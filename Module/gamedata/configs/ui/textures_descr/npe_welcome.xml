@@ -1,0 +1,8 @@
+<w>
+	<file name="ui\npe_welcome\clear_sky">
+		<texture id="ui_npe_welcome_clear_sky" x="0" y="0" width="256" height="256" />
+	</file>
+	<file name="ui\npe_welcome\card_01">
+		<texture id="ui_npe_welcome_card_01" x="0" y="0" width="1024" height="576" />
+	</file>	
+</w>

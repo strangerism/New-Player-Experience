@@ -1,0 +1,142 @@
+
+local printlog = npe.printlog
+local printdebug = npe.printdebug
+
+GUI = nil -- instance, don't touch
+
+local GAMETIME_STATE = {
+	STOPPED = 0,
+	INMOTION = 1 
+}
+
+function actor_on_first_update()
+	local RENDERER = get_console_cmd(0,"renderer")
+	if (RENDERER == 'renderer_r1') then
+		local hud = get_hud()
+		local cs = hud:GetCustomStatic("dx8_fill_shader")
+		if (not cs) then
+			printdbg("- UINewPlayerExperience | Started dx8_fill_shader")
+			hud:AddCustomStatic("dx8_fill_shader")
+		end
+	end
+end
+
+function on_game_start()
+end
+
+function change_gametime_to(state)
+	exec_console_cmd("time_factor " .. state)
+end
+
+function play(npe_set)
+    printlog("[NPE] play npe_set: " .. npe_set.module)
+    exec_console_cmd("main_menu off")
+    change_gametime_to(GAMETIME_STATE.STOPPED)
+
+
+    printlog("[NPE] creating GUI")
+    GUI = UINewPlayerExperience(npe_set)
+
+	if (GUI) and (not GUI:IsShown()) then
+        printlog("[NPE] showing GUI")
+		GUI:ShowDialog(true)
+		Register_UI("UINewPlayerExperience","npe_dialog")
+    else
+        printlog("[NPE] GUI already shown")
+    end
+end
+
+local xml = nil
+local xml_card_images = nil
+function loadUIStatic(npe_set)
+	printlog("[NPE] loadUIStatic")
+	if not xml then
+		printlog("[NPE] loading ui_npe_dialog.xml")
+		xml = CScriptXmlInit()
+		xml:ParseFile("ui_npe_dialog.xml")
+	end
+    if not xml_card_images then
+        local filename = npe_set.module .. ".xml"
+        printlog("[NPE] loading " .. filename)
+        xml_card_images = CScriptXmlInit()
+        xml_card_images:ParseFile(filename)
+    end
+end
+
+-------------------------------------------------------------------
+class "UINewPlayerExperience" (CUIScriptWnd)
+
+function UINewPlayerExperience:__init(npe_set) super()
+	self:InitControls(npe_set)
+end
+
+function UINewPlayerExperience:__finalize()
+end
+
+function UINewPlayerExperience:InitControls(npe_set)
+    printlog("[NPE] InitControls")
+	self:SetWndRect			(Frect():set(0,0,1024,768))
+	self:SetAutoDelete(true)
+    loadUIStatic(npe_set)
+    self.xml = xml
+	self.dialog	= xml:InitStatic("ui_npe_dialog", self)
+	self.frame	= xml:InitFrame("ui_npe_dialog:frame", self.dialog)
+
+    self.card_title = xml:InitStatic("ui_npe_dialog:card_title",self.dialog)
+	self.top_line = xml:InitStatic("ui_npe_dialog:top_line",self.dialog)
+    
+    self.card_description = xml:InitStatic("ui_npe_dialog:card_description",self.dialog)
+    self.card_image = xml_card_images:InitStatic("card_images:" .. "card_01",self.dialog) 
+    -- self.card_image:Enable(true)
+    -- self.card_image:Show(true)
+
+    self.bottom_line = xml:InitStatic("ui_npe_dialog:bottom_line",self.dialog)
+    self.card_index = xml:InitStatic("ui_npe_dialog:card_index",self.dialog)
+
+    self.btn_close = xml:Init3tButton("ui_npe_dialog:btn_close", self.dialog)
+	self:Register(self.btn_close, "btn_close")	
+	self:AddCallback("btn_close", ui_events.BUTTON_CLICKED, self.OnButtonClose, self)
+
+    self.btn_next = xml:Init3tButton("ui_npe_dialog:btn_next", self.dialog)
+	self:Register(self.btn_next, "btn_next")	
+	self:AddCallback("btn_next", ui_events.BUTTON_CLICKED, self.OnButtonNext, self)
+
+    self.btn_prev = xml:Init3tButton("ui_npe_dialog:btn_prev", self.dialog)
+    self:Register(self.btn_prev, "btn_prev")	
+	self:AddCallback("btn_prev", ui_events.BUTTON_CLICKED, self.OnButtonPrev, self)
+
+end
+
+function UINewPlayerExperience:OnButtonClose()
+    self:Close()
+end
+
+function UINewPlayerExperience:OnButtonNext()
+    printlog("[NPE] OnButtonNext")
+end
+
+function UINewPlayerExperience:OnButtonPrev()
+    printlog("[NPE] OnButtonPrev")
+end
+
+function UINewPlayerExperience:Close()
+	self:HideDialog()
+	self:Show(false)
+	Unregister_UI("UINewPlayerExperience")
+	GUI = nil    
+    change_gametime_to(GAMETIME_STATE.INMOTION)
+end
+
+function UINewPlayerExperience:OnKeyboard(dik, keyboard_action)
+	local res = CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
+
+	if (res == false) then
+		if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+			if dik == DIK_keys.DIK_ESCAPE then
+				printlog("[NPE] OnKeyboard DIK_ESCAPE")
+				self:Close()
+			end
+		end
+    end
+    return res
+end

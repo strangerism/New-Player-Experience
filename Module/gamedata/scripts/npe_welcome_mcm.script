@@ -1,0 +1,57 @@
+
+npe_default_settings = {
+    ["npe_introduction"]		= false	-- Enable/Disable New Player Experience
+}
+
+local deck_npe_welcome = { 
+    title = "New Player Experience Welcome Deck",
+    module= "npe_welcome",
+    id="npe_welcome",
+    sets = {
+        {
+            id = "introduction",
+            title = "Welcome to the New Player Experience",
+            description = "This is the first deck you will see when you start the game. It will guide you through the basics of the game.",
+            size = 3,
+            cards = {
+                [1] = {
+                    title = "Welcome to the New Player Experience",
+                    description = "This is the first card you will see when you start the game. It will guide you through the basics of the game.",
+                    image = "npe_welcome.png",
+                },
+                [2] = {
+                    title = "Welcome to the New Player Experience",
+                    description = "This is the first card you will see when you start the game. It will guide you through the basics of the game.",
+                    image = "npe_welcome.png",
+                },
+                [3] = {
+                    title = "Welcome to the New Player Experience",
+                    description = "This is the first card you will see when you start the game. It will guide you through the basics of the game.",
+                    image = "npe_welcome.png",
+                },
+            },
+            trigger = {
+                type = npe.NPE_EVENT_TYPE.PREFAB,
+                event = npe.NPE_EVENTS.GAME_START,
+                functor = nil,
+                met = false,
+            },
+            played = false,
+        },
+    },
+}
+
+if npe then
+    npe.AddConfig(deck_npe_welcome)
+end
+
+function on_mcm_load()
+
+	op =  { id= "npe_welcome", sh=true, text="ui_mcm_npe_module_npe_welcome", gr ={
+				{id = "title",type= "slide",link= "ui_options_slider_player",text="ui_mcm_npe_module_npe_welcome_title",size= {512,50},spacing= 20 },
+				{id = "introduction", type = "check", val = 1, def=false},
+			}
+		}
+
+	return op, "npe_module"
+end

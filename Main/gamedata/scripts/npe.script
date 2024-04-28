@@ -1,0 +1,270 @@
+
+local npeConfig = {
+    decks = {},
+}
+
+local npeSetsQueue = {
+    triggers = {},
+}
+
+local playableQueue = {
+    setsKeys = {},
+}
+
+NPE_EVENT_TYPE = {
+    NONE = "NONE",
+    PREFAB = "PREFAB",
+    CUSTOM = "CUSTOM",
+}
+
+NPE_EVENTS = {
+    GAME_START = "GAME_START",
+    ITEM_LOOTED = "ITEM_LOOTED", 
+    NPC_LOOTED = "NPC_LOOTED",
+    MUTANT_LOOTED = "MUTANT_LOOTED",
+    DAMAGE_RECEIVED = "DAMAGE_RECEIVED",
+    DAMAGE_DEALT = "DAMAGE_DEALT",
+    QUEST_COMPLETED = "QUEST_COMPLETED",
+    QUEST_ACCEPTED = "QUEST_ACCEPTED",
+    ACTOR_DEATH = "ACTOR_DEATH",
+    ACTOR_RANK_UP = "ACTOR_RANK_UP",
+    ACTOR_LEVEL_UP = "ACTOR_LEVEL_UP",
+    ACTOR_SKILL_UP = "ACTOR_SKILL_UP",
+    ACTOR_PERK_UP = "ACTOR_PERK_UP",
+    ENTERED_RADIATION_FIELD = "ENTERED_RADIATION_FIELD",
+}
+
+settings = {
+    debug_logs = false,
+    enable = true,
+}
+
+
+function printlog(msg,...)
+	msg = msg or " "
+	
+	if select('#', ...) ~= 0 then printf(string.format(msg,...))
+	else printf(msg)
+	end
+end
+
+function printdebug(msg,...) -- debug logging
+	if debug_logs then printlog(msg,...) end
+end
+
+
+local function mapToSetKey(moduleId, setId)
+    return moduleId .. "/" .. setId
+end
+
+local function mapFromSetKey(key)
+    local split = string.gmatch(key, "[^/]+")
+    local moduleId = split()
+    local setId = split()
+    return moduleId, setId
+end
+
+
+local function AddToQueue(set, moduleId)
+    local setKey = mapToSetKey(moduleId, set.id)
+    if set ~= nil then
+        local trigger = {
+            type = set.trigger.type,
+            event = set.trigger.event,
+            functor = set.trigger.functor,
+        }
+        -- Check if a trigger with the same triggerId already exists
+        if npeSetsQueue.triggers[setKey] == nil then
+            -- Add the new trigger to the table with triggerId as the key
+            npeSetsQueue.triggers[setKey] = trigger
+        else
+            print("Trigger with id " .. setKey .. " already exists.")
+        end
+    end
+end
+
+local function getSetFromKey(key)
+    local moduleId, setId = mapFromSetKey(key)
+    local set = nil
+    for i, deck in ipairs(npeConfig.decks) do
+        if deck.module == moduleId then
+            for j, setEntry in ipairs(deck.sets) do
+                if setEntry.id == setId then
+                    set = setEntry
+                    break
+                end
+            end
+        end
+    end
+    return set
+end
+
+local function addToPlayableQueue(setsKeys)
+    if setsKeys == nil then
+        return
+    end
+
+    for i, setKey in ipairs(setsKeys) do
+        table.insert(playableQueue.setsKeys, setKey)
+    end
+end
+
+function AddConfig(npeDeck)
+    if npeDeck ~= nil then
+        local deckExists = false
+        for i, deck in ipairs(npeConfig.decks) do
+            if deck.id == npeDeck.id then
+                deckExists = true
+                break
+            end
+        end
+        if not deckExists then
+            table.insert(npeConfig.decks, npeDeck)
+        else
+            print("Deck with id " .. npeDeck.id .. " already exists.")
+        end
+    end
+end
+
+local function update_decks_from_mcm()
+    
+    for i, deck in ipairs(npeConfig.decks) do
+        for j, set in ipairs(deck.sets) do
+            set.played = npe_mcm.npe_get_setting(deck.module, set.id)
+        end
+    end
+end
+
+
+
+local function update_queue()
+
+    npeSetsQueue = {
+        triggers = {},
+    }
+    for i, deck in ipairs(npeConfig.decks) do
+        for j, set in ipairs(deck.sets) do
+            -- Only call AddToQueue if set.played is false
+            if set.played == false then
+                AddToQueue(set, deck.module)
+            end
+        end
+    end
+end
+    
+
+local function printTable(t, indent)
+    if not t then
+        return
+    end
+    indent = indent or ''
+    for key, value in pairs(t) do
+        if type(value) == 'table' then
+            printf(indent .. '' .. key .. ':')
+            printTable(value, indent .. '  ')
+        else
+            printf(indent .. key .. ': ' .. tostring(value))
+        end
+    end
+end
+
+function findEligibleSetsOn(event)
+    local setsKeys = {}
+    for setKey, trigger in pairs(npeSetsQueue.triggers) do
+        if trigger.event == event then
+            table.insert(setsKeys, setKey)
+        end
+    end
+    return setsKeys
+end
+
+local function playRandomSet(self)
+    printf("playRandomSet")
+    if playableQueue.setsKeys and #playableQueue.setsKeys > 0 then
+        local randomIndex = math.random(#playableQueue)
+        local key = table.remove(playableQueue.setsKeys, randomIndex)
+        local set = getSetFromKey(key)
+        if set ~= nil then
+            local moduleId, unused = mapFromSetKey(key)
+            -- Call the function that will play the set
+            set.module = moduleId
+            printf("Playing set %s from module %s", set.id, set.module)
+            printf("Set Title: %s", set.title)
+            -- set.played = true
+            -- npe_mcm.npe_set_setting(moduleId, set.id, true)
+
+            if not npe_dialog.GUI then
+                if self then
+                    self:On_Cancel()
+                end
+                printlog("[NPE] starting dialog")
+                npe_dialog.play(set)
+            end
+        end
+    end
+end
+
+local playable_tg_update = 0
+local playable_tg_update_step = 5000 --[ms]
+local function npe_actor_on_update()
+    local tg = time_global()
+    if tg < playable_tg_update then
+        return
+    end
+    playable_tg_update = tg + playable_tg_update_step
+
+    playRandomSet()
+end
+
+local function general_initialization()
+
+    -- npe settings
+    settings.debug_logs = npe_mcm.npe_get_setting("general", "debug_logs")
+    settings.enable = npe_mcm.npe_get_setting("general", "enable")
+
+   -- update the npeConfig table with the settings from the MCM
+   update_decks_from_mcm()
+
+   -- Use the function to print the npeConfig.decks table
+   printf("- Decks:")
+   printTable(npeConfig.decks)
+
+   -- update the queue with the triggers from the npeConfig table
+   update_queue()
+
+   -- Use the function to print the npeSetsQueue table
+   printf("- Queue:")
+   printTable(npeSetsQueue.triggers)
+
+   tg = time_global()
+   playable_tg_update = tg + playable_tg_update_step
+end
+
+local function npe_actor_on_first_update()
+    printf("npe_actor_on_first_update")
+
+    general_initialization()
+
+    local setsKeys = findEligibleSetsOn(NPE_EVENTS.GAME_START)
+    printf("Sets triggered on GAME_START:")
+    printTable(setsKeys)
+
+    addToPlayableQueue(setsKeys)
+
+    printf("- PlayableQueue:")
+    printTable(playableQueue.setsKeys)
+end
+
+local function on_option_change()
+    update_decks_from_mcm()
+    update_queue()
+    -- Use the function to print the npeSetsQueue table
+    printf("- Queue:")
+    printTable(npeSetsQueue.triggers)
+end
+
+function on_game_start()
+    RegisterScriptCallback("on_option_change", on_option_change)
+    RegisterScriptCallback("actor_on_first_update", npe_actor_on_first_update)
+    RegisterScriptCallback("actor_on_update", npe_actor_on_update)
+end 

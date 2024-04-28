@@ -1,0 +1,44 @@
+<w>
+	<ui_npe_dialog x="0" y="0" width="1024" height="768">
+
+        <frame x="112" y="134" width="800" height="500" stretch="1">
+            <texture r="77" g="0" b="0" a="255">ui_icons_PDA_tooltips</texture>
+        </frame>
+
+        <card_title x="112" y="134" width="800" height="30" stretch="1">
+            <text r="250" g="250" b="250" font="letterica18" align="c" vert_align="c">ui_npe_dialog_card_title</text>
+        </card_title>
+
+		<top_line x="115" y="164" width="794" height="5" stretch="1">
+			<texture>ui_itm_line</texture>
+		</top_line>	   
+
+        <card_description x="150" y="200" width="350" height="350" stretch="1">
+            <text r="250" g="250" b="250" font="letterica18" align="l" vert_align="t" complex_mode="1">ui_npe_dialog_card_description</text>
+        </card_description>
+
+		<bottom_line x="115" y="590" width="794" height="5" stretch="1">
+			<texture>ui_itm_line</texture>
+		</bottom_line>	  
+                     
+        <btn_close x="120" y="600" width="60" height="30" stretch="1">
+			<text align="c" font="letterica16">ui_npe_dialog_btn_close</text>
+			<texture>ui_button_ordinary</texture>
+        </btn_close>
+
+        <card_index x="112" y="600" width="800" height="30" stretch="1">
+            <text r="250" g="250" b="250" font="letterica18" align="c" vert_align="c">ui_npe_dialog_card_index</text>
+        </card_index>    
+
+        <btn_next x="840" y="600" width="60" height="30" stretch="1">
+			<text align="c" font="letterica16">ui_npe_dialog_btn_next</text>
+			<texture>ui_button_ordinary</texture>
+        </btn_next>
+
+        <btn_prev x="770" y="600" width="60" height="30" stretch="1">
+			<text align="c" font="letterica16">ui_npe_dialog_btn_prev</text>
+			<texture>ui_button_ordinary</texture>
+        </btn_prev>
+
+    </ui_npe_dialog>
+</w>
