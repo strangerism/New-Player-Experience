@@ -28,14 +28,19 @@ function change_gametime_to(state)
 	exec_console_cmd("time_factor " .. state)
 end
 
-function play(npe_set)
-    printlog("[NPE] play npe_set: " .. npe_set.module)
+function play(set)
+	if set == nil then
+		printlog("[NPE] play set is nil")
+		return
+	end
+
+    printlog("[NPE] play set: " .. set.module)
     exec_console_cmd("main_menu off")
     change_gametime_to(GAMETIME_STATE.STOPPED)
 
 
     printlog("[NPE] creating GUI")
-    GUI = UINewPlayerExperience(npe_set)
+    GUI = UINewPlayerExperience(set)
 
 	if (GUI) and (not GUI:IsShown()) then
         printlog("[NPE] showing GUI")
@@ -47,51 +52,62 @@ function play(npe_set)
 end
 
 local xml = nil
-local xml_card_images = nil
-function loadUIStatic(npe_set)
+function loadUIStatic(set)
 	printlog("[NPE] loadUIStatic")
 	if not xml then
 		printlog("[NPE] loading ui_npe_dialog.xml")
 		xml = CScriptXmlInit()
 		xml:ParseFile("ui_npe_dialog.xml")
 	end
-    if not xml_card_images then
-        local filename = npe_set.module .. ".xml"
-        printlog("[NPE] loading " .. filename)
-        xml_card_images = CScriptXmlInit()
-        xml_card_images:ParseFile(filename)
-    end
 end
 
 -------------------------------------------------------------------
 class "UINewPlayerExperience" (CUIScriptWnd)
 
-function UINewPlayerExperience:__init(npe_set) super()
-	self:InitControls(npe_set)
+function UINewPlayerExperience:__init(set) super()
+	self:InitControls(set)
 end
 
 function UINewPlayerExperience:__finalize()
 end
 
-function UINewPlayerExperience:InitControls(npe_set)
+function UINewPlayerExperience:InitControls(set)
     printlog("[NPE] InitControls")
 	self:SetWndRect			(Frect():set(0,0,1024,768))
 	self:SetAutoDelete(true)
-    loadUIStatic(npe_set)
+	self.set = set
+    loadUIStatic(set)
     self.xml = xml
 	self.dialog	= xml:InitStatic("ui_npe_dialog", self)
 	self.frame	= xml:InitFrame("ui_npe_dialog:frame", self.dialog)
+	
+	-- card context
+	self.cardIndex = 1
+	if self.set.cards[self.cardIndex] then
+		
+		local text
+		if self.set.cards[self.cardIndex].title then
+			text = game.translate_string(self.set.cards[self.cardIndex].title)
+		else
+			text = game.translate_string(self.set.title)
+		end
+		self.card_title = xml:InitTextWnd("ui_npe_dialog:card_title",self.dialog)
+		self.card_title:SetText(text)
+	
+		self.top_line = xml:InitStatic("ui_npe_dialog:top_line",self.dialog)
 
-    self.card_title = xml:InitStatic("ui_npe_dialog:card_title",self.dialog)
-	self.top_line = xml:InitStatic("ui_npe_dialog:top_line",self.dialog)
-    
-    self.card_description = xml:InitStatic("ui_npe_dialog:card_description",self.dialog)
-    self.card_image = xml_card_images:InitStatic("card_images:" .. "card_01",self.dialog) 
-    -- self.card_image:Enable(true)
-    -- self.card_image:Show(true)
+		self.card_description = xml:InitTextWnd("ui_npe_dialog:card_description",self.dialog)
+		text = game.translate_string(self.set.cards[self.cardIndex].description)
+		self.card_description:SetText(text)
+
+		self.card_image = xml:InitStatic("ui_npe_dialog:card_image",self.dialog)
+		self.card_image:InitTexture(self.set.cards[self.cardIndex].image)
+	end
 
     self.bottom_line = xml:InitStatic("ui_npe_dialog:bottom_line",self.dialog)
-    self.card_index = xml:InitStatic("ui_npe_dialog:card_index",self.dialog)
+
+    self.card_index = xml:InitTextWnd("ui_npe_dialog:card_index",self.dialog)
+	self.card_index:SetText(self.cardIndex .. "/" .. #self.set.cards)
 
     self.btn_close = xml:Init3tButton("ui_npe_dialog:btn_close", self.dialog)
 	self:Register(self.btn_close, "btn_close")	
@@ -105,6 +121,25 @@ function UINewPlayerExperience:InitControls(npe_set)
     self:Register(self.btn_prev, "btn_prev")	
 	self:AddCallback("btn_prev", ui_events.BUTTON_CLICKED, self.OnButtonPrev, self)
 
+	self:UpdateButtons()
+end
+
+function UINewPlayerExperience:UpdateButtons()
+	printlog("[NPE] UpdateButtons")
+	self.btn_prev:Show(true)
+	self.btn_next:Show(true)
+	if self.cardIndex == 1 then
+		self.btn_prev:Show(false)
+	else
+		self.btn_prev:Show(true)
+	end
+
+	if self.cardIndex == #self.set.cards then
+		self.btn_next:Show(false)
+	else
+		self.btn_next:Show(true)
+	end
+
 end
 
 function UINewPlayerExperience:OnButtonClose()
@@ -113,10 +148,50 @@ end
 
 function UINewPlayerExperience:OnButtonNext()
     printlog("[NPE] OnButtonNext")
+	self.cardIndex = self.cardIndex + 1
+	if self.cardIndex <= #self.set.cards and self.set.cards[self.cardIndex] then
+		local text
+		if self.set.cards[self.cardIndex].title then
+			text = game.translate_string(self.set.cards[self.cardIndex].title)
+		else
+			text = game.translate_string(self.set.title)
+		end
+		self.card_title:SetText(text)
+	
+		text = game.translate_string(self.set.cards[self.cardIndex].description)
+		self.card_description:SetText(text)
+
+		self.card_image:InitTexture(self.set.cards[self.cardIndex].image)
+
+		self.card_index:SetText(self.cardIndex .. "/" .. #self.set.cards)
+	else
+		self.cardIndex = #self.set.cards
+	end
+	self:UpdateButtons()
 end
 
 function UINewPlayerExperience:OnButtonPrev()
     printlog("[NPE] OnButtonPrev")
+	self.cardIndex = self.cardIndex - 1
+	if self.cardIndex > 0 and self.set.cards[self.cardIndex] then
+		local text
+		if self.set.cards[self.cardIndex].title then
+			text = game.translate_string(self.set.cards[self.cardIndex].title)
+		else
+			text = game.translate_string(self.set.title)
+		end
+		self.card_title:SetText(text)
+	
+		text = game.translate_string(self.set.cards[self.cardIndex].description)
+		self.card_description:SetText(text)
+
+		self.card_image:InitTexture(self.set.cards[self.cardIndex].image)
+
+		self.card_index:SetText(self.cardIndex .. "/" .. #self.set.cards)
+	else
+		self.cardIndex = 1
+	end
+	self:UpdateButtons()
 end
 
 function UINewPlayerExperience:Close()

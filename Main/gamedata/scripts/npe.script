@@ -11,13 +11,13 @@ local playableQueue = {
     setsKeys = {},
 }
 
-NPE_EVENT_TYPE = {
+EVENT_TYPE = {
     NONE = "NONE",
     PREFAB = "PREFAB",
     CUSTOM = "CUSTOM",
 }
 
-NPE_EVENTS = {
+EVENTS = {
     GAME_START = "GAME_START",
     ITEM_LOOTED = "ITEM_LOOTED", 
     NPC_LOOTED = "NPC_LOOTED",
@@ -245,7 +245,7 @@ local function npe_actor_on_first_update()
 
     general_initialization()
 
-    local setsKeys = findEligibleSetsOn(NPE_EVENTS.GAME_START)
+    local setsKeys = findEligibleSetsOn(EVENTS.GAME_START)
     printf("Sets triggered on GAME_START:")
     printTable(setsKeys)
 

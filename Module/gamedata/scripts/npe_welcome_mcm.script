@@ -10,29 +10,27 @@ local deck_npe_welcome = {
     sets = {
         {
             id = "introduction",
-            title = "Welcome to the New Player Experience",
-            description = "This is the first deck you will see when you start the game. It will guide you through the basics of the game.",
-            size = 3,
+            title = "ui_npe_welcome_card_01_title",
             cards = {
                 [1] = {
-                    title = "Welcome to the New Player Experience",
-                    description = "This is the first card you will see when you start the game. It will guide you through the basics of the game.",
-                    image = "npe_welcome.png",
+                    title = "ui_npe_welcome_card_01_title",
+                    description = "ui_npe_welcome_card_01_description",
+                    image = "ui_npe_welcome_card_01",
                 },
                 [2] = {
-                    title = "Welcome to the New Player Experience",
-                    description = "This is the first card you will see when you start the game. It will guide you through the basics of the game.",
-                    image = "npe_welcome.png",
+                    title = "ui_npe_welcome_card_02_title",
+                    description = "ui_npe_welcome_card_02_description",
+                    image = "ui_npe_welcome_card_02",
                 },
                 [3] = {
-                    title = "Welcome to the New Player Experience",
-                    description = "This is the first card you will see when you start the game. It will guide you through the basics of the game.",
-                    image = "npe_welcome.png",
+                    title = "ui_npe_welcome_card_03_title",
+                    description = "ui_npe_welcome_card_04_description",
+                    image = "ui_npe_welcome_card_03",
                 },
             },
             trigger = {
-                type = npe.NPE_EVENT_TYPE.PREFAB,
-                event = npe.NPE_EVENTS.GAME_START,
+                type = npe.EVENT_TYPE.PREFAB,
+                event = npe.EVENTS.GAME_START,
                 functor = nil,
                 met = false,
             },

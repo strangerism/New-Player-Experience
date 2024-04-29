@@ -1,7 +1,0 @@
-<w>
-	<card_images>
-        <card_01 x="522" y="200" width="350" height="350" stretch="1">
-            <texture>ui_npe_welcome_card_01</texture>
-        </card_01>        
-	</card_images>
-</w>

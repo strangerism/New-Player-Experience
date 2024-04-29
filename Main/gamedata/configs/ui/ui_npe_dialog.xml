@@ -17,6 +17,9 @@
             <text r="250" g="250" b="250" font="letterica18" align="l" vert_align="t" complex_mode="1">ui_npe_dialog_card_description</text>
         </card_description>
 
+        <card_image x="522" y="200" width="350" height="350" stretch="1">
+        </card_image>
+
 		<bottom_line x="115" y="590" width="794" height="5" stretch="1">
 			<texture>ui_itm_line</texture>
 		</bottom_line>	  
@@ -27,7 +30,7 @@
         </btn_close>
 
         <card_index x="112" y="600" width="800" height="30" stretch="1">
-            <text r="250" g="250" b="250" font="letterica18" align="c" vert_align="c">ui_npe_dialog_card_index</text>
+            <text r="250" g="250" b="250" font="letterica18" align="c" vert_align="c"></text>
         </card_index>    
 
         <btn_next x="840" y="600" width="60" height="30" stretch="1">
