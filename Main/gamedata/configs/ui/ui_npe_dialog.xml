@@ -5,7 +5,11 @@
             <texture r="77" g="0" b="0" a="255">ui_icons_PDA_tooltips</texture>
         </frame>
 
-        <card_title x="112" y="134" width="800" height="30" stretch="1">
+		<auto_frameline x="112" y="134" width="800" height="2" vertical="0">
+			<texture>ui_inGame2_pda_line_horizontal</texture>
+		</auto_frameline>
+
+        <card_title x="112" y="140" width="800" height="30" stretch="1">
             <text r="250" g="250" b="250" font="letterica18" align="c" vert_align="c">ui_npe_dialog_card_title</text>
         </card_title>
 
@@ -43,5 +47,8 @@
 			<texture>ui_button_ordinary</texture>
         </btn_prev>
 
+		<auto_frameline x="112" y="630" width="800" height="2" vertical="0">
+			<texture>ui_inGame2_pda_line_horizontal</texture>
+		</auto_frameline>
     </ui_npe_dialog>
 </w>
