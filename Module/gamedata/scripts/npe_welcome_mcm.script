@@ -28,13 +28,11 @@ local deck_npe_welcome = {
                     image = "ui_npe_welcome_card_03",
                 },
             },
-            trigger = {
-                type = npe.EVENT_TYPE.PREFAB,
-                event = npe.EVENTS.GAME_START,
+            context = {
+                type = npe.CONTEXT_TYPE.EVENT,
+                qualifier = npe.EVENTS.GAME_START,
                 functor = nil,
-                met = false,
             },
-            played = false,
         },
     },
 }

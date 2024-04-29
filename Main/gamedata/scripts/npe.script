@@ -4,22 +4,22 @@ local npeConfig = {
 }
 
 local npeSetsQueue = {
-    triggers = {},
+    contexts = {},
 }
 
 local playableQueue = {
     setsKeys = {},
 }
 
-EVENT_TYPE = {
+CONTEXT_TYPE = {
     NONE = "NONE",
-    PREFAB = "PREFAB",
+    EVENT = "EVENT",
     CUSTOM = "CUSTOM",
+    FUNCTOR = "FUNCTOR",
 }
 
 EVENTS = {
     GAME_START = "GAME_START",
-    ITEM_LOOTED = "ITEM_LOOTED", 
     NPC_LOOTED = "NPC_LOOTED",
     MUTANT_LOOTED = "MUTANT_LOOTED",
     DAMAGE_RECEIVED = "DAMAGE_RECEIVED",
@@ -32,6 +32,12 @@ EVENTS = {
     ACTOR_SKILL_UP = "ACTOR_SKILL_UP",
     ACTOR_PERK_UP = "ACTOR_PERK_UP",
     ENTERED_RADIATION_FIELD = "ENTERED_RADIATION_FIELD",
+
+}
+
+FUNCTORS = {
+    ITEM_LOOTED = "ITEM_LOOTED", 
+    TALK_TO_NPC = "TALK_TO_NPC",
 }
 
 settings = {
@@ -68,17 +74,17 @@ end
 local function AddToQueue(set, moduleId)
     local setKey = mapToSetKey(moduleId, set.id)
     if set ~= nil then
-        local trigger = {
-            type = set.trigger.type,
-            event = set.trigger.event,
-            functor = set.trigger.functor,
+        local context = {
+            type = set.context.type,
+            qualifier = set.context.qualifier,
+            functor = set.context.functor,
         }
-        -- Check if a trigger with the same triggerId already exists
-        if npeSetsQueue.triggers[setKey] == nil then
-            -- Add the new trigger to the table with triggerId as the key
-            npeSetsQueue.triggers[setKey] = trigger
+        -- Check if a context with the same contextId already exists
+        if npeSetsQueue.contexts[setKey] == nil then
+            -- Add the new context to the table with contextId as the key
+            npeSetsQueue.contexts[setKey] = context
         else
-            print("Trigger with id " .. setKey .. " already exists.")
+            print("context with id " .. setKey .. " already exists.")
         end
     end
 end
@@ -140,7 +146,7 @@ end
 local function update_queue()
 
     npeSetsQueue = {
-        triggers = {},
+        contexts = {},
     }
     for i, deck in ipairs(npeConfig.decks) do
         for j, set in ipairs(deck.sets) do
@@ -168,10 +174,10 @@ local function printTable(t, indent)
     end
 end
 
-function findEligibleSetsOn(event)
+function findEligibleSetsOn(qualifier)
     local setsKeys = {}
-    for setKey, trigger in pairs(npeSetsQueue.triggers) do
-        if trigger.event == event then
+    for setKey, context in pairs(npeSetsQueue.contexts) do
+        if context.qualifier == qualifier then
             table.insert(setsKeys, setKey)
         end
     end
@@ -190,8 +196,8 @@ local function playRandomSet(self)
             set.module = moduleId
             printf("Playing set %s from module %s", set.id, set.module)
             printf("Set Title: %s", set.title)
-            -- set.played = true
-            -- npe_mcm.npe_set_setting(moduleId, set.id, true)
+            set.played = true
+            npe_mcm.npe_set_setting(moduleId, set.id, true)
 
             if not npe_dialog.GUI then
                 if self then
@@ -229,12 +235,12 @@ local function general_initialization()
    printf("- Decks:")
    printTable(npeConfig.decks)
 
-   -- update the queue with the triggers from the npeConfig table
+   -- update the queue with the contexts from the npeConfig table
    update_queue()
 
    -- Use the function to print the npeSetsQueue table
    printf("- Queue:")
-   printTable(npeSetsQueue.triggers)
+   printTable(npeSetsQueue.contexts)
 
    tg = time_global()
    playable_tg_update = tg + playable_tg_update_step
@@ -246,7 +252,7 @@ local function npe_actor_on_first_update()
     general_initialization()
 
     local setsKeys = findEligibleSetsOn(EVENTS.GAME_START)
-    printf("Sets triggered on GAME_START:")
+    printf("Sets contexted on GAME_START:")
     printTable(setsKeys)
 
     addToPlayableQueue(setsKeys)
@@ -260,7 +266,7 @@ local function on_option_change()
     update_queue()
     -- Use the function to print the npeSetsQueue table
     printf("- Queue:")
-    printTable(npeSetsQueue.triggers)
+    printTable(npeSetsQueue.contexts)
 end
 
 function on_game_start()
