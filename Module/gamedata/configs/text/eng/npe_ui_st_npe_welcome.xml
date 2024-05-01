@@ -8,17 +8,19 @@
 		<text>NPE Welcome</text>
 	</string>
 	<string id="ui_mcm_npe_module_npe_welcome_title">
-		<text>NPE Welcome Title</text>
+		<text>New Player Experience</text>
 	</string>
 	<string id="ui_mcm_npe_module_npe_welcome_introduction">
 		<text>Introduction</text>
 	</string>
 
+	<string id="ui_npe_welcome_set_title">
+		<text>New Player Experience Introduction</text>
+	</string>
 	<!-- deck_npe_welcome -->
 
 	<string id="ui_npe_welcome_card_01_title">
-		<text>Welcome to the New Player Experience
-		</text>
+		<text>%c[d_cyan]Welcome to the New Player Experience</text>
 	</string>
 	<string id="ui_npe_welcome_card_01_description">
 		<text>You have installed the New Player Experience mod, NPE in brief. 
@@ -40,7 +42,7 @@
 		</text>
 	</string>	
 	<string id="ui_npe_welcome_card_02_title">
-		<text>Access the NPE MCM menu</text>
+		<text>%c[d_cyan]Access the NPE MCM menu</text>
 	</string>
 	<string id="ui_npe_welcome_card_02_description">
 		<text>NPE has its own MCM menu where you can configure the NPE system to your liking.
@@ -53,7 +55,7 @@
 		</text>
 	</string>	
 	<string id="ui_npe_welcome_card_03_title">
-		<text>Check all the NPE Modules avaliable to you</text>
+		<text>%c[d_cyan]Check all the NPE Modules avaliable to you</text>
 	</string>
 	<string id="ui_npe_welcome_card_04_description">
 		<text>The NPE system is modular, meaning that you can add or remove modules that add tutorials to the game.

@@ -10,7 +10,7 @@ local deck_npe_welcome = {
     sets = {
         {
             id = "introduction",
-            title = "ui_npe_welcome_card_01_title",
+            title = "ui_npe_welcome_set_title",
             cards = {
                 [1] = {
                     title = "ui_npe_welcome_card_01_title",

@@ -81,11 +81,17 @@ function UINewPlayerExperience:InitControls(set)
 	self.dialog	= xml:InitStatic("ui_npe_dialog", self)
 	self.frame	= xml:InitFrame("ui_npe_dialog:frame", self.dialog)
 	
+	self.context = xml:InitTextWnd("ui_npe_dialog:context",self.dialog)
+	self.context:SetText("%c[0,255,208,0]" .. "NPE > " .. set.context.qualifier)
+
+	local text
+	text = game.translate_string(self.set.title)
+	self.set_title = xml:InitTextWnd("ui_npe_dialog:set_title",self.dialog)
+	self.set_title:SetText(text)
+
 	-- card context
 	self.cardIndex = 1
 	if self.set.cards[self.cardIndex] then
-		
-		local text
 		if self.set.cards[self.cardIndex].title then
 			text = game.translate_string(self.set.cards[self.cardIndex].title)
 		else
@@ -202,6 +208,7 @@ function UINewPlayerExperience:Close()
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
     change_gametime_to(GAMETIME_STATE.INMOTION)
+	npe.resumePlayLoop()
 end
 
 function UINewPlayerExperience:OnKeyboard(dik, keyboard_action)

@@ -166,10 +166,10 @@ local function printTable(t, indent)
     indent = indent or ''
     for key, value in pairs(t) do
         if type(value) == 'table' then
-            printf(indent .. '' .. key .. ':')
+            printlog(indent .. '' .. key .. ':')
             printTable(value, indent .. '  ')
         else
-            printf(indent .. key .. ': ' .. tostring(value))
+            printlog(indent .. key .. ': ' .. tostring(value))
         end
     end
 end
@@ -185,7 +185,7 @@ function findEligibleSetsOn(qualifier)
 end
 
 local function playRandomSet(self)
-    printf("playRandomSet")
+    printlog("playRandomSet")
     if playableQueue.setsKeys and #playableQueue.setsKeys > 0 then
         local randomIndex = math.random(#playableQueue)
         local key = table.remove(playableQueue.setsKeys, randomIndex)
@@ -194,8 +194,8 @@ local function playRandomSet(self)
             local moduleId, unused = mapFromSetKey(key)
             -- Call the function that will play the set
             set.module = moduleId
-            printf("Playing set %s from module %s", set.id, set.module)
-            printf("Set Title: %s", set.title)
+            printlog("Playing set %s from module %s", set.id, set.module)
+            printlog("Set Title: %s", set.title)
             set.played = true
             npe_mcm.npe_set_setting(moduleId, set.id, true)
 
@@ -205,6 +205,7 @@ local function playRandomSet(self)
                 end
                 printlog("[NPE] starting dialog")
                 npe_dialog.play(set)
+                pausePlayLoop()
             end
         end
     end
@@ -219,7 +220,30 @@ local function npe_actor_on_update()
     end
     playable_tg_update = tg + playable_tg_update_step
 
+    -- playRandomSet()
+    
+end
+
+local runPlayLoop = false
+local playLoopName = 'NPE_Play_Loop'
+local playLoopFrequency = 60 -- 60 seconds
+function NPEPlayLoop()
+    if not runPlayLoop then return true end
+    ResetTimeEvent(playLoopName, playLoopName, playLoopFrequency)
+
     playRandomSet()
+
+    return false
+end
+function pausePlayLoop()
+    printdebug("[NPE] pausing loop")
+    runPlayLoop = false
+end
+
+function resumePlayLoop()
+    printdebug("[NPE] resuming loop")
+    runPlayLoop = true
+    CreateTimeEvent(playLoopName, playLoopName, 10, NPEPlayLoop) -- offset time 10 seconds
 end
 
 local function general_initialization()
@@ -232,14 +256,14 @@ local function general_initialization()
    update_decks_from_mcm()
 
    -- Use the function to print the npeConfig.decks table
-   printf("- Decks:")
+   printlog("- Decks:")
    printTable(npeConfig.decks)
 
    -- update the queue with the contexts from the npeConfig table
    update_queue()
 
    -- Use the function to print the npeSetsQueue table
-   printf("- Queue:")
+   printlog("- Queue:")
    printTable(npeSetsQueue.contexts)
 
    tg = time_global()
@@ -247,25 +271,27 @@ local function general_initialization()
 end
 
 local function npe_actor_on_first_update()
-    printf("npe_actor_on_first_update")
+    printlog("npe_actor_on_first_update")
 
     general_initialization()
 
     local setsKeys = findEligibleSetsOn(EVENTS.GAME_START)
-    printf("Sets contexted on GAME_START:")
+    printlog("Sets contexted on GAME_START:")
     printTable(setsKeys)
 
     addToPlayableQueue(setsKeys)
 
-    printf("- PlayableQueue:")
+    printlog("- PlayableQueue:")
     printTable(playableQueue.setsKeys)
+
+    resumePlayLoop()
 end
 
 local function on_option_change()
     update_decks_from_mcm()
     update_queue()
     -- Use the function to print the npeSetsQueue table
-    printf("- Queue:")
+    printlog("- Queue:")
     printTable(npeSetsQueue.contexts)
 end
 
