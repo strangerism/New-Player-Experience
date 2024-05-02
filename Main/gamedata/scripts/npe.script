@@ -11,6 +11,16 @@ local playableQueue = {
     setsKeys = {},
 }
 
+PLAYTIME = {
+    INSTANT = "INSTANT",
+    DELAYED = "DELAYED"
+}
+
+CONTEXT_STATE = {
+    ACTIVE = "ACTIVE",
+    INACTIVE = "INACTIVE",
+}
+
 CONTEXT_TYPE = {
     NONE = "NONE",
     EVENT = "EVENT",
@@ -19,29 +29,40 @@ CONTEXT_TYPE = {
 }
 
 EVENTS = {
-    GAME_START = "GAME_START",
-    NPC_LOOTED = "NPC_LOOTED",
-    MUTANT_LOOTED = "MUTANT_LOOTED",
-    DAMAGE_RECEIVED = "DAMAGE_RECEIVED",
-    DAMAGE_DEALT = "DAMAGE_DEALT",
-    QUEST_COMPLETED = "QUEST_COMPLETED",
-    QUEST_ACCEPTED = "QUEST_ACCEPTED",
-    ACTOR_DEATH = "ACTOR_DEATH",
-    ACTOR_RANK_UP = "ACTOR_RANK_UP",
-    ACTOR_LEVEL_UP = "ACTOR_LEVEL_UP",
-    ACTOR_SKILL_UP = "ACTOR_SKILL_UP",
-    ACTOR_PERK_UP = "ACTOR_PERK_UP",
-    ENTERED_RADIATION_FIELD = "ENTERED_RADIATION_FIELD",
-
+    GAME_START = "Game Start",
+    NPC_LOOTED = "NPC Looted",
+    MUTANT_LOOTED = "Mutant Looted",
+    DAMAGE_DEALT = "Damage Dealt",
+    QUEST_COMPLETED = "Quest Completed",
+    QUEST_ACCEPTED = "Quest Accepted",
+    ACTOR_DEATH = "Death",
+    ACTOR_HIT= "Hit Received",
+    ACTOR_BLEEDING= "Bleeding",
+    ACTOR_IRRADIATED = "Irradiated",
+    ACTOR_STRESSED = "Stressed",
+    ACTOR_HUNGRY = "Hungry",
+    ACTOR_OVERWEIGHT = "Overweight",
+    ACTOR_MAD = "Madness",
+    ACTOR_SLEEP = "Sleep",
+    ACTOR_RANK_UP = "Rank Up",
+    ACTOR_LEVEL_UP = "Level Up",
+    ACTOR_SKILL_UP = "Skill Up",
+    ACTOR_PERK_UP = "Perk Up",
+    ENTERED_RADIATION_FIELD = "Entered Radiation Field",
+    ENTERED_ANOMALOUS_FIELD = "Entered Anomalous Field",
+    STASH_COORDINATES_REVEALED = "Stash Coordinates Revealed",
 }
 
 FUNCTORS = {
-    ITEM_LOOTED = "ITEM_LOOTED", 
-    TALK_TO_NPC = "TALK_TO_NPC",
+    ITEM_LOOTED = "Item Looted", 
+    ITEM_OWNED = "Item Owned",
+    TALKED_TO_NPC = "Talked to NPC",
+    DAMAGE_RECEIVED = "Damage Received",
+    
 }
 
 settings = {
-    debug_logs = false,
+    debug_logs = true,
     enable = true,
 }
 
@@ -84,7 +105,7 @@ local function AddToQueue(set, moduleId)
             -- Add the new context to the table with contextId as the key
             npeSetsQueue.contexts[setKey] = context
         else
-            print("context with id " .. setKey .. " already exists.")
+            printlog("context with id " .. setKey .. " already exists.")
         end
     end
 end
@@ -111,7 +132,10 @@ local function addToPlayableQueue(setsKeys)
     end
 
     for i, setKey in ipairs(setsKeys) do
+        -- add set to the playable queue
         table.insert(playableQueue.setsKeys, setKey)
+        -- removes it from the npeSetsQueue
+        npeSetsQueue.contexts[setKey] = nil
     end
 end
 
@@ -127,7 +151,7 @@ function AddConfig(npeDeck)
         if not deckExists then
             table.insert(npeConfig.decks, npeDeck)
         else
-            print("Deck with id " .. npeDeck.id .. " already exists.")
+            printlog("Deck with id " .. npeDeck.id .. " already exists.")
         end
     end
 end
@@ -184,8 +208,25 @@ function findEligibleSetsOn(qualifier)
     return setsKeys
 end
 
+function findEligibleSetsOnFunctor()
+    printdebug("findEligibleSetsOnFunctor")
+    local setsKeys = {}
+    for setKey, context in pairs(npeSetsQueue.contexts) do
+        printdebug("Checking set %s", setKey)
+        if context.type == CONTEXT_TYPE.FUNCTOR and context.functor then
+            printdebug(table.concat(context.functor, ', '))
+            local success = execute_func(unpack(context.functor))
+            printdebug("Functor %s executed. Success: %s", setKey, success)
+            if success then
+                table.insert(setsKeys, setKey)
+            end
+        end
+    end
+    return setsKeys
+end
+
 local function playRandomSet(self)
-    printlog("playRandomSet")
+    printdebug("playRandomSet")
     if playableQueue.setsKeys and #playableQueue.setsKeys > 0 then
         local randomIndex = math.random(#playableQueue)
         local key = table.remove(playableQueue.setsKeys, randomIndex)
@@ -194,8 +235,8 @@ local function playRandomSet(self)
             local moduleId, unused = mapFromSetKey(key)
             -- Call the function that will play the set
             set.module = moduleId
-            printlog("Playing set %s from module %s", set.id, set.module)
-            printlog("Set Title: %s", set.title)
+            printdebug("Playing set %s from module %s", set.id, set.module)
+            printdebug("Set Title: %s", set.title)
             set.played = true
             npe_mcm.npe_set_setting(moduleId, set.id, true)
 
@@ -211,22 +252,55 @@ local function playRandomSet(self)
     end
 end
 
-local playable_tg_update = 0
-local playable_tg_update_step = 5000 --[ms]
-local function npe_actor_on_update()
-    local tg = time_global()
-    if tg < playable_tg_update then
-        return
-    end
-    playable_tg_update = tg + playable_tg_update_step
+-- local playable_tg_update = 0
+-- local playable_tg_update_step = 5000 --[ms]
+-- local function npe_actor_on_update()
+--     local tg = time_global()
+--     if tg < playable_tg_update then
+--         return
+--     end
+--     playable_tg_update = tg + playable_tg_update_step
 
-    -- playRandomSet()
+--     local setsKeys = findEligibleSetsOnFunctor()
+
+--     addToPlayableQueue(setsKeys)
     
+-- end
+
+local runEligibilityMatchLoop = false
+local playEligibilityMatchName = 'NPE_EligibilityMatch_Loop'
+local playEligibilityMatchFrequency = 10 -- 60 seconds
+function NPEEligibilityMatchLoop()
+    printdebug("[NPE] EligibilityMatch loop")
+    if not runEligibilityMatchLoop then return true end
+    ResetTimeEvent(playEligibilityMatchName, playEligibilityMatchName, playEligibilityMatchFrequency)
+
+    -- find matching sets with ContextType.FUNCTOR and check eligibility
+    local setsKeys = findEligibleSetsOnFunctor()
+    printdebug("!Sets eligible:")
+    printTable(setsKeys)
+
+    addToPlayableQueue(setsKeys)
+    printdebug("- PlayableQueue:")
+    printTable(playableQueue.setsKeys)
+
+    return false
 end
+function pauseEligibilityMatchLoop()
+    printlog("[NPE] pausing EligibilityMatch loop")
+    runEligibilityMatchLoop = false
+end
+
+function resumeEligibilityMatchLoop()
+    printlog("[NPE] resuming EligibilityMatch loop")
+    runEligibilityMatchLoop = true
+    CreateTimeEvent(playEligibilityMatchName, playEligibilityMatchName, 10, NPEEligibilityMatchLoop) -- offset time 10 seconds
+end
+
 
 local runPlayLoop = false
 local playLoopName = 'NPE_Play_Loop'
-local playLoopFrequency = 60 -- 60 seconds
+local playLoopFrequency = 10 -- 60 seconds
 function NPEPlayLoop()
     if not runPlayLoop then return true end
     ResetTimeEvent(playLoopName, playLoopName, playLoopFrequency)
@@ -236,12 +310,12 @@ function NPEPlayLoop()
     return false
 end
 function pausePlayLoop()
-    printdebug("[NPE] pausing loop")
+    printlog("[NPE] pausing play loop")
     runPlayLoop = false
 end
 
 function resumePlayLoop()
-    printdebug("[NPE] resuming loop")
+    printlog("[NPE] resuming play loop")
     runPlayLoop = true
     CreateTimeEvent(playLoopName, playLoopName, 10, NPEPlayLoop) -- offset time 10 seconds
 end
@@ -266,12 +340,12 @@ local function general_initialization()
    printlog("- Queue:")
    printTable(npeSetsQueue.contexts)
 
-   tg = time_global()
-   playable_tg_update = tg + playable_tg_update_step
+--    tg = time_global()
+--    playable_tg_update = tg + playable_tg_update_step
 end
 
 local function npe_actor_on_first_update()
-    printlog("npe_actor_on_first_update")
+    printlog(" npe_actor_on_first_update")
 
     general_initialization()
 
@@ -284,7 +358,10 @@ local function npe_actor_on_first_update()
     printlog("- PlayableQueue:")
     printTable(playableQueue.setsKeys)
 
+    printlog("[NPE] starting play loop")
     resumePlayLoop()
+    printlog("[NPE] starting EligibilityMatch loop")
+    resumeEligibilityMatchLoop()
 end
 
 local function on_option_change()
@@ -298,5 +375,17 @@ end
 function on_game_start()
     RegisterScriptCallback("on_option_change", on_option_change)
     RegisterScriptCallback("actor_on_first_update", npe_actor_on_first_update)
-    RegisterScriptCallback("actor_on_update", npe_actor_on_update)
+    -- RegisterScriptCallback("actor_on_update", npe_actor_on_update)
+
+ 
+    -- -- Events Callbacks
+    -- RegisterScriptCallback("actor_on_sleep",actor_on_sleep) -- ACTOR_SLEEP
+    -- RegisterScriptCallback("actor_on_hit_callback",actor_on_hit_callback) -- ACTOR_HIT
+	-- RegisterScriptCallback("actor_on_weapon_fired", update_shooting_tg) -- DAMAGE_DEALT
+    -- RegisterScriptCallback("actor_on_weapon_lower",actor_on_weapon_lower)
+
+    -- -- Functors Callbacks
+    -- RegisterScriptCallback("ActorMenu_on_item_focus_receive",ActorMenu_on_item_focus_receive)
+    -- RegisterScriptCallback("actor_on_item_use",actor_on_item_use)
+    -- RegisterScriptCallback("actor_item_to_slot",actor_item_to_slot)
 end 

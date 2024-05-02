@@ -1,6 +1,6 @@
 
 npe_default_settings = {
-    ["npe_introduction"]		= false	-- Enable/Disable New Player Experience
+    ["introduction"]		= false	-- Enable/Disable New Player Experience
 }
 
 local deck_npe_welcome = { 

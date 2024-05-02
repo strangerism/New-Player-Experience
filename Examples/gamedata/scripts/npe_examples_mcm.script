@@ -1,0 +1,59 @@
+
+npe_default_settings = {
+    ["functor_test_01"]		= false	-- Enable/Disable New Player Experience
+}
+
+function owns_item(item)
+    printf("Checking if actor owns item: %s", item)
+    local found = false
+
+	local function check_items(actor,itm)
+		local sec = itm:section()
+        if sec == item then
+            found = true
+        end
+	end
+	db.actor:iterate_inventory(check_items,db.actor)
+
+    return found
+end
+
+local deck_npe_examples = { 
+    title = "New Player Experience Examples Deck",
+    module= "npe_examples",
+    id="npe_examples",
+    sets = {
+        {
+            id = "functor_test_01",
+            title = "ui_mcm_npe_module_npe_examples",
+            cards = {
+                [1] = {
+                    title = "ui_npe_examples_card_01_title",
+                    description = "ui_npe_examples_card_01_description",
+                    image = "ui_npe_examples_card_01",
+                },
+            },
+            context = {
+                type = npe.CONTEXT_TYPE.FUNCTOR,
+                functor = {"npe_examples_mcm", "owns_item", "wpn_binoc_inv"},
+                qualifier = "Item Owned",
+            },
+        },
+    },
+}
+
+if npe then
+    printf("Adding deck npe_examples")
+    npe.AddConfig(deck_npe_examples)
+end
+
+function on_mcm_load()
+
+	op =  { id= "npe_examples", sh=true, text="ui_mcm_npe_module_npe_examples", gr ={
+				{id = "title",type= "slide",link= "ui_options_slider_player",text="ui_mcm_npe_module_npe_examples_title",size= {512,50},spacing= 20 },
+                {id = "functor_test_01", type = "check", val = 1, def=false},
+			}
+		}
+
+	return op, "npe_module"
+end
