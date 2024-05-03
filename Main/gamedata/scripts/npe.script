@@ -152,7 +152,7 @@ local function update_decks_from_mcm()
     
     for i, deck in ipairs(npeConfig.decks) do
         for j, set in ipairs(deck.sets) do
-            set.played = npe_mcm.npe_get_setting(deck.module, set.id)
+            set.played = npe_mcm.npe_module_get_setting(deck.module, set.id)
         end
     end
 end
@@ -243,7 +243,7 @@ local function playRandomSet(self)
             printdebug("Playing set %s from module %s", set.id, set.module)
             printdebug("Set Title: %s", set.title)
             set.played = true
-            npe_mcm.npe_set_setting(moduleId, set.id, true)
+            npe_mcm.npe_module_set_setting(moduleId, set.id, true)
 
             if not npe_dialog.GUI then
                 if self then

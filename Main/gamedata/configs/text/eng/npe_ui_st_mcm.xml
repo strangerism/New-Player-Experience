@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="windows-1251"?>
 
 <string_table>
-	<string id="ui_mcm_menu_npe_module">
-		<text>New Player Experience</text>
+	<string id="ui_mcm_menu_npe">
+		<text>NPE</text>
 	</string>
-	<string id="ui_mcm_npe_module_general">
+	<string id="ui_mcm_npe_general">
 		<text>General</text>
 	</string>		
-	<string id="ui_mcm_npe_module_general_title">
+	<string id="ui_mcm_npe_general_title">
 		<text>General Settings</text>
 	</string>	
-	<string id="ui_mcm_npe_module_general_enable">
+	<string id="ui_mcm_npe_general_enable">
 		<text>Enable</text>
 	</string>
-	<string id="ui_mcm_npe_module_general_debug_logs">
+	<string id="ui_mcm_npe_general_debug_logs">
 		<text>Debug Logs</text>
 	</string>
-		<string id="ui_mcm_npe_module_general_play_frequency">
+		<string id="ui_mcm_npe_general_play_frequency">
 		<text>Interval between playing tutorials</text>
 	</string>
-	<string id="ui_mcm_npe_module_general_contextmatch_frequency">
+	<string id="ui_mcm_npe_general_contextmatch_frequency">
 		<text>Interval between the scanning of eligible tutorials</text>
 	</string>
 		
-	<string id="ui_mcm_npe_module_npe_modules">
-		<text>Modules</text>
+	<string id="ui_mcm_menu_npe_module">
+		<text>NPE Modules</text>
 	</string>	
-		<string id="ui_mcm_npe_module_npe_modules_title">
+		<string id="ui_mcm_menu_npe_module_title">
 		<text>New Player Experience Modules</text>
 	</string>	
 	<string id="ui_npe_dialog_set_title">
