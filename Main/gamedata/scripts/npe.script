@@ -11,16 +11,6 @@ local playableQueue = {
     setsKeys = {},
 }
 
-PLAYTIME = {
-    INSTANT = "INSTANT",
-    DELAYED = "DELAYED"
-}
-
-CONTEXT_STATE = {
-    ACTIVE = "ACTIVE",
-    INACTIVE = "INACTIVE",
-}
-
 CONTEXT_TYPE = {
     NONE = "NONE",
     EVENT = "EVENT",
@@ -64,6 +54,8 @@ FUNCTORS = {
 settings = {
     debug_logs = true,
     enable = true,
+    contextmatch_frequency = 3,
+    play_frequency = 10
 }
 
 
@@ -225,6 +217,19 @@ function findEligibleSetsOnFunctor()
     return setsKeys
 end
 
+function findEligibleSetsContexts()
+    local setsKeys = {}
+    for setKey, context in pairs(npeSetsQueue.contexts) do
+        if context.type == CONTEXT_TYPE.EVENT and context.type ~= EVENTS.GAME_START and context.qualifier then
+            local eligibility = npe_events.Invoke[context.qualifier]()
+            if eligibility then
+                table.insert(setsKeys, setKey)
+            end
+        end
+    end
+    return setsKeys
+end
+
 local function playRandomSet(self)
     printdebug("playRandomSet")
     if playableQueue.setsKeys and #playableQueue.setsKeys > 0 then
@@ -252,35 +257,27 @@ local function playRandomSet(self)
     end
 end
 
--- local playable_tg_update = 0
--- local playable_tg_update_step = 5000 --[ms]
--- local function npe_actor_on_update()
---     local tg = time_global()
---     if tg < playable_tg_update then
---         return
---     end
---     playable_tg_update = tg + playable_tg_update_step
-
---     local setsKeys = findEligibleSetsOnFunctor()
-
---     addToPlayableQueue(setsKeys)
-    
--- end
-
 local runEligibilityMatchLoop = false
 local playEligibilityMatchName = 'NPE_EligibilityMatch_Loop'
-local playEligibilityMatchFrequency = 10 -- 60 seconds
+
 function NPEEligibilityMatchLoop()
     printdebug("[NPE] EligibilityMatch loop")
     if not runEligibilityMatchLoop then return true end
-    ResetTimeEvent(playEligibilityMatchName, playEligibilityMatchName, playEligibilityMatchFrequency)
+    ResetTimeEvent(playEligibilityMatchName, playEligibilityMatchName, settings.contextmatch_frequency)
 
     -- find matching sets with ContextType.FUNCTOR and check eligibility
     local setsKeys = findEligibleSetsOnFunctor()
-    printdebug("!Sets eligible:")
+    printdebug("//findEligibleSetsOnFunctor:")
     printTable(setsKeys)
-
     addToPlayableQueue(setsKeys)
+
+
+    -- find matching sets with ContextType.EVENT and check eligibility
+    setsKeys = findEligibleSetsContexts()
+    printdebug("//findEligibleSetsContexts:")
+    printTable(setsKeys)
+    addToPlayableQueue(setsKeys)
+
     printdebug("- PlayableQueue:")
     printTable(playableQueue.setsKeys)
 
@@ -300,10 +297,10 @@ end
 
 local runPlayLoop = false
 local playLoopName = 'NPE_Play_Loop'
-local playLoopFrequency = 10 -- 60 seconds
+
 function NPEPlayLoop()
     if not runPlayLoop then return true end
-    ResetTimeEvent(playLoopName, playLoopName, playLoopFrequency)
+    ResetTimeEvent(playLoopName, playLoopName, settings.play_frequency)
 
     playRandomSet()
 
@@ -325,7 +322,8 @@ local function general_initialization()
     -- npe settings
     settings.debug_logs = npe_mcm.npe_get_setting("general", "debug_logs")
     settings.enable = npe_mcm.npe_get_setting("general", "enable")
-
+    settings.contextmatch_frequency = npe_mcm.npe_get_setting("general", "contextmatch_frequency")
+    settings.play_frequency = npe_mcm.npe_get_setting("general", "play_frequency")  
    -- update the npeConfig table with the settings from the MCM
    update_decks_from_mcm()
 
@@ -340,8 +338,6 @@ local function general_initialization()
    printlog("- Queue:")
    printTable(npeSetsQueue.contexts)
 
---    tg = time_global()
---    playable_tg_update = tg + playable_tg_update_step
 end
 
 local function npe_actor_on_first_update()

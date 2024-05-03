@@ -6,7 +6,7 @@ end
 
 item_looted = function(item)
     printf("Item looted %s", item)
-
+    
     if item == "gun" then
         return true
     else
@@ -15,15 +15,17 @@ item_looted = function(item)
 end
 
 -- Now you can reference the functions in the table
-event_functors = {
-    ["GAME_START"] = game_start,
-    ["ITEM_LOOTED"] = item_looted, 
-}
+-- invoke = {
+--     [npe.FUNCTORS.ITEM_LOOTED] = item_looted, 
+-- }
 
 -- function actor_on_first_update()
 --     printf("Actor first update")
 
---     local outcome = event_functors["ITEM_LOOTED"]("gun")
+--     local qualifier = {npe.FUNCTORS.ITEM_LOOTED, "gun"}
+--     local functor =  
+--     local outcome = execute_func(unpack(functor))
+--     -- local outcome = invoke[npe.EVENTS.NPC_LOOTED]("gun")
 --     printf("did I find a gun? %s", outcome)
 -- end
 

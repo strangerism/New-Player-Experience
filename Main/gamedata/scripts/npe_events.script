@@ -1,33 +1,50 @@
--- Define the functions before referencing them
-game_start = function()
-    printf("Game started")
-    return true
+function isActorBleeding()
+    local bleeding = db.actor.bleeding > 0
+    return bleeding
 end
 
-item_looted = function(item)
-    printf("Item looted %s", item)
-
-    if item == "gun" then
-        return true
-    else
-        return false
-    end
+function isActorIrradiated()
+    local irradiated = db.actor.irradiated > 0
+    return irradiated
 end
 
--- Now you can reference the functions in the table
-event_functors = {
-    ["GAME_START"] = game_start,
-    ["ITEM_LOOTED"] = item_looted, 
+function isActorStressed()
+    local stressed = db.actor.psy_health < 1
+    return stressed
+end
+
+function isActorGoingMad()
+    local madness = db.actor.psy_health < 0.5
+    return madness
+end
+
+function isActorHungry()
+    local hungry = actor_status.get_satienty(true) > 0
+    return hungry
+end
+
+function isActorOverweight()
+    local overweight = actor_status.get_overweight(true) > 0
+    return overweight
+end
+
+function inventory_opened()
+	if (db.actor:has_info("inventory_wnd_open") or
+	db.actor:has_info("trade_wnd_open") or
+	db.actor:has_info("upgrade_wnd_open") or
+	db.actor:has_info("body_search_wnd_open") or
+	db.actor:has_info("dialog_wnd_open")) then
+		return true
+	else
+		return false
+	end
+end
+
+Invoke = {
+    [npe.EVENTS.ACTOR_BLEEDING] = isActorBleeding, 
+    [npe.EVENTS.ACTOR_IRRADIATED] = isActorIrradiated, 
+    [npe.EVENTS.ACTOR_STRESSED] = isActorStressed, 
+    [npe.EVENTS.ACTOR_MAD] = isActorGoingMad, 
+    [npe.EVENTS.ACTOR_HUNGRY] = isActorHungry, 
+    [npe.EVENTS.ACTOR_OVERWEIGHT] = isActorOverweight, 
 }
-
--- function actor_on_first_update()
---     printf("Actor first update")
-
---     local outcome = event_functors["ITEM_LOOTED"]("gun")
---     printf("did I find a gun? %s", outcome)
--- end
-
--- function on_game_start()
---     RegisterScriptCallback("actor_on_first_update", actor_on_first_update)
---     printf("Game started")
--- end
