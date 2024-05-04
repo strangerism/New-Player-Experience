@@ -9,7 +9,7 @@ local GAMETIME_STATE = {
 	INMOTION = 1 
 }
 
-function change_gametime_to(state)
+function Change_gametime_to(state)
 	exec_console_cmd("freeze_time " .. state)
 end
 
@@ -18,26 +18,26 @@ local next_page_snd = sound_object([[interface\npe\next_page]])
 local prev_page_snd = sound_object([[interface\npe\prev_page]])
 local close_snd = sound_object([[interface\npe\close_panel]])
 local snd
-function stop_sound()
+local function stop_sound()
 	if snd then
 		snd:stop()
 		snd = nil
 	end
 end
-function play_sound(sound)
+local function play_sound(sound)
 	stop_sound()
 	snd = sound
 	snd:play(db.actor,0,sound_object.s2d)
 end
 
-function play(set)
+function Play(set)
 	if set == nil then
 		printlog("[NPE] play set is nil")
 		return
 	end
 
     printlog("[NPE] play set: " .. set.module)
-    change_gametime_to(GAMETIME_STATE.STOPPED)
+    Change_gametime_to(GAMETIME_STATE.STOPPED)
 	play_sound(start_set_snd)
     printlog("[NPE] creating GUI")
     GUI = UINewPlayerExperience(set)
@@ -52,7 +52,7 @@ function play(set)
 end
 
 local xml = nil
-function loadUIStatic(set)
+function LoadUIStatic()
 	printlog("[NPE] loadUIStatic")
 	if not xml then
 		printlog("[NPE] loading ui_npe_dialog.xml")
@@ -76,7 +76,7 @@ function UINewPlayerExperience:InitControls(set)
 	self:SetWndRect			(Frect():set(0,0,1024,768))
 	self:SetAutoDelete(true)
 	self.set = set
-    loadUIStatic(set)
+    LoadUIStatic()
     self.xml = xml
 	self.dialog	= xml:InitStatic("ui_npe_dialog", self)
 	self.frame	= xml:InitFrame("ui_npe_dialog:frame", self.dialog)
@@ -210,8 +210,8 @@ function UINewPlayerExperience:Close()
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
 	play_sound(close_snd)
-    change_gametime_to(GAMETIME_STATE.INMOTION)
-	npe.resumePlayLoop()
+    Change_gametime_to(GAMETIME_STATE.INMOTION)
+	npe.Resume_play_loop()
 end
 
 function UINewPlayerExperience:OnKeyboard(dik, keyboard_action)

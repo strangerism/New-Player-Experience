@@ -62,7 +62,7 @@ local deck_npe_examples = {
             context = {
                 type = npe.CONTEXT_TYPE.EVENT,
                 functor = nil,
-                qualifier = npe.EVENTS.ACTOR_OVERWEIGHT,
+                qualifier = npe_events.ACTOR_OVERWEIGHT,
             },
         },        
     },
@@ -70,7 +70,7 @@ local deck_npe_examples = {
 
 if npe then
     printf("Adding deck npe_examples")
-    npe.AddConfig(deck_npe_examples)
+    npe.Add_deck(deck_npe_examples)
 end
 
 function on_mcm_load()

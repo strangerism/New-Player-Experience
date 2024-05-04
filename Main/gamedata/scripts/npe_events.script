@@ -1,3 +1,65 @@
+
+-- This file contains the events that can be used to trigger the NPE system
+-- The events are defined as constants and the functions that check if the event has been triggered
+-- are defined in the Invoke table
+
+GAME_START = "Game Start" --
+NPC_LOOTED = "NPC Looted"
+NPC_KILLED = "NPC Killed"
+MUTANT_LOOTED = "Mutant Looted"
+MUTANT_KILLED = "Mutant Killed"
+DAMAGE_DEALT = "Damage Dealt"
+QUEST_COMPLETED = "Quest Completed"
+QUEST_ACCEPTED = "Quest Accepted"
+ACTOR_DEATH = "Death"
+ACTOR_HIT= "Hit Received"
+ACTOR_BLEEDING= "Bleeding"
+ACTOR_IRRADIATED = "Irradiated"
+ACTOR_STRESSED = "Stressed"
+ACTOR_HUNGRY = "Hungry"
+ACTOR_OVERWEIGHT = "Overweight"
+ACTOR_MAD = "Madness"
+ACTOR_SLEEP = "Sleep"
+ACTOR_RANK_UP = "Rank Up"
+ACTOR_LEVEL_UP = "Level Up"
+ACTOR_SKILL_UP = "Skill Up"
+ACTOR_PERK_UP = "Perk Up"
+ENTERED_RADIATION_FIELD = "Entered Radiation Field"
+ENTERED_ANOMALOUS_FIELD = "Entered Anomalous Field"
+STASH_COORDINATES_REVEALED = "Stash Coordinates Revealed"
+
+
+-- list of all the events that can be triggered
+local Game_Started = false
+function isGameStarted()
+    return Game_Started
+end
+
+local NPC_Looted = false
+function isNPCLooted()
+    return NPC_Looted
+end
+
+local NPC_Killed = false
+function isNPCKilled()
+    return NPC_Killed
+end
+
+local Mutant_Killed = false
+function isMutantKilled()
+    return Mutant_Killed
+end
+
+local Mutant_Looted = false
+function isMutantLooted()
+    return Mutant_Looted
+end
+
+local Actor_Hit = false
+function isActorHit()
+    return Actor_Hit
+end
+
 function isActorBleeding()
     local bleeding = db.actor.bleeding > 0
     return bleeding
@@ -28,23 +90,61 @@ function isActorOverweight()
     return overweight
 end
 
-function inventory_opened()
-	if (db.actor:has_info("inventory_wnd_open") or
-	db.actor:has_info("trade_wnd_open") or
-	db.actor:has_info("upgrade_wnd_open") or
-	db.actor:has_info("body_search_wnd_open") or
-	db.actor:has_info("dialog_wnd_open")) then
-		return true
-	else
-		return false
-	end
-end
+
+-- function inventory_opened()
+-- 	if (db.actor:has_info("inventory_wnd_open") or
+-- 	db.actor:has_info("trade_wnd_open") or
+-- 	db.actor:has_info("upgrade_wnd_open") or
+-- 	db.actor:has_info("body_search_wnd_open") or
+-- 	db.actor:has_info("dialog_wnd_open")) then
+-- 		return true
+-- 	else
+-- 		return false
+-- 	end
+-- end
+
+-- table that maps the event to the function that checks if the event has been triggered
 
 Invoke = {
-    [npe.EVENTS.ACTOR_BLEEDING] = isActorBleeding, 
-    [npe.EVENTS.ACTOR_IRRADIATED] = isActorIrradiated, 
-    [npe.EVENTS.ACTOR_STRESSED] = isActorStressed, 
-    [npe.EVENTS.ACTOR_MAD] = isActorGoingMad, 
-    [npe.EVENTS.ACTOR_HUNGRY] = isActorHungry, 
-    [npe.EVENTS.ACTOR_OVERWEIGHT] = isActorOverweight, 
+    [GAME_START] = isGameStarted,
+    [NPC_LOOTED] = isNPCLooted,
+    [NPC_KILLED] = isNPCKilled,
+    [MUTANT_LOOTED] = isMutantLooted, 
+    [MUTANT_KILLED] = isMutantKilled, 
+    [DAMAGE_DEALT] = "",
+    [QUEST_COMPLETED] = "",
+    [QUEST_ACCEPTED] = "",
+    [ACTOR_DEATH] = "",
+    [ACTOR_HIT] = isActorHit,     
+    [ACTOR_BLEEDING] = isActorBleeding, 
+    [ACTOR_IRRADIATED] = isActorIrradiated, 
+    [ACTOR_STRESSED] = isActorStressed, 
+    [ACTOR_MAD] = isActorGoingMad, 
+    [ACTOR_HUNGRY] = isActorHungry, 
+    [ACTOR_OVERWEIGHT] = isActorOverweight, 
+
 }
+
+function monster_on_actor_use_callback(obj)
+    Mutant_Looted = true
+end
+function actor_on_hit_callback(obj, amount, local_direction, who, bone_id)
+    Actor_Hit = true
+end
+function monster_on_death_callback(obj)
+    Mutant_Killed = true
+end
+function npc_on_death_callback(obj)
+    NPC_Killed = true
+end
+function npc_on_use(obj)
+    NPC_Looted = true
+end
+function on_game_start()
+    Game_Started = true
+	RegisterScriptCallback("monster_on_actor_use_callback",monster_on_actor_use_callback)
+    RegisterScriptCallback("actor_on_hit_callback",actor_on_hit_callback)
+    RegisterScriptCallback("monster_on_death_callback",monster_on_death_callback)
+    RegisterScriptCallback("npc_on_death_callback",npc_on_death_callback)
+    RegisterScriptCallback("npc_on_use",npc_on_use)
+end

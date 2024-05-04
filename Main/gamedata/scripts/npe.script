@@ -18,31 +18,6 @@ CONTEXT_TYPE = {
     FUNCTOR = "FUNCTOR",
 }
 
-EVENTS = {
-    GAME_START = "Game Start",
-    NPC_LOOTED = "NPC Looted",
-    MUTANT_LOOTED = "Mutant Looted",
-    DAMAGE_DEALT = "Damage Dealt",
-    QUEST_COMPLETED = "Quest Completed",
-    QUEST_ACCEPTED = "Quest Accepted",
-    ACTOR_DEATH = "Death",
-    ACTOR_HIT= "Hit Received",
-    ACTOR_BLEEDING= "Bleeding",
-    ACTOR_IRRADIATED = "Irradiated",
-    ACTOR_STRESSED = "Stressed",
-    ACTOR_HUNGRY = "Hungry",
-    ACTOR_OVERWEIGHT = "Overweight",
-    ACTOR_MAD = "Madness",
-    ACTOR_SLEEP = "Sleep",
-    ACTOR_RANK_UP = "Rank Up",
-    ACTOR_LEVEL_UP = "Level Up",
-    ACTOR_SKILL_UP = "Skill Up",
-    ACTOR_PERK_UP = "Perk Up",
-    ENTERED_RADIATION_FIELD = "Entered Radiation Field",
-    ENTERED_ANOMALOUS_FIELD = "Entered Anomalous Field",
-    STASH_COORDINATES_REVEALED = "Stash Coordinates Revealed",
-}
-
 FUNCTORS = {
     ITEM_LOOTED = "Item Looted", 
     ITEM_OWNED = "Item Owned",
@@ -51,7 +26,7 @@ FUNCTORS = {
     
 }
 
-settings = {
+Settings = {
     debug_logs = true,
     enable = true,
     contextmatch_frequency = 3,
@@ -72,11 +47,11 @@ function printdebug(msg,...) -- debug logging
 end
 
 
-local function mapToSetKey(moduleId, setId)
+local function map_to_set_key(moduleId, setId)
     return moduleId .. "/" .. setId
 end
 
-local function mapFromSetKey(key)
+local function map_from_set_key(key)
     local split = string.gmatch(key, "[^/]+")
     local moduleId = split()
     local setId = split()
@@ -84,8 +59,8 @@ local function mapFromSetKey(key)
 end
 
 
-local function AddToQueue(set, moduleId)
-    local setKey = mapToSetKey(moduleId, set.id)
+local function add_to_sets_queue(set, moduleId)
+    local setKey = map_to_set_key(moduleId, set.id)
     if set ~= nil then
         local context = {
             type = set.context.type,
@@ -102,8 +77,8 @@ local function AddToQueue(set, moduleId)
     end
 end
 
-local function getSetFromKey(key)
-    local moduleId, setId = mapFromSetKey(key)
+local function get_set_from_key(key)
+    local moduleId, setId = map_from_set_key(key)
     local set = nil
     for i, deck in ipairs(npeConfig.decks) do
         if deck.module == moduleId then
@@ -118,7 +93,7 @@ local function getSetFromKey(key)
     return set
 end
 
-local function addToPlayableQueue(setsKeys)
+local function add_to_playable_queue(setsKeys)
     if setsKeys == nil then
         return
     end
@@ -131,7 +106,7 @@ local function addToPlayableQueue(setsKeys)
     end
 end
 
-function AddConfig(npeDeck)
+function Add_deck(npeDeck)
     if npeDeck ~= nil then
         local deckExists = false
         for i, deck in ipairs(npeConfig.decks) do
@@ -166,16 +141,16 @@ local function update_queue()
     }
     for i, deck in ipairs(npeConfig.decks) do
         for j, set in ipairs(deck.sets) do
-            -- Only call AddToQueue if set.played is false
+            -- Only call add_to_sets_queue if set.played is false
             if set.played == false then
-                AddToQueue(set, deck.module)
+                add_to_sets_queue(set, deck.module)
             end
         end
     end
 end
     
 
-local function printTable(t, indent)
+local function print_table(t, indent)
     if not t then
         return
     end
@@ -183,14 +158,14 @@ local function printTable(t, indent)
     for key, value in pairs(t) do
         if type(value) == 'table' then
             printlog(indent .. '' .. key .. ':')
-            printTable(value, indent .. '  ')
+            print_table(value, indent .. '  ')
         else
             printlog(indent .. key .. ': ' .. tostring(value))
         end
     end
 end
 
-function findEligibleSetsOn(qualifier)
+local function find_sets_on(qualifier)
     local setsKeys = {}
     for setKey, context in pairs(npeSetsQueue.contexts) do
         if context.qualifier == qualifier then
@@ -200,8 +175,8 @@ function findEligibleSetsOn(qualifier)
     return setsKeys
 end
 
-function findEligibleSetsOnFunctor()
-    printdebug("findEligibleSetsOnFunctor")
+local function find_contexts_on_functor()
+    printdebug("find_contexts_on_functor")
     local setsKeys = {}
     for setKey, context in pairs(npeSetsQueue.contexts) do
         printdebug("Checking set %s", setKey)
@@ -217,12 +192,14 @@ function findEligibleSetsOnFunctor()
     return setsKeys
 end
 
-function findEligibleSetsContexts()
+local function find_active_contexts()
+    -- search from the Event type contexts and check if they have become active
+    -- if active they are added to the playableQueue
     local setsKeys = {}
     for setKey, context in pairs(npeSetsQueue.contexts) do
-        if context.type == CONTEXT_TYPE.EVENT and context.type ~= EVENTS.GAME_START and context.qualifier then
-            local eligibility = npe_events.Invoke[context.qualifier]()
-            if eligibility then
+        if context.type == CONTEXT_TYPE.EVENT and context.qualifier then
+            local active = npe_events.Invoke[context.qualifier]()
+            if active then
                 table.insert(setsKeys, setKey)
             end
         end
@@ -230,28 +207,30 @@ function findEligibleSetsContexts()
     return setsKeys
 end
 
-local function playRandomSet(self)
-    printdebug("playRandomSet")
+local function play_random_set(self)
+    printdebug("play_random_set")
     if playableQueue.setsKeys and #playableQueue.setsKeys > 0 then
         local randomIndex = math.random(#playableQueue)
         local key = table.remove(playableQueue.setsKeys, randomIndex)
-        local set = getSetFromKey(key)
+        local set = get_set_from_key(key)
         if set ~= nil then
-            local moduleId, unused = mapFromSetKey(key)
-            -- Call the function that will play the set
+            local moduleId, unused = map_from_set_key(key)
             set.module = moduleId
-            printdebug("Playing set %s from module %s", set.id, set.module)
-            printdebug("Set Title: %s", set.title)
-            set.played = true
-            npe_mcm.npe_module_set_setting(moduleId, set.id, true)
-
             if not npe_dialog.GUI then
+                -- Call the function that will play the set
+                printdebug("Playing set %s from module %s", set.id, set.module)
+                printdebug("Set Title: %s", set.title)
+                set.played = true
+                npe_mcm.npe_module_set_setting(moduleId, set.id, true)
                 if self then
                     self:On_Cancel()
                 end
                 printlog("[NPE] starting dialog")
-                npe_dialog.play(set)
-                pausePlayLoop()
+                npe_dialog.Play(set)
+                Pause_play_loop()
+            else
+                -- cannot play set, UI is busy. Put it back in the queue
+                table.insert(playableQueue.setsKeys, key)
             end
         end
     end
@@ -260,83 +239,83 @@ end
 local runEligibilityMatchLoop = false
 local playEligibilityMatchName = 'NPE_EligibilityMatch_Loop'
 
-function NPEEligibilityMatchLoop()
+local function npe_contexts_query_loop()
     printdebug("[NPE] EligibilityMatch loop")
     if not runEligibilityMatchLoop then return true end
-    ResetTimeEvent(playEligibilityMatchName, playEligibilityMatchName, settings.contextmatch_frequency)
+    ResetTimeEvent(playEligibilityMatchName, playEligibilityMatchName, Settings.contextmatch_frequency)
 
     -- find matching sets with ContextType.FUNCTOR and check eligibility
-    local setsKeys = findEligibleSetsOnFunctor()
-    printdebug("//findEligibleSetsOnFunctor:")
-    printTable(setsKeys)
-    addToPlayableQueue(setsKeys)
+    local setsKeys = find_contexts_on_functor()
+    printdebug("//find_contexts_on_functor:")
+    print_table(setsKeys)
+    add_to_playable_queue(setsKeys)
 
 
     -- find matching sets with ContextType.EVENT and check eligibility
-    setsKeys = findEligibleSetsContexts()
-    printdebug("//findEligibleSetsContexts:")
-    printTable(setsKeys)
-    addToPlayableQueue(setsKeys)
+    setsKeys = find_active_contexts()
+    printdebug("//find_active_contexts:")
+    print_table(setsKeys)
+    add_to_playable_queue(setsKeys)
 
     printdebug("- PlayableQueue:")
-    printTable(playableQueue.setsKeys)
+    print_table(playableQueue.setsKeys)
 
     return false
 end
-function pauseEligibilityMatchLoop()
+local function pause_active_contexts_query_loop()
     printlog("[NPE] pausing EligibilityMatch loop")
     runEligibilityMatchLoop = false
 end
 
-function resumeEligibilityMatchLoop()
+local function resume_active_contexts_query_loop()
     printlog("[NPE] resuming EligibilityMatch loop")
     runEligibilityMatchLoop = true
-    CreateTimeEvent(playEligibilityMatchName, playEligibilityMatchName, 10, NPEEligibilityMatchLoop) -- offset time 10 seconds
+    CreateTimeEvent(playEligibilityMatchName, playEligibilityMatchName, 10, npe_contexts_query_loop) -- offset time 10 seconds
 end
 
 
 local runPlayLoop = false
 local playLoopName = 'NPE_Play_Loop'
 
-function NPEPlayLoop()
+local function npe_play_loop()
     if not runPlayLoop then return true end
-    ResetTimeEvent(playLoopName, playLoopName, settings.play_frequency)
+    ResetTimeEvent(playLoopName, playLoopName, Settings.play_frequency)
 
-    playRandomSet()
+    play_random_set()
 
     return false
 end
-function pausePlayLoop()
+function Pause_play_loop()
     printlog("[NPE] pausing play loop")
     runPlayLoop = false
 end
 
-function resumePlayLoop()
+function Resume_play_loop()
     printlog("[NPE] resuming play loop")
     runPlayLoop = true
-    CreateTimeEvent(playLoopName, playLoopName, 10, NPEPlayLoop) -- offset time 10 seconds
+    CreateTimeEvent(playLoopName, playLoopName, 10, npe_play_loop) -- offset time 10 seconds
 end
 
 local function general_initialization()
 
-    -- npe settings
-    settings.debug_logs = npe_mcm.npe_get_setting("general", "debug_logs")
-    settings.enable = npe_mcm.npe_get_setting("general", "enable")
-    settings.contextmatch_frequency = npe_mcm.npe_get_setting("general", "contextmatch_frequency")
-    settings.play_frequency = npe_mcm.npe_get_setting("general", "play_frequency")  
-   -- update the npeConfig table with the settings from the MCM
+    -- npe Settings
+    Settings.debug_logs = npe_mcm.npe_get_setting("general", "debug_logs")
+    Settings.enable = npe_mcm.npe_get_setting("general", "enable")
+    Settings.contextmatch_frequency = npe_mcm.npe_get_setting("general", "contextmatch_frequency")
+    Settings.play_frequency = npe_mcm.npe_get_setting("general", "play_frequency")  
+   -- update the npeConfig table with the Settings from the MCM
    update_decks_from_mcm()
 
    -- Use the function to print the npeConfig.decks table
    printlog("- Decks:")
-   printTable(npeConfig.decks)
+   print_table(npeConfig.decks)
 
    -- update the queue with the contexts from the npeConfig table
    update_queue()
 
    -- Use the function to print the npeSetsQueue table
    printlog("- Queue:")
-   printTable(npeSetsQueue.contexts)
+   print_table(npeSetsQueue.contexts)
 
 end
 
@@ -345,19 +324,10 @@ local function npe_actor_on_first_update()
 
     general_initialization()
 
-    local setsKeys = findEligibleSetsOn(EVENTS.GAME_START)
-    printlog("Sets contexted on GAME_START:")
-    printTable(setsKeys)
-
-    addToPlayableQueue(setsKeys)
-
-    printlog("- PlayableQueue:")
-    printTable(playableQueue.setsKeys)
-
     printlog("[NPE] starting play loop")
-    resumePlayLoop()
-    printlog("[NPE] starting EligibilityMatch loop")
-    resumeEligibilityMatchLoop()
+    Resume_play_loop()
+    printlog("[NPE] starting active contexts query loop")
+    resume_active_contexts_query_loop()
 end
 
 local function on_option_change()
@@ -365,23 +335,11 @@ local function on_option_change()
     update_queue()
     -- Use the function to print the npeSetsQueue table
     printlog("- Queue:")
-    printTable(npeSetsQueue.contexts)
+    print_table(npeSetsQueue.contexts)
 end
 
 function on_game_start()
     RegisterScriptCallback("on_option_change", on_option_change)
     RegisterScriptCallback("actor_on_first_update", npe_actor_on_first_update)
-    -- RegisterScriptCallback("actor_on_update", npe_actor_on_update)
 
- 
-    -- -- Events Callbacks
-    -- RegisterScriptCallback("actor_on_sleep",actor_on_sleep) -- ACTOR_SLEEP
-    -- RegisterScriptCallback("actor_on_hit_callback",actor_on_hit_callback) -- ACTOR_HIT
-	-- RegisterScriptCallback("actor_on_weapon_fired", update_shooting_tg) -- DAMAGE_DEALT
-    -- RegisterScriptCallback("actor_on_weapon_lower",actor_on_weapon_lower)
-
-    -- -- Functors Callbacks
-    -- RegisterScriptCallback("ActorMenu_on_item_focus_receive",ActorMenu_on_item_focus_receive)
-    -- RegisterScriptCallback("actor_on_item_use",actor_on_item_use)
-    -- RegisterScriptCallback("actor_item_to_slot",actor_item_to_slot)
-end 
+end

@@ -30,7 +30,7 @@ local deck_npe_welcome = {
             },
             context = {
                 type = npe.CONTEXT_TYPE.EVENT,
-                qualifier = npe.EVENTS.GAME_START,
+                qualifier = npe_events.GAME_START,
                 functor = nil,
             },
         },
@@ -38,7 +38,7 @@ local deck_npe_welcome = {
 }
 
 if npe then
-    npe.AddConfig(deck_npe_welcome)
+    npe.Add_deck(deck_npe_welcome)
 end
 
 function on_mcm_load()
