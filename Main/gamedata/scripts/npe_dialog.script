@@ -9,23 +9,25 @@ local GAMETIME_STATE = {
 	INMOTION = 1 
 }
 
-function actor_on_first_update()
-	local RENDERER = get_console_cmd(0,"renderer")
-	if (RENDERER == 'renderer_r1') then
-		local hud = get_hud()
-		local cs = hud:GetCustomStatic("dx8_fill_shader")
-		if (not cs) then
-			printdbg("- UINewPlayerExperience | Started dx8_fill_shader")
-			hud:AddCustomStatic("dx8_fill_shader")
-		end
+function change_gametime_to(state)
+	exec_console_cmd("freeze_time " .. state)
+end
+
+local start_set_snd = sound_object([[interface\npe\open_panel]])
+local next_page_snd = sound_object([[interface\npe\next_page]])
+local prev_page_snd = sound_object([[interface\npe\prev_page]])
+local close_snd = sound_object([[interface\npe\close_panel]])
+local snd
+function stop_sound()
+	if snd then
+		snd:stop()
+		snd = nil
 	end
 end
-
-function on_game_start()
-end
-
-function change_gametime_to(state)
-	exec_console_cmd("time_factor " .. state)
+function play_sound(sound)
+	stop_sound()
+	snd = sound
+	snd:play(db.actor,0,sound_object.s2d)
 end
 
 function play(set)
@@ -35,10 +37,8 @@ function play(set)
 	end
 
     printlog("[NPE] play set: " .. set.module)
-    exec_console_cmd("main_menu off")
     change_gametime_to(GAMETIME_STATE.STOPPED)
-
-
+	play_sound(start_set_snd)
     printlog("[NPE] creating GUI")
     GUI = UINewPlayerExperience(set)
 
@@ -174,6 +174,7 @@ function UINewPlayerExperience:OnButtonNext()
 	else
 		self.cardIndex = 3
 	end
+	play_sound(next_page_snd)
 	self:UpdateButtons()
 end
 
@@ -199,6 +200,7 @@ function UINewPlayerExperience:OnButtonPrev()
 	else
 		self.cardIndex = 1
 	end
+	play_sound(prev_page_snd)
 	self:UpdateButtons()
 end
 
@@ -207,6 +209,7 @@ function UINewPlayerExperience:Close()
 	self:Show(false)
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
+	play_sound(close_snd)
     change_gametime_to(GAMETIME_STATE.INMOTION)
 	npe.resumePlayLoop()
 end
