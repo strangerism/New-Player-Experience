@@ -76,34 +76,37 @@ end
 
 function Play(set)
 	if set == nil then
-		printlog("[NPE] play set is nil")
+		printdebug("[NPE] play set is nil")
+		npe.Resume_play_loop()
 		return
 	end
 	SOUNDS_SET = npe.Settings.sounds_set
-	printlog("[NPE] SOUNDS_SET: " .. SOUNDS_SET)
-    printlog("[NPE] play set module: " .. set.module .. " set Id:" .. set.id)
-	printlog("[NPE] play set title: " .. set.title)
+	printdebug("[NPE] SOUNDS_SET: " .. SOUNDS_SET)
+    printdebug("[NPE] play set module: " .. set.module .. " set Id:" .. set.id)
+	printdebug("[NPE] play set title: " .. set.title)
 	if npe.Settings.pause_game or set.context.pause_game then
     	pause_game(true)
 	end
 	play_sound(Sounds[SOUNDS_SET].open)
-    printlog("[NPE] creating GUI")
+    printdebug("[NPE] creating GUI")
     GUI = UINewPlayerExperience(set)
 
 	if (GUI) and (not GUI:IsShown()) then
-        printlog("[NPE] showing GUI")
+        printdebug("[NPE] showing GUI")
 		GUI:ShowDialog(true)
 		Register_UI("UINewPlayerExperience","npe_dialog")
     else
-        printlog("[NPE] GUI already shown")
+        printdebug("[NPE] GUI already shown")
+		npe.Resume_play_loop()
+		return
     end
 end
 
 local xml = nil
 function LoadUIStatic()
-	printlog("[NPE] loadUIStatic")
+	printdebug("[NPE] loadUIStatic")
 	if not xml then
-		printlog("[NPE] loading ui_npe_dialog.xml")
+		printdebug("[NPE] loading ui_npe_dialog.xml")
 		xml = CScriptXmlInit()
 		xml:ParseFile("ui_npe_dialog.xml")
 	end
@@ -120,7 +123,7 @@ function UINewPlayerExperience:__finalize()
 end
 
 function UINewPlayerExperience:InitControls(set)
-    printlog("[NPE] InitControls")
+    printdebug("[NPE] InitControls")
 	self:SetWndRect			(Frect():set(0,0,1024,768))
 	self:SetAutoDelete(true)
 	self.set = set
@@ -180,7 +183,7 @@ function UINewPlayerExperience:InitControls(set)
 end
 
 function UINewPlayerExperience:UpdateButtons()
-	printlog("[NPE] UpdateButtons")
+	printdebug("[NPE] UpdateButtons")
 	self.btn_prev:Show(true)
 	self.btn_next:Show(true)
 	if self.cardIndex == 1 then
@@ -202,7 +205,7 @@ function UINewPlayerExperience:OnButtonClose()
 end
 
 function UINewPlayerExperience:OnButtonNext()
-    printlog("[NPE] OnButtonNext")
+    printdebug("[NPE] OnButtonNext")
 	self.cardIndex = self.cardIndex + 1
 	if self.cardIndex <= #self.set.cards and self.cardIndex <= 3 and self.set.cards[self.cardIndex] then
 		local text
@@ -227,7 +230,7 @@ function UINewPlayerExperience:OnButtonNext()
 end
 
 function UINewPlayerExperience:OnButtonPrev()
-    printlog("[NPE] OnButtonPrev")
+    printdebug("[NPE] OnButtonPrev")
 	self.cardIndex = self.cardIndex - 1
 	if self.cardIndex > 0 and self.set.cards[self.cardIndex] then
 		local text
@@ -270,7 +273,7 @@ function UINewPlayerExperience:OnKeyboard(dik, keyboard_action)
 	if (res == false) then
 		if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
 			if dik == DIK_keys.DIK_ESCAPE then
-				printlog("[NPE] OnKeyboard DIK_ESCAPE")
+				printdebug("[NPE] OnKeyboard DIK_ESCAPE")
 				self:Close()
 			end
 		end

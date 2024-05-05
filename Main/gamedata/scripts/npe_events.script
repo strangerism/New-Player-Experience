@@ -179,6 +179,15 @@ local function activate_oneshot_event(event, callback)
     return f
 end
 
+function Register_callbacks(npeSetsQueue)
+
+    for i, v in ipairs(npeSetsQueue) do
+        printlog("Registering callback for "..v.context.qualifier)
+        RegisterScriptCallback(v.context.qualifier,activate_oneshot_event(v.context.qualifier, v.context.qualifier))
+    end
+
+end
+
 function on_game_start()
     RegisterScriptCallback("actor_on_update",actor_on_update)
 

@@ -4,7 +4,7 @@ npe_default_settings = {
 }
 
 function owns_item(item)
-    printf("Checking if actor owns item: %s", item)
+    -- printf("Checking if actor owns item: %s", item)
     local found = false
 
 	local function check_items(actor,itm)
@@ -37,6 +37,7 @@ local deck_npe_examples = {
                 type = npe.CONTEXT_TYPE.FUNCTOR,
                 functor = {"npe_examples_mcm", "owns_item", "wpn_binoc_inv"},
                 qualifier = "Item Owned",
+                delay = 30,
             },
         },
         {
@@ -86,7 +87,6 @@ local deck_npe_examples = {
                 functor = nil,
                 qualifier = npe_events.ACTOR_HIT,
                 pause_game = true,
-                delay = 0,
                 override = { module_name = "module_name", set_id = "set_id", qualifier = "qualifier" },
             },
         },                      
