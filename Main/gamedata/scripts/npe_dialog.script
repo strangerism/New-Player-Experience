@@ -22,11 +22,11 @@ local function pause_game(pause)
 	
 end
 
-PDA = "PDA"
-NPE_HIGH = "NPE_HIGH"
-NPE_LOW = "NPE_LOW"
-NPE_MEDIUM = "NPE_MEDIUM"
-RADIO = "RADIO"
+local PDA = "PDA"
+local NPE_HIGH = "NPE_HIGH"
+local NPE_LOW = "NPE_LOW"
+local NPE_MEDIUM = "NPE_MEDIUM"
+local RADIO = "RADIO"
 local SOUNDS_SET
 Sounds = {
 	[PDA] = {
@@ -133,7 +133,7 @@ function UINewPlayerExperience:InitControls(set)
 	self.frame	= xml:InitFrame("ui_npe_dialog:frame", self.dialog)
 	
 	self.context = xml:InitTextWnd("ui_npe_dialog:context",self.dialog)
-	self.context:SetText("%c[0,255,208,0]" .. "NPE > " .. set.context.qualifier.name)
+	self.context:SetText("%c[0,255,208,0]" .. "NPE > " .. set.context.event.name)
 
 	local text
 	text = game.translate_string(self.set.title)

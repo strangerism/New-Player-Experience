@@ -185,16 +185,16 @@ end
 function Register_npe_callbacks(npeSetsQueue)
     printlog("// [NPE] Register npe callbacks")
     for setKey, context in pairs(npeSetsQueue.contexts) do
-        if context.qualifier.type == npe.CONTEXT_TYPE.GAME_EVENT then
-            printlog("Registering GAME_EVENT callback for ".. context.qualifier.name)
-            RegisterScriptCallback(context.qualifier.gane_event,activate_oneshot_event(context.qualifier, context.qualifier.gane_event))    
+        if context.event.type == npe.EVENT_TYPE.GAME_EVENT then
+            printlog("Registering GAME_EVENT callback for ".. context.event.name)
+            RegisterScriptCallback(context.event.gane_event,activate_oneshot_event(context.event, context.event.gane_event))    
         end
-        if context.qualifier.type == npe.CONTEXT_TYPE.NPE_EVENT then
-            printlog("Registering NPE_EVENT callback for ".. context.qualifier.name)
+        if context.event.type == npe.EVENT_TYPE.NPE_EVENT then
+            printlog("Registering NPE_EVENT callback for ".. context.event.name)
             -- here I should enable the NPE_EVENT handlers (execute on actor_update) and the callbacks that will react to them
         end
-        if context.qualifier.type == npe.CONTEXT_TYPE.CUSTOM then
-            printlog("Registering CUSTOM callback for ".. context.qualifier.name)
+        if context.event.type == npe.EVENT_TYPE.CUSTOM then
+            printlog("Registering CUSTOM callback for ".. context.event.name)
             -- here I should enable the CUSTOM functors (execute on actor_update) and the callbacks that will react to them
         end
     end

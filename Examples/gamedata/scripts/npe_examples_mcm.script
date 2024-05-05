@@ -18,7 +18,9 @@ function owns_item(item)
     return found
 end
 
-local ITEM_OWNED = { name = "Item Owned", functor = {"npe_examples_mcm", "owns_item", "wpn_binoc_inv"} }
+local EVENTS = {
+    ITEM_OWNED = { name = "Item Owned", functor = {"npe_examples_mcm", "owns_item", "wpn_binoc_inv"} },
+}
 
 local deck_npe_examples = { 
     title = "New Player Experience Examples Deck",
@@ -36,8 +38,7 @@ local deck_npe_examples = {
                 },
             },
             context = {
-                type = npe.CONTEXT_TYPE.FUNCTOR,
-                qualifier = ITEM_OWNED,
+                event = EVENTS.ITEM_OWNED,
                 delay = 30,
             },
         },
@@ -52,9 +53,7 @@ local deck_npe_examples = {
                 },
             },
             context = {
-                type = npe.CONTEXT_TYPE.EVENT,
-                functor = nil,
-                qualifier = npe_events.ENTERED_ANOMALOUS_FIELD,
+                event = npe_events.ENTERED_ANOMALOUS_FIELD,
             },
         },
         {
@@ -68,9 +67,7 @@ local deck_npe_examples = {
                 },
             },
             context = {
-                type = npe.CONTEXT_TYPE.EVENT,
-                functor = nil,
-                qualifier = npe_events.ACTOR_IRRADIATED,
+                event = npe_events.ACTOR_IRRADIATED,
             },
         },
         {
@@ -84,11 +81,9 @@ local deck_npe_examples = {
                 },
             },
             context = {
-                type = npe.CONTEXT_TYPE.EVENT,
-                functor = nil,
-                qualifier = npe_events.ACTOR_HIT,
+                event = npe_events.ACTOR_HIT,
                 pause_game = true,
-                override = { module_name = "module_name", set_id = "set_id", qualifier = "qualifier" },
+                override = { module_name = "module_name", set_id = "set_id", event = "event" },
             },
         },                      
         {
@@ -112,9 +107,7 @@ local deck_npe_examples = {
                 },                
             },
             context = {
-                type = npe.CONTEXT_TYPE.EVENT,
-                functor = nil,
-                qualifier = npe_events.ACTOR_OVERWEIGHT,
+                event = npe_events.ACTOR_OVERWEIGHT,
             },
         },        
     },

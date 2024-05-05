@@ -22,7 +22,7 @@ end
 -- function actor_on_first_update()
 --     printf("Actor first update")
 
---     local qualifier = {npe.FUNCTORS.ITEM_LOOTED, "gun"}
+--     local event = {npe.FUNCTORS.ITEM_LOOTED, "gun"}
 --     local functor =  
 --     local outcome = execute_func(unpack(functor))
 --     -- local outcome = invoke[npe.EVENTS.NPC_LOOTED]("gun")

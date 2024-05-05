@@ -11,7 +11,7 @@ local playableQueue = {
     setsKeys = {},
 }
 
-CONTEXT_TYPE = {
+EVENT_TYPE = {
     GAME_EVENT = "GAME_EVENT",
     NPE_EVENT = "NPE_EVENT",
     CUSTOM = "CUSTOM",
@@ -59,29 +59,29 @@ local function add_to_sets_queue(set, moduleId)
     if set ~= nil then
         local context = {
             type = set.context.type,
-            qualifier = set.context.qualifier,
+            event = set.context.event,
             functor = set.context.functor,
             delay = set.context.delay,
             pause_game = set.context.pause_game,
         }
-        if not context.qualifier.module then
-            context.qualifier.module = moduleId
-            context.qualifier.type = CONTEXT_TYPE.CUSTOM
+        if not context.event.module then
+            context.event.module = moduleId
+            context.event.type = EVENT_TYPE.CUSTOM
         else
-            if context.qualifier.gane_event then
-                context.qualifier.type = CONTEXT_TYPE.GAME_EVENT
+            if context.event.gane_event then
+                context.event.type = EVENT_TYPE.GAME_EVENT
             else
-                context.qualifier.type = CONTEXT_TYPE.NPE_EVENT
+                context.event.type = EVENT_TYPE.NPE_EVENT
             end
         end
         -- Check if a context with the same contextId already exists
         if npeSetsQueue.contexts[setKey] == nil then
             -- Add the new context to the table with contextId as the key
             npeSetsQueue.contexts[setKey] = context
-            printdebug("context with id " .. setKey .. " added to the queue with qualifier " .. context.qualifier.name .. " and module " .. context.qualifier.module .. " and type " .. context.qualifier.type)
+            printdebug("context with id " .. setKey .. " added to the queue with event " .. context.event.name .. " and module " .. context.event.module .. " and type " .. context.event.type)
         else
             printlog("! context with id " .. setKey .. " already exists.")
-            printlog("! context qualifier " .. context.qualifier.name .. " and module " .. context.qualifier.module)
+            printlog("! context event " .. context.event.name .. " and module " .. context.event.module)
         end
     end
 end
@@ -175,32 +175,32 @@ local function print_table(t, indent)
 end
 Print_table_npe = print_table
 
-local function compare_qualifiers(qualifier1, qualifier2)
-    if qualifier1.name ~= qualifier2.name then
+local function compare_events(event1, event2)
+    if event1.name ~= event2.name then
         return false
     end
-    if qualifier1.module ~= qualifier2.module then
+    if event1.module ~= event2.module then
         return false
     end
     return true
 end
 
-local function find_sets_on(qualifier)
-    printdebug("[NPE] find sets on %s", qualifier.name)
+local function find_sets_on(event)
+    printdebug("[NPE] find sets on %s", event.name)
     local setsKeys = {}
     for setKey, queued_context in pairs(npeSetsQueue.contexts) do
-        printdebug("[NPE] queued context name %s", queued_context.qualifier.name)
-        if compare_qualifiers(queued_context.qualifier, qualifier) then
+        printdebug("[NPE] queued context name %s", queued_context.event.name)
+        if compare_events(queued_context.event, event) then
             table.insert(setsKeys, setKey)
         end
     end
     return setsKeys
 end
 
-function Activate_contexts_on(qualifier)
-    printdebug("// [NPE] Activate contexts on %s", qualifier.name)
-    local setsKeys = find_sets_on(qualifier)
-    printdebug("- [NPE] Found sets on %s:", qualifier.name)
+function Activate_contexts_on(event)
+    printdebug("// [NPE] Activate contexts on %s", event.name)
+    local setsKeys = find_sets_on(event)
+    printdebug("- [NPE] Found sets on %s:", event.name)
     print_table(setsKeys)
     add_to_playable_queue(setsKeys)
     
@@ -210,10 +210,10 @@ local function find_sets_with_custom_context()
     printdebug("// [NPE] find sets with custom context")
     local setsKeys = {}
     for setKey, context in pairs(npeSetsQueue.contexts) do
-        if context.qualifier.type == CONTEXT_TYPE.CUSTOM then
+        if context.event.type == EVENT_TYPE.CUSTOM then
             printdebug("[NPE] Checking set %s", setKey)
             -- printdebug("[NPE]" .. table.concat(context.functor, ', '))
-            local success = execute_func(unpack(context.qualifier.functor))
+            local success = execute_func(unpack(context.event.functor))
             printdebug("[NPE] Functor %s executed. Success: %s", setKey, success)
             if success then
                 table.insert(setsKeys, setKey)
@@ -223,20 +223,7 @@ local function find_sets_with_custom_context()
     return setsKeys
 end
 
-local function find_active_contexts()
-    -- search from the Event type contexts and check if they have become active
-    -- if active they are added to the playableQueue
-    local setsKeys = {}
-    for setKey, context in pairs(npeSetsQueue.contexts) do
-        if context.type == CONTEXT_TYPE.EVENT and context.qualifier then
-            local active = npe_events.Invoke[context.qualifier]()
-            if active then
-                table.insert(setsKeys, setKey)
-            end
-        end
-    end
-    return setsKeys
-end
+
 
 local function play_random_set(self)
     if playableQueue.setsKeys and #playableQueue.setsKeys > 0 then

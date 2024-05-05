@@ -29,9 +29,7 @@ local deck_npe_welcome = {
                 },
             },
             context = {
-                type = npe.CONTEXT_TYPE.EVENT,
-                qualifier = npe_events.GAME_START,
-                functor = nil,
+                event = npe_events.GAME_START,
             },
         },
     },
