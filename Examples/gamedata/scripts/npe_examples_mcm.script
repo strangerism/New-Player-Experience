@@ -36,7 +36,7 @@ local deck_npe_examples = {
             context = {
                 type = npe.CONTEXT_TYPE.FUNCTOR,
                 functor = {"npe_examples_mcm", "owns_item", "wpn_binoc_inv"},
-                qualifier = "Item Owned",
+                qualifier = { name = "Item Owned" },
                 delay = 30,
             },
         },
@@ -120,7 +120,7 @@ local deck_npe_examples = {
 }
 
 if npe then
-    printf("Adding deck npe_examples")
+    npe.Printlog_npe("// [NPE] Adding deck npe_examples")
     npe.Add_deck(deck_npe_examples)
 end
 

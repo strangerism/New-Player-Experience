@@ -1,71 +1,73 @@
-
+local printlog = npe.Printlog_npe
+local printdebug = npe.Printdebug_npe
+local print_table = npe.Print_table_npe
 -- This file contains the events that can be used to trigger the NPE system
 -- The events are defined as constants
 
-GAME_START = "Game Start"
+GAME_START = { name = "Game Start", gane_event = nil }
 
 -- NPCs
-NPC_LOOTED = "NPC Looted"
-NPC_KILLED = "NPC Killed"
+NPC_LOOTED = { name = "NPC Looted", gane_event = nil }
+NPC_KILLED = { name = "NPC Killed", gane_event = "npc_on_death_callback" }
 
 -- Mutants
-MUTANT_LOOTED = "Mutant Looted"
-MUTANT_KILLED = "Mutant Killed"
+MUTANT_LOOTED = { name = "Mutant Looted", gane_event = "monster_on_actor_use_callback" }
+MUTANT_KILLED = { name = "Mutant Killed", gane_event = "monster_on_death_callback" }
 
 -- looting
-ITEM_TAKEN_FROM_BOX = "Item Taken From Box"
-ITEM_PUT_IN_BOX = "Item Put In Box"
+ITEM_TAKEN_FROM_BOX = { name = "Item Taken From Box", gane_event = nil }
+ITEM_PUT_IN_BOX = { name = "Item Put In Box", gane_event = nil }
 
 -- Actor
-DAMAGE_DEALT = "Damage Dealt"
-ACTOR_USE_MUTANT_CORPSE = "Check Mutant Corpse"
-ACTOR_USE_NPC_CORPSE = "Check Mutant Corpse"
-ACTOR_DEATH = "Death"
-ACTOR_HIT= "Hit Received"
-ACTOR_BLEEDING= "Bleeding"
-ACTOR_IRRADIATED = "Irradiated"
-ACTOR_HUNGRY = "Hungry"
-ACTOR_OVERWEIGHT = "Overweight"
-ACTOR_THIRSTY = "Thirsty"
-ACTOR_STRESSED = "Stressed"
-ACTOR_MAD = "Madness"
-ACTOR_SLEEP = "Sleep"
-ACTOR_RANK_UP = "Rank Up"
-ACTOR_LEVEL_UP = "Level Up"
-ACTOR_SKILL_UP = "Skill Up"
-ACTOR_PERK_UP = "Perk Up"
+DAMAGE_DEALT = { name = "Damage Dealt", gane_event = nil }
+ACTOR_USE_MUTANT_CORPSE = { name = "Check Mutant Corpse", gane_event = "monster_on_actor_use_callback" }
+ACTOR_USE_NPC_CORPSE = { name = "Check NPC Corpse", gane_event = "npc_on_use" }
+ACTOR_DEATH = { name = "Actor Death", gane_event = nil }
+ACTOR_HIT= { name = "Actor Hit", gane_event = "actor_on_hit_callback" }
+ACTOR_BLEEDING = { name = "Actor Bleeding", gane_event = nil }
+ACTOR_IRRADIATED = { name = "Actor Irradiated", gane_event = nil }
+ACTOR_HUNGRY = { name = "Actor Hungry", gane_event = nil }
+ACTOR_OVERWEIGHT = { name = "Actor Overweight", gane_event = nil }
+ACTOR_THIRSTY = { name = "Actor Thirsty", gane_event = nil }
+ACTOR_STRESSED = { name = "Actor Stressed", gane_event = nil }
+ACTOR_MAD = { name = "Actor Mad", gane_event = nil }
+ACTOR_SLEEP = { name = "Actor Sleep", gane_event = "actor_on_sleep" }
+ACTOR_RANK_UP = { name = "Actor Rank Up", gane_event = nil }
+ACTOR_LEVEL_UP = { name = "Actor Level Up", gane_event = nil }
+ACTOR_SKILL_UP = { name = "Actor Skill Up", gane_event = nil }
+ACTOR_PERK_UP = { name = "Actor Perk Up", gane_event = nil }
 
 -- Items
-ITEM_USED = "Item Used"
-ITEM_TO_BELT = "Item To Belt"
-ITEM_TO_RACK = "Item To Rack"
-ITEM_TO_SLOT = "Item To Slot"
+ITEM_USED = { name = "Item Used", gane_event = "actor_on_use" }
+ITEM_TO_BELT = { name = "Item To Belt", gane_event = nil }
+ITEM_TO_RACK = { name = "Item To Rack", gane_event = nil }
+ITEM_TO_SLOT = { name = "Item To Slot", gane_event = nil }   
 
 -- trades, workbenches, and inventory
-TRADE_STARTED = "Trade Started"
+TRADE_STARTED = { name = "Trade Started", gane_event = "ActorMenu_on_trade_started" }
 
 -- anomalies
-ENTERED_RADIATION_FIELD = "Entered Radiation Field"
-ENTERED_ANOMALOUS_FIELD = "Entered Anomalous Field"
+-- ENTERED_RADIATION_FIELD = { name = "Entered Radiation Field", gane_event = "actor_on_feeling_anomaly" }
+ENTERED_ANOMALOUS_FIELD = { name = "Entered Anomalous Field", gane_event = "actor_on_feeling_anomaly" }
 
 -- stashes, tasks, and maps
-STASH_COORDINATES_REVEALED = "Stash Coordinates Revealed"
-STASH_OPENED = "Stash Opened"
-QUEST_COMPLETED = "Quest Completed"
-QUEST_ACCEPTED = "Quest Accepted"
-ACHIEVEMENT_EARNED = "Achievement Earned"
+STASH_COORDINATES_REVEALED = { name = "Stash Coordinates Revealed", gane_event = nil }
+STASH_OPENED = { name = "Stash Opened", gane_event = nil }
+QUEST_COMPLETED = { name = "Quest Completed", gane_event = nil }
+QUEST_ACCEPTED = { name = "Quest Accepted", gane_event = nil }
+ACHIEVEMENT_EARNED = { name = "Achievement Earned", gane_event = nil }
 
 -- the zone
-SURGE = "Surge"
-PSY_STORM = "Psy Storm"
+SURGE = { name = "Surge", gane_event = nil }
+PSY_STORM = { name = "Psy Storm", gane_event = nil }
 
 -- weapons events
-WEAPON_JAM = "Weapon Jam"
-WEAPON_REPAIR = "Weapon Repair"
-WEAPON_MODIFICATION = "Weapon Modification"
-WEAPON_UPGRADE = "Weapon Upgrade"
-WEAPON_NO_AMMO = "Weapon No Ammo"
-SCOPE_ATTACHED = "Scope Attached"
+WEAPON_JAM = { name = "Weapon Jam", gane_event = nil }
+WEAPON_REPAIR = { name = "Weapon Repair", gane_event = nil }
+WEAPON_MODIFICATION = { name = "Weapon Modification", gane_event = nil }
+WEAPON_UPGRADE = { name = "Weapon Upgrade", gane_event = nil }
+WEAPON_NO_AMMO = { name = "Weapon No Ammo", gane_event = nil }
+SCOPE_ATTACHED = { name = "Scope Attached", gane_event = nil }
 
 -- list of all the events that can be triggered
 local function isActorBleeding()
@@ -171,7 +173,7 @@ end
 local function activate_oneshot_event(event, callback)
     local f
     f = function() 
-    printf("!activate oneshot event %s %s", event, callback)
+    printdebug("activate_oneshot_event "..event.name.." "..callback)
   
     npe.Activate_contexts_on(event)
     UnregisterScriptCallback(callback, f)
@@ -179,11 +181,16 @@ local function activate_oneshot_event(event, callback)
     return f
 end
 
-function Register_callbacks(npeSetsQueue)
 
-    for i, v in ipairs(npeSetsQueue) do
-        printlog("Registering callback for "..v.context.qualifier)
-        RegisterScriptCallback(v.context.qualifier,activate_oneshot_event(v.context.qualifier, v.context.qualifier))
+function Register_npe_callbacks(npeSetsQueue)
+    printlog("// [NPE] Register_npe_callbacks")
+    for setKey, context in pairs(npeSetsQueue.contexts) do
+        if context.qualifier.gane_event ~= nil then
+            printlog("Registering callback for ".. context.qualifier.name)
+            RegisterScriptCallback(context.qualifier.gane_event,activate_oneshot_event(context.qualifier, context.qualifier.gane_event))    
+        else
+            -- here I should enable these special event handlers (execute on actor_update) and the callbacks that will react to them
+        end
     end
 
 end
@@ -193,13 +200,13 @@ function on_game_start()
 
     RegisterScriptCallback("actor_on_first_update", actor_on_first_update)
 
-    RegisterScriptCallback("ActorMenu_on_trade_started",activate_oneshot_event(TRADE_STARTED, "ActorMenu_on_trade_started"))
-	RegisterScriptCallback("monster_on_actor_use_callback",activate_oneshot_event(ACTOR_USE_MUTANT_CORPSE, "monster_on_actor_use_callback"))
-    RegisterScriptCallback("monster_on_death_callback",activate_oneshot_event(MUTANT_KILLED, "monster_on_death_callback"))
-    RegisterScriptCallback("npc_on_death_callback",activate_oneshot_event(NPC_KILLED, "npc_on_death_callback"))
-    RegisterScriptCallback("npc_on_use",activate_oneshot_event(ACTOR_USE_NPC_CORPSE, "npc_on_use"))
-    RegisterScriptCallback("actor_on_hit_callback",activate_oneshot_event(ACTOR_HIT, "actor_on_hit_callback"))
-    RegisterScriptCallback("actor_on_feeling_anomaly", activate_oneshot_event(ENTERED_ANOMALOUS_FIELD, "actor_on_feeling_anomaly"))
+    -- RegisterScriptCallback("ActorMenu_on_trade_started",activate_oneshot_event(TRADE_STARTED, "ActorMenu_on_trade_started"))
+	-- RegisterScriptCallback("monster_on_actor_use_callback",activate_oneshot_event(ACTOR_USE_MUTANT_CORPSE, "monster_on_actor_use_callback"))
+    -- RegisterScriptCallback("monster_on_death_callback",activate_oneshot_event(MUTANT_KILLED, "monster_on_death_callback"))
+    -- RegisterScriptCallback("npc_on_death_callback",activate_oneshot_event(NPC_KILLED, "npc_on_death_callback"))
+    -- RegisterScriptCallback("npc_on_use",activate_oneshot_event(ACTOR_USE_NPC_CORPSE, "npc_on_use"))
+    -- RegisterScriptCallback("actor_on_hit_callback",activate_oneshot_event(ACTOR_HIT, "actor_on_hit_callback"))
+    -- RegisterScriptCallback("actor_on_feeling_anomaly", activate_oneshot_event(ENTERED_ANOMALOUS_FIELD, "actor_on_feeling_anomaly"))
 
     
 end

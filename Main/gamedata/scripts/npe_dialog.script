@@ -1,6 +1,6 @@
 
-local printlog = npe.printlog
-local printdebug = npe.printdebug
+local printlog = npe.Printlog_npe
+local printdebug = npe.Printdebug_npe
 
 GUI = nil -- instance, don't touch
 
@@ -133,7 +133,7 @@ function UINewPlayerExperience:InitControls(set)
 	self.frame	= xml:InitFrame("ui_npe_dialog:frame", self.dialog)
 	
 	self.context = xml:InitTextWnd("ui_npe_dialog:context",self.dialog)
-	self.context:SetText("%c[0,255,208,0]" .. "NPE > " .. set.context.qualifier)
+	self.context:SetText("%c[0,255,208,0]" .. "NPE > " .. set.context.qualifier.name)
 
 	local text
 	text = game.translate_string(self.set.title)

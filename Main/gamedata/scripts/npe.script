@@ -35,7 +35,7 @@ Settings = {
 }
 
 
-function printlog(msg,...)
+local function printlog(msg,...)
 	msg = msg or " "
 	
 	if select('#', ...) ~= 0 then printf(string.format(msg,...))
@@ -43,10 +43,11 @@ function printlog(msg,...)
 	end
 end
 
-function printdebug(msg,...) -- debug logging
+local function printdebug(msg,...) -- debug logging
 	if Settings.debug_logs then printlog(msg,...) end
 end
-
+Printlog_npe = printlog
+Printdebug_npe = printdebug
 
 local function map_to_set_key(moduleId, setId)
     return moduleId .. "/" .. setId
@@ -165,13 +166,14 @@ local function print_table(t, indent)
     indent = indent or ''
     for key, value in pairs(t) do
         if type(value) == 'table' then
-            printdebug(indent .. '' .. key .. ':')
+            printlog(indent .. '' .. key .. ':')
             print_table(value, indent .. '  ')
         else
-            printdebug(indent .. key .. ': ' .. tostring(value))
+            printlog(indent .. key .. ': ' .. tostring(value))
         end
     end
 end
+Print_table_npe = print_table
 
 local function play_set(set)
     Pause_play_loop()
@@ -196,7 +198,7 @@ end
 local function find_sets_on(qualifier)
     local setsKeys = {}
     for setKey, context in pairs(npeSetsQueue.contexts) do
-        if context.qualifier == qualifier then
+        if context.qualifier.name == qualifier.name then
             table.insert(setsKeys, setKey)
         end
     end
@@ -204,11 +206,11 @@ local function find_sets_on(qualifier)
 end
 
 function Activate_contexts_on(qualifier)
-    printdebug("[NPE] Activate_contexts_on %s", qualifier)
+    printdebug("[NPE] Activate_contexts_on %s", qualifier.name)
     local setsKeys = find_sets_on(qualifier)
-    printdebug("// [NPE] find_sets_on %s:", qualifier)
+    printdebug("// [NPE] Found sets on %s:", qualifier.name)
     print_table(setsKeys)
-    printdebug("- [NPE] Adding to playable queue")
+    printdebug("- [NPE] Adding to playable queue the found sets")
     add_to_playable_queue(setsKeys)
     
 end
@@ -370,6 +372,9 @@ local function general_initialization()
    -- update the queue with the contexts from the npeConfig table
    update_queue()
 
+    -- register the queued contexts with the npe_events
+   npe_events.Register_npe_callbacks(npeSetsQueue)
+   
    -- Use the function to print the npeSetsQueue table
    printlog("- [NPE] Queue:")
    print_table(npeSetsQueue.contexts)
@@ -391,6 +396,7 @@ local function on_option_change()
     update_settings()
     update_decks_from_mcm()
     update_queue()
+    npe_events.Register_npe_callbacks(npeSetsQueue)
     -- Use the function to print the npeSetsQueue table
     printlog("- [NPE] Queue:")
     print_table(npeSetsQueue.contexts)
