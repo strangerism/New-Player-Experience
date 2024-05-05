@@ -30,7 +30,8 @@ Settings = {
     debug_logs = true,
     enable = true,
     contextmatch_frequency = 3,
-    play_frequency = 10
+    play_frequency = 10,
+    sounds_set = "NPE"
 }
 
 
@@ -175,6 +176,16 @@ local function find_sets_on(qualifier)
     return setsKeys
 end
 
+function Activate_contexts_on(qualifier)
+    printdebug("Activate_contexts_on %s", qualifier)
+    local setsKeys = find_sets_on(qualifier)
+    printdebug("//find_sets_on %s:", qualifier)
+    print_table(setsKeys)
+    printdebug("-Adding to playable queue")
+    add_to_playable_queue(setsKeys)
+    
+end
+
 local function find_contexts_on_functor()
     printdebug("find_contexts_on_functor")
     local setsKeys = {}
@@ -252,10 +263,10 @@ local function npe_contexts_query_loop()
 
 
     -- find matching sets with ContextType.EVENT and check eligibility
-    setsKeys = find_active_contexts()
-    printdebug("//find_active_contexts:")
-    print_table(setsKeys)
-    add_to_playable_queue(setsKeys)
+    -- setsKeys = find_active_contexts()
+    -- printdebug("//find_active_contexts:")
+    -- print_table(setsKeys)
+    -- add_to_playable_queue(setsKeys)
 
     printdebug("- PlayableQueue:")
     print_table(playableQueue.setsKeys)
@@ -296,13 +307,20 @@ function Resume_play_loop()
     CreateTimeEvent(playLoopName, playLoopName, 10, npe_play_loop) -- offset time 10 seconds
 end
 
-local function general_initialization()
-
-    -- npe Settings
+local function update_settings()
     Settings.debug_logs = npe_mcm.npe_get_setting("general", "debug_logs")
     Settings.enable = npe_mcm.npe_get_setting("general", "enable")
     Settings.contextmatch_frequency = npe_mcm.npe_get_setting("general", "contextmatch_frequency")
     Settings.play_frequency = npe_mcm.npe_get_setting("general", "play_frequency")  
+    Settings.sounds_set = npe_mcm.npe_get_setting("general", "sounds_set")  
+    Settings.pause_game = npe_mcm.npe_get_setting("general", "pause_game")  
+end
+
+local function general_initialization()
+
+    -- npe Settings
+    update_settings()
+    
    -- update the npeConfig table with the Settings from the MCM
    update_decks_from_mcm()
 
@@ -331,6 +349,7 @@ local function npe_actor_on_first_update()
 end
 
 local function on_option_change()
+    update_settings()
     update_decks_from_mcm()
     update_queue()
     -- Use the function to print the npeSetsQueue table

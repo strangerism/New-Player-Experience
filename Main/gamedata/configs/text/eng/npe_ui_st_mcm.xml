@@ -13,16 +13,39 @@
 	<string id="ui_mcm_npe_general_enable">
 		<text>Enable</text>
 	</string>
+	<string id="ui_mcm_npe_general_enable_desc">
+		<text>Enable/Disable all tutorials</text>
+	</string>	
 	<string id="ui_mcm_npe_general_debug_logs">
 		<text>Debug Logs</text>
 	</string>
-		<string id="ui_mcm_npe_general_play_frequency">
+	<string id="ui_mcm_npe_general_debug_logs_desc">
+		<text>Logs debug messages to the console</text>
+	</string>	
+	<string id="ui_mcm_npe_general_play_frequency">
 		<text>Interval between playing tutorials</text>
 	</string>
+	<string id="ui_mcm_npe_general_play_frequency_desc">
+		<text>Determine the delay in seconds between a tutorial context becoming active and its playing, or between tutorials if more then one is queued</text>
+	</string>	
 	<string id="ui_mcm_npe_general_contextmatch_frequency">
-		<text>Interval between the scanning of eligible tutorials</text>
+		<text>Interval between the evaluation of active tutorials</text>
 	</string>
-		
+	<string id="ui_mcm_npe_general_contextmatch_frequency_desc">
+		<text>The frequency upon which NPC checks if a tutorial context is active and added to the queue (only used by certain types of tutorials)</text>
+	</string>	
+	<string id="ui_mcm_npe_general_sounds_set">
+		<text>Sounds</text>
+	</string>
+	<string id="ui_mcm_npe_general_sounds_set_desc">
+		<text>Select the sounds set used by the tutorial window</text>
+	</string>	
+	<string id="ui_mcm_npe_general_pause_game">
+		<text>Pause game</text>
+	</string>
+	<string id="ui_mcm_npe_general_pause_game_desc">
+		<text>Pauses the game when a tutorial is played. Some tutorials can force to pause the game regardless of this setting</text>
+	</string>	
 	<string id="ui_mcm_menu_npe_module">
 		<text>NPE Modules</text>
 	</string>	

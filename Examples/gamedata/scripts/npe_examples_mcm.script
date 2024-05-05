@@ -40,6 +40,57 @@ local deck_npe_examples = {
             },
         },
         {
+            id = "anomalous_field",
+            title = "ui_mcm_npe_module_npe_examples_anomalous_field_set_title",
+            cards = {
+                [1] = {
+                    title = "ui_npe_examples_anomalous_field_card_title",
+                    description = "ui_npe_examples_anomalous_field_card_description",
+                    image = "ui_npe_welcome_card_01",
+                },
+            },
+            context = {
+                type = npe.CONTEXT_TYPE.EVENT,
+                functor = nil,
+                qualifier = npe_events.ENTERED_ANOMALOUS_FIELD,
+            },
+        },
+        {
+            id = "irradiated",
+            title = "ui_mcm_npe_module_npe_examples_irradiated_set_title",
+            cards = {
+                [1] = {
+                    title = "ui_npe_examples_irradiated_card_title",
+                    description = "ui_npe_examples_irradiated_card_description",
+                    image = "ui_npe_welcome_card_01",
+                },
+            },
+            context = {
+                type = npe.CONTEXT_TYPE.EVENT,
+                functor = nil,
+                qualifier = npe_events.ACTOR_IRRADIATED,
+            },
+        },
+        {
+            id = "actor_hit",
+            title = "ui_mcm_npe_module_npe_examples_actor_hit_set_title",
+            cards = {
+                [1] = {
+                    title = "ui_npe_examples_actor_hit_card_title",
+                    description = "ui_npe_examples_actor_hit_card_description",
+                    image = "ui_npe_welcome_card_01",
+                },
+            },
+            context = {
+                type = npe.CONTEXT_TYPE.EVENT,
+                functor = nil,
+                qualifier = npe_events.ACTOR_HIT,
+                pause_game = true,
+                delay = 0,
+                override = { module_name = "module_name", set_id = "set_id", qualifier = "qualifier" },
+            },
+        },                      
+        {
             id = "encumbrance",
             title = "ui_mcm_npe_module_npe_examples_encumbrance_set_title",
             cards = {
@@ -79,6 +130,9 @@ function on_mcm_load()
 				{id = "title",type= "slide",link= "ui_options_slider_player",text="ui_mcm_npe_module_npe_examples_title",size= {512,50},spacing= 20 },
                 {id = "binoculars", type = "check", val = 1, def=false},
                 {id = "encumbrance", type = "check", val = 1, def=false},
+                {id = "anomalous_field", type = "check", val = 1, def=false},
+                {id = "irradiated", type = "check", val = 1, def=false},
+                {id = "actor_hit", type = "check", val = 1, def=false},
 			}
 		}
 

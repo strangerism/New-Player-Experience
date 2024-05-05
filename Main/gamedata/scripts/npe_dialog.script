@@ -9,14 +9,58 @@ local GAMETIME_STATE = {
 	INMOTION = 1 
 }
 
-function Change_gametime_to(state)
-	exec_console_cmd("freeze_time " .. state)
+local function change_gametime_to(state)
+	exec_console_cmd("time_factor " .. state)
 end
 
-local start_set_snd = sound_object([[interface\npe\open_panel]])
-local next_page_snd = sound_object([[interface\npe\next_page]])
-local prev_page_snd = sound_object([[interface\npe\prev_page]])
-local close_snd = sound_object([[interface\npe\close_panel]])
+local function pause_game(pause)
+	if pause then
+		exec_console_cmd("freeze_time on")
+	else
+		exec_console_cmd("freeze_time off")
+	end
+	
+end
+
+PDA = "PDA"
+NPE_HIGH = "NPE_HIGH"
+NPE_LOW = "NPE_LOW"
+NPE_MEDIUM = "NPE_MEDIUM"
+RADIO = "RADIO"
+local SOUNDS_SET
+Sounds = {
+	[PDA] = {
+		open =  sound_object([[device\pda\pda_guide]]),
+		next =  sound_object([[radio\interact\click]]),
+		prev =  sound_object([[radio\interact\click]]),
+		close = sound_object([[device\pda\pda_note]])
+	},
+	[NPE_HIGH] = {
+		open =  sound_object([[interface\npe\open_panel-alt_high]]),
+		next =  sound_object([[interface\npe\next_page_high]]),
+		prev =  sound_object([[interface\npe\prev_page_high]]),
+		close = sound_object([[interface\npe\close_panel_high]])
+	},
+	[NPE_MEDIUM] = {
+		open =  sound_object([[interface\npe\open_panel-alt_med]]),
+		next =  sound_object([[interface\npe\next_page_med]]),
+		prev =  sound_object([[interface\npe\prev_page_med]]),
+		close = sound_object([[interface\npe\close_panel_med]])
+	},	
+	[NPE_LOW] = {
+		open =  sound_object([[interface\npe\open_panel-alt]]),
+		next =  sound_object([[interface\npe\next_page]]),
+		prev =  sound_object([[interface\npe\prev_page]]),
+		close = sound_object([[interface\npe\close_panel]])
+	},
+	[RADIO] = {
+		open = sound_object([[detectors\rf\on]]),
+		next = sound_object([[detectors\rf\beep]]),
+		prev = sound_object([[detectors\rf\beep]]),
+		close = sound_object([[detectors\rf\off]])
+	}	
+}
+
 local snd
 local function stop_sound()
 	if snd then
@@ -35,10 +79,14 @@ function Play(set)
 		printlog("[NPE] play set is nil")
 		return
 	end
-
-    printlog("[NPE] play set: " .. set.module)
-    Change_gametime_to(GAMETIME_STATE.STOPPED)
-	play_sound(start_set_snd)
+	SOUNDS_SET = npe.Settings.sounds_set
+	printlog("[NPE] SOUNDS_SET: " .. SOUNDS_SET)
+    printlog("[NPE] play set module: " .. set.module .. " set Id:" .. set.id)
+	printlog("[NPE] play set title: " .. set.title)
+	if npe.Settings.pause_game or set.context.pause_game then
+    	pause_game(true)
+	end
+	play_sound(Sounds[SOUNDS_SET].open)
     printlog("[NPE] creating GUI")
     GUI = UINewPlayerExperience(set)
 
@@ -174,7 +222,7 @@ function UINewPlayerExperience:OnButtonNext()
 	else
 		self.cardIndex = 3
 	end
-	play_sound(next_page_snd)
+	play_sound(Sounds[SOUNDS_SET].next)
 	self:UpdateButtons()
 end
 
@@ -200,7 +248,7 @@ function UINewPlayerExperience:OnButtonPrev()
 	else
 		self.cardIndex = 1
 	end
-	play_sound(prev_page_snd)
+	play_sound(Sounds[SOUNDS_SET].prev)
 	self:UpdateButtons()
 end
 
@@ -209,8 +257,10 @@ function UINewPlayerExperience:Close()
 	self:Show(false)
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
-	play_sound(close_snd)
-    Change_gametime_to(GAMETIME_STATE.INMOTION)
+	play_sound(Sounds[SOUNDS_SET].close)
+	if npe.Settings.pause_game or self.set.context.pause_game then
+    	pause_game(false)
+	end	
 	npe.Resume_play_loop()
 end
 
