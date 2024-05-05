@@ -18,6 +18,8 @@ function owns_item(item)
     return found
 end
 
+local ITEM_OWNED = { name = "Item Owned", functor = {"npe_examples_mcm", "owns_item", "wpn_binoc_inv"} }
+
 local deck_npe_examples = { 
     title = "New Player Experience Examples Deck",
     module= "npe_examples",
@@ -35,8 +37,7 @@ local deck_npe_examples = {
             },
             context = {
                 type = npe.CONTEXT_TYPE.FUNCTOR,
-                functor = {"npe_examples_mcm", "owns_item", "wpn_binoc_inv"},
-                qualifier = { name = "Item Owned" },
+                qualifier = ITEM_OWNED,
                 delay = 30,
             },
         },

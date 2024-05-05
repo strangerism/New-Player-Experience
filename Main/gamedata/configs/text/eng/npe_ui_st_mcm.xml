@@ -28,10 +28,10 @@
 	<string id="ui_mcm_npe_general_play_frequency_desc">
 		<text>Determine the delay in seconds between a tutorial context becoming active and its playing, or between tutorials if more then one is queued</text>
 	</string>	
-	<string id="ui_mcm_npe_general_contextmatch_frequency">
+	<string id="ui_mcm_npe_general_context_activation_loop">
 		<text>Interval between the evaluation of active tutorials</text>
 	</string>
-	<string id="ui_mcm_npe_general_contextmatch_frequency_desc">
+	<string id="ui_mcm_npe_general_context_activation_loop_desc">
 		<text>The frequency upon which NPC checks if a tutorial context is active and added to the queue (only used by certain types of tutorials)</text>
 	</string>	
 	<string id="ui_mcm_npe_general_sounds_set">

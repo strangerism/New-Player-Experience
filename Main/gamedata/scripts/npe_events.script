@@ -4,70 +4,70 @@ local print_table = npe.Print_table_npe
 -- This file contains the events that can be used to trigger the NPE system
 -- The events are defined as constants
 
-GAME_START = { name = "Game Start", gane_event = nil }
+GAME_START = { name = "Game Start", gane_event = nil, module = "npe" }
 
 -- NPCs
-NPC_LOOTED = { name = "NPC Looted", gane_event = nil }
-NPC_KILLED = { name = "NPC Killed", gane_event = "npc_on_death_callback" }
+NPC_LOOTED = { name = "NPC Looted", gane_event = nil, module = "npe" }
+NPC_KILLED = { name = "NPC Killed", gane_event = "npc_on_death_callback", module = "npe" }
 
 -- Mutants
-MUTANT_LOOTED = { name = "Mutant Looted", gane_event = "monster_on_actor_use_callback" }
-MUTANT_KILLED = { name = "Mutant Killed", gane_event = "monster_on_death_callback" }
+MUTANT_LOOTED = { name = "Mutant Looted", gane_event = "monster_on_actor_use_callback", module = "npe" }
+MUTANT_KILLED = { name = "Mutant Killed", gane_event = "monster_on_death_callback", module = "npe" }
 
 -- looting
-ITEM_TAKEN_FROM_BOX = { name = "Item Taken From Box", gane_event = nil }
-ITEM_PUT_IN_BOX = { name = "Item Put In Box", gane_event = nil }
+ITEM_TAKEN_FROM_BOX = { name = "Item Taken From Box", gane_event = nil, module = "npe" }
+ITEM_PUT_IN_BOX = { name = "Item Put In Box", gane_event = nil, module = "npe" }
 
 -- Actor
-DAMAGE_DEALT = { name = "Damage Dealt", gane_event = nil }
-ACTOR_USE_MUTANT_CORPSE = { name = "Check Mutant Corpse", gane_event = "monster_on_actor_use_callback" }
-ACTOR_USE_NPC_CORPSE = { name = "Check NPC Corpse", gane_event = "npc_on_use" }
-ACTOR_DEATH = { name = "Actor Death", gane_event = nil }
-ACTOR_HIT= { name = "Actor Hit", gane_event = "actor_on_hit_callback" }
-ACTOR_BLEEDING = { name = "Actor Bleeding", gane_event = nil }
-ACTOR_IRRADIATED = { name = "Actor Irradiated", gane_event = nil }
-ACTOR_HUNGRY = { name = "Actor Hungry", gane_event = nil }
-ACTOR_OVERWEIGHT = { name = "Actor Overweight", gane_event = nil }
-ACTOR_THIRSTY = { name = "Actor Thirsty", gane_event = nil }
-ACTOR_STRESSED = { name = "Actor Stressed", gane_event = nil }
-ACTOR_MAD = { name = "Actor Mad", gane_event = nil }
-ACTOR_SLEEP = { name = "Actor Sleep", gane_event = "actor_on_sleep" }
-ACTOR_RANK_UP = { name = "Actor Rank Up", gane_event = nil }
-ACTOR_LEVEL_UP = { name = "Actor Level Up", gane_event = nil }
-ACTOR_SKILL_UP = { name = "Actor Skill Up", gane_event = nil }
-ACTOR_PERK_UP = { name = "Actor Perk Up", gane_event = nil }
+DAMAGE_DEALT = { name = "Damage Dealt", gane_event = nil, module = "npe" }
+ACTOR_USE_MUTANT_CORPSE = { name = "Check Mutant Corpse", gane_event = "monster_on_actor_use_callback", module = "npe" }
+ACTOR_USE_NPC_CORPSE = { name = "Check NPC Corpse", gane_event = "npc_on_use", module = "npe" }
+ACTOR_DEATH = { name = "Actor Death", gane_event = nil, module = "npe" }
+ACTOR_HIT= { name = "Actor Hit", gane_event = "actor_on_hit_callback", module = "npe" }
+ACTOR_BLEEDING = { name = "Actor Bleeding", gane_event = nil, module = "npe" }
+ACTOR_IRRADIATED = { name = "Actor Irradiated", gane_event = nil, module = "npe" }
+ACTOR_HUNGRY = { name = "Actor Hungry", gane_event = nil, module = "npe" }
+ACTOR_OVERWEIGHT = { name = "Actor Overweight", gane_event = nil, module = "npe" }
+ACTOR_THIRSTY = { name = "Actor Thirsty", gane_event = nil, module = "npe" }
+ACTOR_STRESSED = { name = "Actor Stressed", gane_event = nil, module = "npe" }
+ACTOR_MAD = { name = "Actor Mad", gane_event = nil, module = "npe" }
+ACTOR_SLEEP = { name = "Actor Sleep", gane_event = "actor_on_sleep", module = "npe" }
+ACTOR_RANK_UP = { name = "Actor Rank Up", gane_event = nil, module = "npe" }
+ACTOR_LEVEL_UP = { name = "Actor Level Up", gane_event = nil, module = "npe" }
+ACTOR_SKILL_UP = { name = "Actor Skill Up", gane_event = nil, module = "npe" }
+ACTOR_PERK_UP = { name = "Actor Perk Up", gane_event = nil, module = "npe" }
 
 -- Items
-ITEM_USED = { name = "Item Used", gane_event = "actor_on_use" }
-ITEM_TO_BELT = { name = "Item To Belt", gane_event = nil }
-ITEM_TO_RACK = { name = "Item To Rack", gane_event = nil }
-ITEM_TO_SLOT = { name = "Item To Slot", gane_event = nil }   
+ITEM_USED = { name = "Item Used", gane_event = "actor_on_use", module = "npe" }
+ITEM_TO_BELT = { name = "Item To Belt", gane_event = nil, module = "npe" }
+ITEM_TO_RACK = { name = "Item To Rack", gane_event = nil, module = "npe" }
+ITEM_TO_SLOT = { name = "Item To Slot", gane_event = nil, module = "npe" }   
 
 -- trades, workbenches, and inventory
-TRADE_STARTED = { name = "Trade Started", gane_event = "ActorMenu_on_trade_started" }
+TRADE_STARTED = { name = "Trade Started", gane_event = "ActorMenu_on_trade_started", module = "npe" }
 
 -- anomalies
--- ENTERED_RADIATION_FIELD = { name = "Entered Radiation Field", gane_event = "actor_on_feeling_anomaly" }
-ENTERED_ANOMALOUS_FIELD = { name = "Entered Anomalous Field", gane_event = "actor_on_feeling_anomaly" }
+-- ENTERED_RADIATION_FIELD = { name = "Entered Radiation Field", gane_event = "actor_on_feeling_anomaly", module = "npe" }
+ENTERED_ANOMALOUS_FIELD = { name = "Entered Anomalous Field", gane_event = "actor_on_feeling_anomaly", module = "npe" }
 
 -- stashes, tasks, and maps
-STASH_COORDINATES_REVEALED = { name = "Stash Coordinates Revealed", gane_event = nil }
-STASH_OPENED = { name = "Stash Opened", gane_event = nil }
-QUEST_COMPLETED = { name = "Quest Completed", gane_event = nil }
-QUEST_ACCEPTED = { name = "Quest Accepted", gane_event = nil }
-ACHIEVEMENT_EARNED = { name = "Achievement Earned", gane_event = nil }
+STASH_COORDINATES_REVEALED = { name = "Stash Coordinates Revealed", gane_event = nil, module = "npe" }
+STASH_OPENED = { name = "Stash Opened", gane_event = nil, module = "npe" }
+QUEST_COMPLETED = { name = "Quest Completed", gane_event = nil, module = "npe" }
+QUEST_ACCEPTED = { name = "Quest Accepted", gane_event = nil, module = "npe" }
+ACHIEVEMENT_EARNED = { name = "Achievement Earned", gane_event = nil, module = "npe" }
 
 -- the zone
-SURGE = { name = "Surge", gane_event = nil }
-PSY_STORM = { name = "Psy Storm", gane_event = nil }
+SURGE = { name = "Surge", gane_event = nil, module = "npe" }
+PSY_STORM = { name = "Psy Storm", gane_event = nil, module = "npe" }
 
 -- weapons events
-WEAPON_JAM = { name = "Weapon Jam", gane_event = nil }
-WEAPON_REPAIR = { name = "Weapon Repair", gane_event = nil }
-WEAPON_MODIFICATION = { name = "Weapon Modification", gane_event = nil }
-WEAPON_UPGRADE = { name = "Weapon Upgrade", gane_event = nil }
-WEAPON_NO_AMMO = { name = "Weapon No Ammo", gane_event = nil }
-SCOPE_ATTACHED = { name = "Scope Attached", gane_event = nil }
+WEAPON_JAM = { name = "Weapon Jam", gane_event = nil, module = "npe" }
+WEAPON_REPAIR = { name = "Weapon Repair", gane_event = nil, module = "npe" }
+WEAPON_MODIFICATION = { name = "Weapon Modification", gane_event = nil, module = "npe" }
+WEAPON_UPGRADE = { name = "Weapon Upgrade", gane_event = nil, module = "npe" }
+WEAPON_NO_AMMO = { name = "Weapon No Ammo", gane_event = nil, module = "npe" }
+SCOPE_ATTACHED = { name = "Scope Attached", gane_event = nil, module = "npe" }
 
 -- list of all the events that can be triggered
 local function isActorBleeding()
@@ -173,7 +173,7 @@ end
 local function activate_oneshot_event(event, callback)
     local f
     f = function() 
-    printdebug("activate_oneshot_event "..event.name.." "..callback)
+    printdebug("// [NPE] activate oneshot event "..event.name.." "..callback)
   
     npe.Activate_contexts_on(event)
     UnregisterScriptCallback(callback, f)
@@ -183,13 +183,19 @@ end
 
 
 function Register_npe_callbacks(npeSetsQueue)
-    printlog("// [NPE] Register_npe_callbacks")
+    printlog("// [NPE] Register npe callbacks")
     for setKey, context in pairs(npeSetsQueue.contexts) do
-        if context.qualifier.gane_event ~= nil then
-            printlog("Registering callback for ".. context.qualifier.name)
+        if context.qualifier.type == npe.CONTEXT_TYPE.GAME_EVENT then
+            printlog("Registering GAME_EVENT callback for ".. context.qualifier.name)
             RegisterScriptCallback(context.qualifier.gane_event,activate_oneshot_event(context.qualifier, context.qualifier.gane_event))    
-        else
-            -- here I should enable these special event handlers (execute on actor_update) and the callbacks that will react to them
+        end
+        if context.qualifier.type == npe.CONTEXT_TYPE.NPE_EVENT then
+            printlog("Registering NPE_EVENT callback for ".. context.qualifier.name)
+            -- here I should enable the NPE_EVENT handlers (execute on actor_update) and the callbacks that will react to them
+        end
+        if context.qualifier.type == npe.CONTEXT_TYPE.CUSTOM then
+            printlog("Registering CUSTOM callback for ".. context.qualifier.name)
+            -- here I should enable the CUSTOM functors (execute on actor_update) and the callbacks that will react to them
         end
     end
 

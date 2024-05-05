@@ -12,24 +12,15 @@ local playableQueue = {
 }
 
 CONTEXT_TYPE = {
-    NONE = "NONE",
-    EVENT = "EVENT",
+    GAME_EVENT = "GAME_EVENT",
+    NPE_EVENT = "NPE_EVENT",
     CUSTOM = "CUSTOM",
-    FUNCTOR = "FUNCTOR",
-}
-
-FUNCTORS = {
-    ITEM_LOOTED = "Item Looted", 
-    ITEM_OWNED = "Item Owned",
-    TALKED_TO_NPC = "Talked to NPC",
-    DAMAGE_RECEIVED = "Damage Received",
-    
 }
 
 Settings = {
     debug_logs = true,
     enable = true,
-    contextmatch_frequency = 3,
+    context_activation_loop = 3,
     play_frequency = 10,
     sounds_set = "NPE"
 }
@@ -62,7 +53,9 @@ end
 
 
 local function add_to_sets_queue(set, moduleId)
+    printdebug("[NPE] add_to_sets_queue %s %s", moduleId, set.id)
     local setKey = map_to_set_key(moduleId, set.id)
+    printdebug("[NPE] setKey %s", setKey)
     if set ~= nil then
         local context = {
             type = set.context.type,
@@ -71,12 +64,24 @@ local function add_to_sets_queue(set, moduleId)
             delay = set.context.delay,
             pause_game = set.context.pause_game,
         }
+        if not context.qualifier.module then
+            context.qualifier.module = moduleId
+            context.qualifier.type = CONTEXT_TYPE.CUSTOM
+        else
+            if context.qualifier.gane_event then
+                context.qualifier.type = CONTEXT_TYPE.GAME_EVENT
+            else
+                context.qualifier.type = CONTEXT_TYPE.NPE_EVENT
+            end
+        end
         -- Check if a context with the same contextId already exists
         if npeSetsQueue.contexts[setKey] == nil then
             -- Add the new context to the table with contextId as the key
             npeSetsQueue.contexts[setKey] = context
+            printdebug("context with id " .. setKey .. " added to the queue with qualifier " .. context.qualifier.name .. " and module " .. context.qualifier.module .. " and type " .. context.qualifier.type)
         else
-            printlog("context with id " .. setKey .. " already exists.")
+            printlog("! context with id " .. setKey .. " already exists.")
+            printlog("! context qualifier " .. context.qualifier.name .. " and module " .. context.qualifier.module)
         end
     end
 end
@@ -122,13 +127,13 @@ function Add_deck(npeDeck)
         if not deckExists then
             table.insert(npeConfig.decks, npeDeck)
         else
-            printlog("Deck with id " .. npeDeck.id .. " already exists.")
+            printlog("! [NPE] Deck with id " .. npeDeck.id .. " already exists.")
         end
     end
 end
 
 local function update_decks_from_mcm()
-    
+    printdebug("// [NPE] update decks from MCM")
     for i, deck in ipairs(npeConfig.decks) do
         for j, set in ipairs(deck.sets) do
             set.played = npe_mcm.npe_module_get_setting(deck.module, set.id)
@@ -138,8 +143,8 @@ end
 
 
 
-local function update_queue()
-
+local function update_activation_queue()
+    printdebug("// [NPE] update_activation_queue")
     npeSetsQueue = {
         contexts = {},
     }
@@ -152,12 +157,7 @@ local function update_queue()
         end
     end
 end
-    
--- local function update_queued_context(setKey, context)
---     if npeSetsQueue.contexts[setKey] ~= nil then
---         npeSetsQueue.contexts[setKey] = context
---     end
--- end
+
 
 local function print_table(t, indent)
     if not t then
@@ -166,39 +166,31 @@ local function print_table(t, indent)
     indent = indent or ''
     for key, value in pairs(t) do
         if type(value) == 'table' then
-            printlog(indent .. '' .. key .. ':')
+            printdebug(indent .. '' .. key .. ':')
             print_table(value, indent .. '  ')
         else
-            printlog(indent .. key .. ': ' .. tostring(value))
+            printdebug(indent .. key .. ': ' .. tostring(value))
         end
     end
 end
 Print_table_npe = print_table
 
-local function play_set(set)
-    Pause_play_loop()
-    if set ~= nil then
-        if not npe_dialog.GUI then
-            -- Call the function that will play the set
-            printdebug("[NPE] Playing set %s from module %s", set.id, set.module)
-            printdebug("[NPE] Set Title: %s", set.title)
-            set.played = true
-            npe_mcm.npe_module_set_setting(set.module, set.id, true)
-            printdebug("[NPE] starting dialog")
-            npe_dialog.Play(set)
-        else
-            -- cannot play set, UI is busy. Put it back in the queue
-            table.insert(playableQueue.setsKeys, set.id)
-        end
-    else
-        Resume_play_loop()
+local function compare_qualifiers(qualifier1, qualifier2)
+    if qualifier1.name ~= qualifier2.name then
+        return false
     end
+    if qualifier1.module ~= qualifier2.module then
+        return false
+    end
+    return true
 end
 
 local function find_sets_on(qualifier)
+    printdebug("[NPE] find sets on %s", qualifier.name)
     local setsKeys = {}
-    for setKey, context in pairs(npeSetsQueue.contexts) do
-        if context.qualifier.name == qualifier.name then
+    for setKey, queued_context in pairs(npeSetsQueue.contexts) do
+        printdebug("[NPE] queued context name %s", queued_context.qualifier.name)
+        if compare_qualifiers(queued_context.qualifier, qualifier) then
             table.insert(setsKeys, setKey)
         end
     end
@@ -206,23 +198,22 @@ local function find_sets_on(qualifier)
 end
 
 function Activate_contexts_on(qualifier)
-    printdebug("[NPE] Activate_contexts_on %s", qualifier.name)
+    printdebug("// [NPE] Activate contexts on %s", qualifier.name)
     local setsKeys = find_sets_on(qualifier)
-    printdebug("// [NPE] Found sets on %s:", qualifier.name)
+    printdebug("- [NPE] Found sets on %s:", qualifier.name)
     print_table(setsKeys)
-    printdebug("- [NPE] Adding to playable queue the found sets")
     add_to_playable_queue(setsKeys)
     
 end
 
-local function find_contexts_on_functor()
-    printdebug("[NPE] find_contexts_on_functor")
+local function find_sets_with_custom_context()
+    printdebug("// [NPE] find sets with custom context")
     local setsKeys = {}
     for setKey, context in pairs(npeSetsQueue.contexts) do
-        if context.type == CONTEXT_TYPE.FUNCTOR and context.functor then
+        if context.qualifier.type == CONTEXT_TYPE.CUSTOM then
             printdebug("[NPE] Checking set %s", setKey)
             -- printdebug("[NPE]" .. table.concat(context.functor, ', '))
-            local success = execute_func(unpack(context.functor))
+            local success = execute_func(unpack(context.qualifier.functor))
             printdebug("[NPE] Functor %s executed. Success: %s", setKey, success)
             if success then
                 table.insert(setsKeys, setKey)
@@ -288,17 +279,17 @@ local function play_random_set(self)
     end
 end
 
-local runEligibilityMatchLoop = false
-local playEligibilityMatchName = 'NPE_EligibilityMatch_Loop'
+local run_context_activation_loop = false
+local context_activation_loop_name = 'NPE_ContextActivation_Loop'
 
-local function npe_contexts_query_loop()
+local function npe_contexts_activation_loop()
     printdebug("[NPE] EligibilityMatch loop")
-    if not runEligibilityMatchLoop then return true end
-    ResetTimeEvent(playEligibilityMatchName, playEligibilityMatchName, Settings.contextmatch_frequency)
+    if not run_context_activation_loop then return true end
+    ResetTimeEvent(context_activation_loop_name, context_activation_loop_name, Settings.context_activation_loop)
 
     -- find matching sets with ContextType.FUNCTOR and check eligibility
-    local setsKeys = find_contexts_on_functor()
-    printdebug("// [NPE] find_contexts_on_functor:")
+    local setsKeys = find_sets_with_custom_context()
+
     print_table(setsKeys)
     add_to_playable_queue(setsKeys)
 
@@ -309,29 +300,29 @@ local function npe_contexts_query_loop()
     -- print_table(setsKeys)
     -- add_to_playable_queue(setsKeys)
 
-    printdebug("- [NPE] PlayableQueue:")
+    printdebug("- [NPE] Playable Queue:")
     print_table(playableQueue.setsKeys)
 
     return false
 end
-local function pause_active_contexts_query_loop()
-    printdebug("[NPE] pausing EligibilityMatch loop")
-    runEligibilityMatchLoop = false
+local function pause_contexts_activation_loop()
+    printdebug("[NPE] pausing contexts activation loop")
+    run_context_activation_loop = false
 end
 
-local function resume_active_contexts_query_loop()
-    printdebug("[NPE] resuming EligibilityMatch loop")
-    runEligibilityMatchLoop = true
-    CreateTimeEvent(playEligibilityMatchName, playEligibilityMatchName, 10, npe_contexts_query_loop) -- offset time 10 seconds
+local function resume_contexts_activation_loop()
+    printdebug("[NPE] resuming contexts activation loop")
+    run_context_activation_loop = true
+    CreateTimeEvent(context_activation_loop_name, context_activation_loop_name, 10, npe_contexts_activation_loop) -- offset time 10 seconds
 end
 
 
-local runPlayLoop = false
-local playLoopName = 'NPE_Play_Loop'
+local run_play_loop = false
+local play_loop_name = 'NPE_Play_Loop'
 
 local function npe_play_loop()
-    if not runPlayLoop then return true end
-    ResetTimeEvent(playLoopName, playLoopName, Settings.play_frequency)
+    if not run_play_loop then return true end
+    ResetTimeEvent(play_loop_name, play_loop_name, Settings.play_frequency)
 
     play_random_set()
 
@@ -339,19 +330,20 @@ local function npe_play_loop()
 end
 function Pause_play_loop()
     printdebug("[NPE] pausing play loop")
-    runPlayLoop = false
+    run_play_loop = false
 end
 
 function Resume_play_loop()
+    if run_play_loop then return end
     printdebug("[NPE] resuming play loop")
-    runPlayLoop = true
-    CreateTimeEvent(playLoopName, playLoopName, 10, npe_play_loop) -- offset time 10 seconds
+    run_play_loop = true
+    CreateTimeEvent(play_loop_name, play_loop_name, 10, npe_play_loop) -- offset time 10 seconds
 end
 
 local function update_settings()
     Settings.debug_logs = npe_mcm.npe_get_setting("general", "debug_logs")
     Settings.enable = npe_mcm.npe_get_setting("general", "enable")
-    Settings.contextmatch_frequency = npe_mcm.npe_get_setting("general", "contextmatch_frequency")
+    Settings.context_activation_loop = npe_mcm.npe_get_setting("general", "context_activation_loop")
     Settings.play_frequency = npe_mcm.npe_get_setting("general", "play_frequency")  
     Settings.sounds_set = npe_mcm.npe_get_setting("general", "sounds_set")  
     Settings.pause_game = npe_mcm.npe_get_setting("general", "pause_game")  
@@ -370,32 +362,30 @@ local function general_initialization()
    print_table(npeConfig.decks)
 
    -- update the queue with the contexts from the npeConfig table
-   update_queue()
+   update_activation_queue()
 
     -- register the queued contexts with the npe_events
    npe_events.Register_npe_callbacks(npeSetsQueue)
    
    -- Use the function to print the npeSetsQueue table
-   printlog("- [NPE] Queue:")
+   printlog("- [NPE] Activation Queue:")
    print_table(npeSetsQueue.contexts)
 
 end
 
 local function npe_actor_on_first_update()
-    printlog(" npe_actor_on_first_update")
 
     general_initialization()
 
-    printlog("[NPE] starting play loop")
     Resume_play_loop()
-    printlog("[NPE] starting active contexts query loop")
-    resume_active_contexts_query_loop()
+
+    resume_contexts_activation_loop()
 end
 
 local function on_option_change()
     update_settings()
     update_decks_from_mcm()
-    update_queue()
+    update_activation_queue()
     npe_events.Register_npe_callbacks(npeSetsQueue)
     -- Use the function to print the npeSetsQueue table
     printlog("- [NPE] Queue:")
