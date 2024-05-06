@@ -29,15 +29,11 @@ local deck_npe_welcome = {
                 },
             },
             context = {
-                event = npe_events.EVENT.GAME_START,
+                event = npe.EVENT.GAME_START,
             },
         },
     },
 }
-
-if npe then
-    npe.Add_deck(deck_npe_welcome)
-end
 
 function on_mcm_load()
 
@@ -48,4 +44,11 @@ function on_mcm_load()
 		}
 
 	return op, "npe_module"
+end
+
+function on_game_start()
+    if npe then
+        npe_manager.Printlog_npe("// [NPE] Adding deck " .. deck_npe_welcome.title .. " to NPE Manager.")
+        npe_manager.Add_deck(deck_npe_welcome)
+    end
 end

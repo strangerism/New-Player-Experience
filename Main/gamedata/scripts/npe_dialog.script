@@ -1,6 +1,6 @@
 
-local printlog = npe.Printlog_npe
-local printdebug = npe.Printdebug_npe
+local printlog = npe_manager.Printlog_npe
+local printdebug = npe_manager.Printdebug_npe
 
 GUI = nil -- instance, don't touch
 
@@ -80,11 +80,11 @@ function Play(set)
 		npe.Resume_play_loop()
 		return
 	end
-	SOUNDS_SET = npe.Settings.sounds_set
+	SOUNDS_SET = npe_manager.Settings.sounds_set
 	printdebug("[NPE] SOUNDS_SET: " .. SOUNDS_SET)
     printdebug("[NPE] play set module: " .. set.module .. " set Id:" .. set.id)
 	printdebug("[NPE] play set title: " .. set.title)
-	if npe.Settings.pause_game or set.context.pause_game then
+	if npe_manager.Settings.pause_game or set.context.pause_game then
     	pause_game(true)
 	end
 	play_sound(Sounds[SOUNDS_SET].open)
@@ -261,10 +261,10 @@ function UINewPlayerExperience:Close()
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
 	play_sound(Sounds[SOUNDS_SET].close)
-	if npe.Settings.pause_game or self.set.context.pause_game then
+	if npe_manager.Settings.pause_game or self.set.context.pause_game then
     	pause_game(false)
 	end	
-	npe.Resume_play_loop()
+	npe_manager.Resume_play_loop()
 end
 
 function UINewPlayerExperience:OnKeyboard(dik, keyboard_action)

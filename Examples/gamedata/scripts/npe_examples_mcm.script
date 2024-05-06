@@ -53,7 +53,7 @@ local deck_npe_examples = {
                 },
             },
             context = {
-                event = npe_events.EVENT.ENTERED_ANOMALOUS_FIELD,
+                event = npe.EVENT.ENTERED_ANOMALOUS_FIELD,
             },
         },
         {
@@ -67,7 +67,7 @@ local deck_npe_examples = {
                 },
             },
             context = {
-                event = npe_events.EVENT.ACTOR_IRRADIATED,
+                event = npe.EVENT.ACTOR_IRRADIATED,
             },
         },
         {
@@ -81,7 +81,7 @@ local deck_npe_examples = {
                 },
             },
             context = {
-                event = npe_events.EVENT.ACTOR_HIT,
+                event = npe.EVENT.ACTOR_HIT,
                 pause_game = true,
                 override = { module_name = "module_name", set_id = "set_id", event = "event" },
             },
@@ -107,16 +107,12 @@ local deck_npe_examples = {
                 },                
             },
             context = {
-                event = npe_events.EVENT.ACTOR_OVERWEIGHT,
+                event = npe.EVENT.ACTOR_OVERWEIGHT,
             },
         },        
     },
 }
 
-if npe then
-    npe.Printlog_npe("// [NPE] Adding deck npe_examples")
-    npe.Add_deck(deck_npe_examples)
-end
 
 function on_mcm_load()
 
@@ -131,4 +127,11 @@ function on_mcm_load()
 		}
 
 	return op, "npe_module"
+end
+
+function on_game_start()
+    if npe then
+        npe_manager.Printlog_npe("// [NPE] Adding deck " .. deck_npe_examples.title .. " to NPE Manager.")
+        npe_manager.Add_deck(deck_npe_examples)
+    end
 end
