@@ -8,8 +8,11 @@
 		<text>NPE Examples</text>
 	</string>
 	<string id="ui_mcm_npe_module_npe_examples_title">
-		<text>A list of NPE Examples</text>
+		<text>A list of NPE Examples tutorials</text>
 	</string>
+	<string id="ui_mcm_npe_module_npe_examples_help">
+		<text>The items below (tutorials) if checked it means they have been shown already, uncheck to play them again</text>
+	</string>	
 	<string id="ui_mcm_npe_module_npe_examples_binoculars">
 		<text>Binoculars Tutorial</text>
 	</string>

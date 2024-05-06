@@ -1,0 +1,175 @@
+-- NPE Module template
+
+-- PREPARATION
+
+-- FIRST STEP
+--      you need to define the name of this module
+--      use as module name the name of your mod main script preceded by npe_
+--      for example (mymod.script --> npe_mymod_mcm.script). Therefore the modelname chosen in this example is "npe_mymod"
+--      or something that you know will be unique in the hypotetical modlist's scripts' namespace, where this npe module will be added
+-- SECOND STEP
+--      replace in all filenames included in this template module, this script included, the string "modulename" with your chosen module name
+--      replace in this script all the instances of modulename and setname as required
+
+-- CREATION OF A NEW NPE MODULE
+
+-- [OPTIONAL] Custom event handlers
+--      Define here all your custom events handlers that are any of the custom events you defined below
+
+-- for example
+
+-- function owns_item(item)
+--     -- printf("Checking if actor owns item: %s", item)
+--     local found = false
+
+-- 	local function check_items(actor,itm)
+-- 		local sec = itm:section()
+--         if sec == item then
+--             found = true
+--         end
+-- 	end
+-- 	db.actor:iterate_inventory(check_items,db.actor)
+
+--     return found
+-- end
+
+function a_custom_handler_functor(obj)
+    printf("Custom handler functor called with parameter: %s", obj)
+end
+
+-- [OPTIONAL] Custom events
+--      Define here all your custom events that use the custom event handlers defined above
+
+-- local EVENT = {
+--     BINOCULARS_OWNED = { 
+--         name = "Binoculars Owned", 
+--         handler = { 
+--             name = "on_actor_owning_binoculars",
+--             functor = {"npe_modulename_mcm", "owns_item", "wpn_binoc_inv" }
+--         } 
+--     },
+--     VODKA_OWNED = { 
+--         name = "Vodka Owned", 
+--         handler = { 
+--             name = "on_actor_owning_vodka",
+--             functor = {"npe_modulename_mcm", "owns_item", "vodka" }
+--         } 
+--     },    
+-- }
+
+local EVENT = {
+    MY_CUSTOM_EVENT = { 
+        name = "My Custom Event", -- this will be presented in the tutorial window as breadcrumb in the top left. It represent the context of the event  and it's not localized (use english preferably)
+        handler = { 
+            name = "a_custom_event_name",
+            functor = {"npe_modulename_mcm", "a_custom_handler_functor", "my_custom_parameter"}
+        } 
+    },
+}
+
+-- [MANDATORY] Define your deck
+--      Define here your deck, with all the sets and cards
+--      A deck represents a number of sets that contains cards that will be shown to the player in a specific order
+--      A set representing a tutorial in practice that can become active when a specific event is triggered. Once active NPE will show it to the player
+--      A card is a single tutorial step that will be shown to the player
+--      A card can have an image, a title and a description
+
+local deck_npe_modulename = { 
+    title = "Your module title", -- e.g. "My Mod Introduction" -- only used internally by the NPE Manager
+    module= "modulename", -- must be unique thus the use of modulename whatever you have choosen above
+    id="modulename", -- must be unique thus the use of modulename whatever you have choosen above
+    sets = {
+        sets = {
+            {
+                id = "setname", -- e.g. "encumbrance"
+                title = "ui_mcm_npe_module_modulename_setname_set_title", -- it must reference a string in the localization file "npe_ui_st_modulename.xml"
+                cards = {
+                    -- [MANDATORY] Define your set of cards
+                    --      cards are defined with index starting from 1 and increasing by 1 for each card
+                    --      cards are shown in the order they are defined
+                    --      total cards can be 1 up to a maximum of 3
+                    --      The card design should follow the three step tutorial design:
+                    --              - first card should present the subject of the tutorial
+                    --              - second card should present the action to be taken
+                    --              - third card should present the result of the action and conclusion   
+                    [1] = {
+                        title = "ui_modulename_setname_card_01_title", -- it must reference a string in the localization file "npe_ui_st_npe_modulename.xml"
+                        description = "ui_modulename_setname_card_01_description", -- it must reference a string in the localization file "npe_ui_st_modulename.xml"
+                        image = "ui_modulename_setname_card_01", -- it must reference a texture id in the file "ui/texture_descr/modulename.xml"
+                    },
+                    [2] = {
+                        title = "ui_modulename_setname_card_02_title",
+                        description = "ui_modulename_setname_card_02_description",
+                        image = "ui_modulename_setname_card_02",
+                    },
+                    [3] = {
+                        title = "ui_modulename_setname_card_03_title",
+                        description = "ui_modulename_setname_card_03_description",
+                        image = "ui_modulename_setname_card_03",
+                    },                
+                },
+                -- [MANDATORY] Define the context of when the set shall become active and shown
+                --      context represet the way this set is triggered and shown to the player
+                --      context can have the following keys:
+                --      event: [MANDATORY] the event that triggers this set
+                --      delay: [OPTIONAL] the delay in seconds after the event is triggered before the set is shown
+                --      pause_game: [OPTIONAL] if true the game is paused when the set is shown
+                --      override: [OPTIONAL] rule to override another npe module set on similar context (e.g. if you want to override the encumbrance set of another npe module)
+
+                context = {
+                    -- [MANDATORY] Assign the event that triggers this set
+                    --      event can be choosen from the predefined events included in the npe.script (NPE Main Module) or from your custom events you might have defined above
+                    event = npe.EVENT.ACTOR_OVERWEIGHT,
+                },
+            },
+        -- you can define more then one set        
+        {
+            id = "setname1",
+            title = "ui_mcm_npe_module_modulename_setname1_set_title",
+            cards = {
+                [1] = {
+                    title = "ui_modulename_setname1_card_title",
+                    description = "ui_modulename_setname1_card_description",
+                    image = "ui_modulename_setname1_card",
+                },
+            },
+            context = {
+                -- here you are using a custom event
+                event = EVENT.MY_CUSTOM_EVENT,
+                -- delay is optional and it's the time in seconds after the event is triggered before the set is shown 
+                -- this time can vary depending on the number of playable sets in the queued_context at the moment of the activation
+                -- the number set it's the minimum not guaranteed
+                delay = 30,
+                -- pause_game is optional and if true the game is paused when the set is shown
+                pause_game = true,
+            },
+        },  
+        -- and more...              
+        }    
+    },
+}
+
+
+function on_mcm_load()
+    -- [MANDATORY] The NPE module MCM menu meeds to be populated with the sets' ids defined above
+	op =  { id= "modulename", sh=true, text="ui_mcm_npe_module_modulename", gr ={
+				{id = "title",type= "slide",link= "ui_options_slider_player",text="ui_mcm_npe_module_modulename_title",size= {512,50},spacing= 20 },
+                -- [MANDATORY] The sets' ids defined above need to be added here. 
+                --      This allow the user to check sets that have been shown (selected) and evenually replay them (unselect in mcm) if needed
+                {id = "setname", type = "check", val = 1, def=false},
+                {id = "setname1", type = "check", val = 1, def=false},
+			}
+		}
+
+	return op, "npe_module"  -- [IMPORTANT] do not change this line
+end
+
+-- [MANDATORY] At game start add your deck with the NPE Manager
+--      you need to replace "deck_npe_modulename" with the name of your deck
+
+function on_game_start()
+    if npe then
+        npe_manager.Printlog_npe("// [NPE] Adding deck " .. deck_npe_modulename.title .. " to NPE Manager.")
+        npe_manager.Add_deck(deck_npe_modulename)
+    end
+end

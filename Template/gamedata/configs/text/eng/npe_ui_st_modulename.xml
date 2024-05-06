@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="windows-1251"?>
+
+<string_table>
+
+	<!-- mcm menu (mandatory) -->
+
+	<string id="ui_mcm_npe_module_npe_examples">
+		<text>NPE Examples</text>
+	</string>
+	<string id="ui_mcm_npe_module_npe_examples_title">
+		<text>A list of NPE Examples</text>
+	</string>
+	<string id="ui_mcm_npe_module_npe_examples_binoculars">
+		<text>Binoculars Tutorial</text>
+	</string>
+	<string id="ui_mcm_npe_module_npe_examples_vodka">
+		<text>Vodka Tutorial</text>
+	</string>	
+	<string id="ui_mcm_npe_module_npe_examples_encumbrance">
+		<text>Encumbrance Tutorial</text>
+	</string>	
+	<string id="ui_mcm_npe_module_npe_examples_anomalous_field">
+		<text>Anomalous fields Tutorial</text>
+	</string>	
+	<string id="ui_mcm_npe_module_npe_examples_irradiated">
+		<text>Radiations effects Tutorial</text>
+	</string>		
+	<string id="ui_mcm_npe_module_npe_examples_actor_hit">
+		<text>Actor receive damage Tutorial</text>
+	</string>			
+	<!-- deck_npe_examples -->
+
+	<!-- binoculars tutorial set -->
+
+	<string id="ui_mcm_npe_module_npe_examples_binoculars_set_title">
+		<text>Binoculars Tutorial</text>
+	</string>
+	<string id="ui_npe_examples_binoculars_card_title">
+		<text>%c[d_cyan]Binoculars</text>
+	</string>
+	<string id="ui_npe_examples_binoculars_card_description">
+		<text>You have found a binocular. 
+		\n
+		\n
+		Open your inventory and equip the new found binocular in the respective slot.
+		\n
+		\n
+		Hovering the mouse on the binocular will highlight the slot where it can be equipped.		
+		\n
+		\n
+		Use the hotkey 4 to equip the binocular. Right click mouse to use them 
+		</text>
+	</string>	
+</string_table>

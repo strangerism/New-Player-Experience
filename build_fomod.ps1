@@ -11,7 +11,7 @@ function CreateBuildFolders {
 function BuildMod {
 
     $target = "build/NPE"
-    Copy-Item -Recurse -Force -Path ".\fomod", ".\Main", ".\Module", ".\Examples" -Destination $target -Exclude .bak
+    Copy-Item -Recurse -Force -Path ".\fomod", ".\Main", ".\Module", ".\Examples", ".\Template" -Destination $target -Exclude .bak
 
     # Copy-Item -Force -Path ".\doc\NPE.pdf" -Destination $target
 }
