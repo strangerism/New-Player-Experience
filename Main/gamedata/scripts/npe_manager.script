@@ -167,14 +167,30 @@ local function print_table(t, indent)
     indent = indent or ''
     for key, value in pairs(t) do
         if type(value) == 'table' then
-            printdebug(indent .. '' .. key .. ':')
+            printlog(indent .. '' .. key .. ':')
             print_table(value, indent .. '  ')
+        else
+            printlog(indent .. key .. ': ' .. tostring(value))
+        end
+    end
+end
+Print_table_npe = print_table
+
+local function debug_table(t, indent)
+    if not t then
+        return
+    end
+    indent = indent or ''
+    for key, value in pairs(t) do
+        if type(value) == 'table' then
+            printdebug(indent .. '' .. key .. ':')
+            debug_table(value, indent .. '  ')
         else
             printdebug(indent .. key .. ': ' .. tostring(value))
         end
     end
 end
-Print_table_npe = print_table
+Debug_table_npe = debug_table
 
 local function compare_events(event1, event2)
     if event1.name ~= event2.name then
@@ -477,17 +493,17 @@ local function on_option_change()
 
     update_decks_from_mcm()
     -- Use the function to print the npeConfig.decks table
-    printlog("- [NPE] Decks:")
-    print_table(npeConfig.decks)
-    printlog("- [NPE] Decks list Ended")
+    printdebug("- [NPE] Decks:")
+    debug_table(npeConfig.decks)
+    printdebug("- [NPE] Decks list Ended")
 
     -- upcate the queue with the contexts from the npeConfig table
     update_activation_queue()
 
     -- Use the function to print the npeSetsContextQueue table
-    printlog("- [NPE] Activation Queue:")
-    print_table(npeSetsContextQueue.contexts)
-    printlog("- [NPE] Activation Queue list Ended")
+    printdebug("- [NPE] Activation Queue:")
+    debug_table(npeSetsContextQueue.contexts)
+    printdebug("- [NPE] Activation Queue list Ended")
     -- register the queued contexts with the npe_events
     Register_npe_callbacks()
 
