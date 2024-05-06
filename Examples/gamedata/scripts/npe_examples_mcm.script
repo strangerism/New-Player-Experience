@@ -19,7 +19,13 @@ function owns_item(item)
 end
 
 local EVENT = {
-    ITEM_OWNED = { name = "Item Owned", handler = {"npe_examples_mcm", "owns_item", "wpn_binoc_inv"} },
+    ITEM_OWNED = { 
+        name = "Item Owned", 
+        handler = { 
+            name = "on_actor_owning_binoculars",
+            functor = {"npe_examples_mcm", "owns_item", "wpn_binoc_inv" }
+        } 
+    },
 }
 
 local deck_npe_examples = { 
