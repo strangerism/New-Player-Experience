@@ -76,37 +76,37 @@ end
 
 function Play(set)
 	if set == nil then
-		printdebug("[NPE] play set is nil")
-		npe.Resume_play_loop()
+		printdebug("[NPE] Play set is nil")
+		npe_manager.Resume_execution()
 		return
 	end
 	SOUNDS_SET = npe_manager.Settings.sounds_set
-	printdebug("[NPE] SOUNDS_SET: " .. SOUNDS_SET)
-    printdebug("[NPE] play set module: " .. set.module .. " set Id:" .. set.id)
-	printdebug("[NPE] play set title: " .. set.title)
+	printdebug("[NPE] Sounds set: " .. SOUNDS_SET)
+    printdebug("[NPE] Play set module: " .. set.module .. " set Id:" .. set.id)
+	printdebug("[NPE] Play set title: " .. set.title)
 	if npe_manager.Settings.pause_game or set.context.pause_game then
     	pause_game(true)
 	end
 	play_sound(Sounds[SOUNDS_SET].open)
-    printdebug("[NPE] creating GUI")
+    printdebug("[NPE] Creating GUI")
     GUI = UINewPlayerExperience(set)
 
 	if (GUI) and (not GUI:IsShown()) then
-        printdebug("[NPE] showing GUI")
+        printdebug("[NPE] Showing GUI")
 		GUI:ShowDialog(true)
 		Register_UI("UINewPlayerExperience","npe_dialog")
     else
         printdebug("[NPE] GUI already shown")
-		npe.Resume_play_loop()
+		npe_manager.Resume_execution()
 		return
     end
 end
 
 local xml = nil
 function LoadUIStatic()
-	printdebug("[NPE] loadUIStatic")
+	printdebug("[NPE] LoadUIStatic")
 	if not xml then
-		printdebug("[NPE] loading ui_npe_dialog.xml")
+		printdebug("[NPE] Loading ui_npe_dialog.xml")
 		xml = CScriptXmlInit()
 		xml:ParseFile("ui_npe_dialog.xml")
 	end
@@ -264,9 +264,15 @@ function UINewPlayerExperience:Close()
 	if npe_manager.Settings.pause_game or self.set.context.pause_game then
     	pause_game(false)
 	end	
-	npe_manager.Resume_play_loop()
+	npe_manager.Resume_execution()
 end
 
+function UINewPlayerExperience:TearDown()
+	self:HideDialog()
+	self:Show(false)
+	Unregister_UI("UINewPlayerExperience")
+	GUI = nil    
+end
 function UINewPlayerExperience:OnKeyboard(dik, keyboard_action)
 	local res = CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
 

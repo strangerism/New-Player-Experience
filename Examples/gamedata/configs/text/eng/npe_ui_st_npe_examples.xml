@@ -13,6 +13,9 @@
 	<string id="ui_mcm_npe_module_npe_examples_binoculars">
 		<text>Binoculars Tutorial</text>
 	</string>
+	<string id="ui_mcm_npe_module_npe_examples_vodka">
+		<text>Vodka Tutorial</text>
+	</string>	
 	<string id="ui_mcm_npe_module_npe_examples_encumbrance">
 		<text>Encumbrance Tutorial</text>
 	</string>	
@@ -46,6 +49,28 @@
 		\n
 		\n
 		Use the hotkey 4 to equip the binocular. Right click mouse to use them 
+		</text>
+	</string>		
+
+	<!-- vodka tutorial set -->
+
+	<string id="ui_mcm_npe_module_npe_examples_vodka_set_title">
+		<text>Vodka Tutorial</text>
+	</string>
+	<string id="ui_npe_examples_vodka_card_title">
+		<text>%c[d_cyan]It's Vodka time</text>
+	</string>
+	<string id="ui_npe_examples_vodka_card_description">
+		<text>You have found a Vodka bottle. 
+		\n
+		\n
+		Vodka is a good drink to recover stamina and reduce radiation level.
+		\n
+		\n
+		You can also use Vodka to trade with other stalkers or to make cocktails.
+		\n
+		\n
+		To use Vodka, open your inventory and right click on the Vodka bottle.
 		</text>
 	</string>		
 

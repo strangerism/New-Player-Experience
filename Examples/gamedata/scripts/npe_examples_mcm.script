@@ -19,13 +19,20 @@ function owns_item(item)
 end
 
 local EVENT = {
-    ITEM_OWNED = { 
-        name = "Item Owned", 
+    BINOCULARS_OWNED = { 
+        name = "Binoculars Owned", 
         handler = { 
             name = "on_actor_owning_binoculars",
             functor = {"npe_examples_mcm", "owns_item", "wpn_binoc_inv" }
         } 
     },
+    VODKA_OWNED = { 
+        name = "Vodka Owned", 
+        handler = { 
+            name = "on_actor_owning_vodka",
+            functor = {"npe_examples_mcm", "owns_item", "vodka" }
+        } 
+    },    
 }
 
 local deck_npe_examples = { 
@@ -44,10 +51,25 @@ local deck_npe_examples = {
                 },
             },
             context = {
-                event = EVENT.ITEM_OWNED,
+                event = EVENT.BINOCULARS_OWNED,
                 delay = 30,
             },
         },
+        {
+            id = "vodka",
+            title = "ui_mcm_npe_module_npe_examples_vodka_set_title",
+            cards = {
+                [1] = {
+                    title = "ui_npe_examples_vodka_card_title",
+                    description = "ui_npe_examples_vodka_card_description",
+                    image = "ui_npe_examples_bino_card",
+                },
+            },
+            context = {
+                event = EVENT.VODKA_OWNED,
+                delay = 15,
+            },
+        },        
         {
             id = "anomalous_field",
             title = "ui_mcm_npe_module_npe_examples_anomalous_field_set_title",
@@ -125,6 +147,7 @@ function on_mcm_load()
 	op =  { id= "npe_examples", sh=true, text="ui_mcm_npe_module_npe_examples", gr ={
 				{id = "title",type= "slide",link= "ui_options_slider_player",text="ui_mcm_npe_module_npe_examples_title",size= {512,50},spacing= 20 },
                 {id = "binoculars", type = "check", val = 1, def=false},
+                {id = "vodka", type = "check", val = 1, def=false},
                 {id = "encumbrance", type = "check", val = 1, def=false},
                 {id = "anomalous_field", type = "check", val = 1, def=false},
                 {id = "irradiated", type = "check", val = 1, def=false},

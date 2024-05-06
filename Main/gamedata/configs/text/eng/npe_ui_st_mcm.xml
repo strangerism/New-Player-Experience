@@ -22,17 +22,17 @@
 	<string id="ui_mcm_npe_general_debug_logs_desc">
 		<text>Logs debug messages to the console</text>
 	</string>	
-	<string id="ui_mcm_npe_general_play_frequency">
+	<string id="ui_mcm_npe_general_play_loop">
 		<text>Interval between playing tutorials</text>
 	</string>
-	<string id="ui_mcm_npe_general_play_frequency_desc">
-		<text>Determine the delay in seconds between a tutorial context becoming active and its playing, or between tutorials if more then one is queued</text>
+	<string id="ui_mcm_npe_general_play_loop_desc">
+		<text>Determine the minimum delay (in seconds) between a tutorial context becoming active and the visualization of the tutorial, or between tutorials if more then one is queued</text>
 	</string>	
-	<string id="ui_mcm_npe_general_context_activation_loop">
-		<text>Interval between the evaluation of active tutorials</text>
+	<string id="ui_mcm_npe_general_execution_loop">
+		<text>Interval between each NPE execution loop</text>
 	</string>
-	<string id="ui_mcm_npe_general_context_activation_loop_desc">
-		<text>The frequency upon which NPC checks if a tutorial context is active and added to the queue (only used by certain types of tutorials)</text>
+	<string id="ui_mcm_npe_general_execution_loop_desc">
+		<text>The frequency upon which NPC runs all the registered contexts event handlers, to check if a context has become active</text>
 	</string>	
 	<string id="ui_mcm_npe_general_sounds_set">
 		<text>Sounds</text>
