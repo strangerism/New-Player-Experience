@@ -1,30 +1,30 @@
--- Define the functions before referencing them
-game_start = function()
-    printf("Game started")
-    return true
-end
+-- -- Define the functions before referencing them
+-- game_start = function()
+--     printf("Game started")
+--     return true
+-- end
 
-item_looted = function(item)
-    printf("Item looted %s", item)
+-- item_looted = function(item)
+--     printf("Item looted %s", item)
     
-    if item == "gun" then
-        return true
-    else
-        return false
-    end
-end
+--     if item == "gun" then
+--         return true
+--     else
+--         return false
+--     end
+-- end
 
 -- Now you can reference the functions in the table
 -- invoke = {
---     [npe.FUNCTORS.ITEM_LOOTED] = item_looted, 
+--     [npe.handlerS.ITEM_LOOTED] = item_looted, 
 -- }
 
 -- function actor_on_first_update()
 --     printf("Actor first update")
 
---     local event = {npe.FUNCTORS.ITEM_LOOTED, "gun"}
---     local functor =  
---     local outcome = execute_func(unpack(functor))
+--     local event = {npe.handlerS.ITEM_LOOTED, "gun"}
+--     local handler =  
+--     local outcome = execute_func(unpack(handler))
 --     -- local outcome = invoke[npe.EVENTS.NPC_LOOTED]("gun")
 --     printf("did I find a gun? %s", outcome)
 -- end
@@ -35,5 +35,5 @@ end
 -- end
 
 
--- functor= {"actor_status","get_overweight",true}	
--- local value = t.functor and execute_func(unpack(t.functor))
+-- handler= {"actor_status","get_overweight",true}	
+-- local value = t.handler and execute_func(unpack(t.handler))

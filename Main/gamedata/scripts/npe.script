@@ -11,10 +11,16 @@ local playableQueue = {
     setsKeys = {},
 }
 
-EVENT_TYPE = {
-    GAME_EVENT = "GAME_EVENT",
-    NPE_EVENT = "NPE_EVENT",
-    CUSTOM = "CUSTOM",
+-- EVENT_TYPE = {
+--     GAME_EVENT = "GAME_EVENT",
+--     NPE_EVENT = "NPE_EVENT",
+--     CUSTOM = "CUSTOM",
+-- }
+
+MODULE_TYPE = {
+    NONE = "none",
+    NPE = "npe",
+    ANOMALY = "anomaly",
 }
 
 Settings = {
@@ -51,6 +57,25 @@ local function map_from_set_key(key)
     return moduleId, setId
 end
 
+-- local function getContextInstanceOf(set, moduleId)
+--     local context = {
+--         event = set.context.event,
+--         delay = set.context.delay,
+--         pause_game = set.context.pause_game,
+--     }
+--     if not context.event.module then
+--         context.event.module = moduleId
+--         context.event.type = EVENT_TYPE.CUSTOM
+--     else
+--         if context.event.gane_event then
+--             context.event.type = EVENT_TYPE.GAME_EVENT
+--         else
+--             context.event.type = EVENT_TYPE.NPE_EVENT
+--         end
+--     end
+
+--     return context
+-- end
 
 local function add_to_sets_queue(set, moduleId)
     printdebug("[NPE] add_to_sets_queue %s %s", moduleId, set.id)
@@ -58,27 +83,18 @@ local function add_to_sets_queue(set, moduleId)
     printdebug("[NPE] setKey %s", setKey)
     if set ~= nil then
         local context = {
-            type = set.context.type,
             event = set.context.event,
-            functor = set.context.functor,
             delay = set.context.delay,
             pause_game = set.context.pause_game,
         }
         if not context.event.module then
             context.event.module = moduleId
-            context.event.type = EVENT_TYPE.CUSTOM
-        else
-            if context.event.gane_event then
-                context.event.type = EVENT_TYPE.GAME_EVENT
-            else
-                context.event.type = EVENT_TYPE.NPE_EVENT
-            end
         end
         -- Check if a context with the same contextId already exists
         if npeSetsQueue.contexts[setKey] == nil then
             -- Add the new context to the table with contextId as the key
             npeSetsQueue.contexts[setKey] = context
-            printdebug("context with id " .. setKey .. " added to the queue with event " .. context.event.name .. " and module " .. context.event.module .. " and type " .. context.event.type)
+            printdebug("context with id " .. setKey .. " added to the queue with event " .. context.event.name .. " and module " .. context.event.module .. " and module " .. context.event.module)
         else
             printlog("! context with id " .. setKey .. " already exists.")
             printlog("! context event " .. context.event.name .. " and module " .. context.event.module)
@@ -189,8 +205,8 @@ local function find_sets_on(event)
     printdebug("[NPE] find sets on %s", event.name)
     local setsKeys = {}
     for setKey, queued_context in pairs(npeSetsQueue.contexts) do
-        printdebug("[NPE] queued context name %s", queued_context.event.name)
         if compare_events(queued_context.event, event) then
+            printdebug("[NPE] queued context name %s", queued_context.event.name)
             table.insert(setsKeys, setKey)
         end
     end
@@ -200,21 +216,22 @@ end
 function Activate_contexts_on(event)
     printdebug("// [NPE] Activate contexts on %s", event.name)
     local setsKeys = find_sets_on(event)
-    printdebug("- [NPE] Found sets on %s:", event.name)
-    print_table(setsKeys)
-    add_to_playable_queue(setsKeys)
-    
+    if setsKeys then
+        printdebug("- [NPE] Found sets on %s:", event.name)
+        print_table(setsKeys)
+        add_to_playable_queue(setsKeys)
+    end
 end
 
 local function find_sets_with_custom_context()
     printdebug("// [NPE] find sets with custom context")
     local setsKeys = {}
     for setKey, context in pairs(npeSetsQueue.contexts) do
-        if context.event.type == EVENT_TYPE.CUSTOM then
+        if context.event.module ~= MODULE_TYPE.NONE and context.event.module ~= MODULE_TYPE.ANOMALY and context.event.module ~= MODULE_TYPE.NPE then
             printdebug("[NPE] Checking set %s", setKey)
-            -- printdebug("[NPE]" .. table.concat(context.functor, ', '))
-            local success = execute_func(unpack(context.event.functor))
-            printdebug("[NPE] Functor %s executed. Success: %s", setKey, success)
+            -- printdebug("[NPE]" .. table.concat(context.handler, ', '))
+            local success = execute_func(unpack(context.event.handler))
+            printdebug("[NPE] handler %s executed. Success: %s", setKey, success)
             if success then
                 table.insert(setsKeys, setKey)
             end
@@ -274,18 +291,11 @@ local function npe_contexts_activation_loop()
     if not run_context_activation_loop then return true end
     ResetTimeEvent(context_activation_loop_name, context_activation_loop_name, Settings.context_activation_loop)
 
-    -- find matching sets with ContextType.FUNCTOR and check eligibility
+    -- find matching sets with ContextType.handler and check eligibility
     local setsKeys = find_sets_with_custom_context()
 
     print_table(setsKeys)
     add_to_playable_queue(setsKeys)
-
-
-    -- find matching sets with ContextType.EVENT and check eligibility
-    -- setsKeys = find_active_contexts()
-    -- printdebug("//find_active_contexts:")
-    -- print_table(setsKeys)
-    -- add_to_playable_queue(setsKeys)
 
     printdebug("- [NPE] Playable Queue:")
     print_table(playableQueue.setsKeys)
@@ -367,6 +377,8 @@ local function npe_actor_on_first_update()
     Resume_play_loop()
 
     resume_contexts_activation_loop()
+
+    Activate_contexts_on(npe_events.EVENT.GAME_START)
 end
 
 local function on_option_change()

@@ -29,7 +29,7 @@ local deck_npe_welcome = {
                 },
             },
             context = {
-                event = npe_events.GAME_START,
+                event = npe_events.EVENT.GAME_START,
             },
         },
     },

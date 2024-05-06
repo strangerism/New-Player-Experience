@@ -1,6 +1,6 @@
 
 npe_default_settings = {
-    ["functor_test_01"]		= false	-- Enable/Disable New Player Experience
+    ["handler_test_01"]		= false	-- Enable/Disable New Player Experience
 }
 
 function owns_item(item)
@@ -18,8 +18,8 @@ function owns_item(item)
     return found
 end
 
-local EVENTS = {
-    ITEM_OWNED = { name = "Item Owned", functor = {"npe_examples_mcm", "owns_item", "wpn_binoc_inv"} },
+local EVENT = {
+    ITEM_OWNED = { name = "Item Owned", handler = {"npe_examples_mcm", "owns_item", "wpn_binoc_inv"} },
 }
 
 local deck_npe_examples = { 
@@ -38,7 +38,7 @@ local deck_npe_examples = {
                 },
             },
             context = {
-                event = EVENTS.ITEM_OWNED,
+                event = EVENT.ITEM_OWNED,
                 delay = 30,
             },
         },
@@ -53,7 +53,7 @@ local deck_npe_examples = {
                 },
             },
             context = {
-                event = npe_events.ENTERED_ANOMALOUS_FIELD,
+                event = npe_events.EVENT.ENTERED_ANOMALOUS_FIELD,
             },
         },
         {
@@ -67,7 +67,7 @@ local deck_npe_examples = {
                 },
             },
             context = {
-                event = npe_events.ACTOR_IRRADIATED,
+                event = npe_events.EVENT.ACTOR_IRRADIATED,
             },
         },
         {
@@ -81,7 +81,7 @@ local deck_npe_examples = {
                 },
             },
             context = {
-                event = npe_events.ACTOR_HIT,
+                event = npe_events.EVENT.ACTOR_HIT,
                 pause_game = true,
                 override = { module_name = "module_name", set_id = "set_id", event = "event" },
             },
@@ -107,7 +107,7 @@ local deck_npe_examples = {
                 },                
             },
             context = {
-                event = npe_events.ACTOR_OVERWEIGHT,
+                event = npe_events.EVENT.ACTOR_OVERWEIGHT,
             },
         },        
     },
