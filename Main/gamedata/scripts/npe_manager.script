@@ -23,6 +23,7 @@ Settings = {
     sounds_set = "NPE"
 }
 
+RegisteredCustomCallbacks = {}
 
 local function printlog(msg,...)
 	msg = msg or " "
@@ -426,7 +427,10 @@ function Register_npe_callbacks()
                     local callback_name = context.event.handler.module .. "_" .. context.event.handler.name
                     context.event.handler.callback_name = callback_name
                     add_to_execution_queue(context.event.handler)
-                    AddScriptCallback(callback_name)
+                    if not RegisteredCustomCallbacks[callback_name] then
+                        RegisteredCustomCallbacks[callback_name] = true
+                        AddScriptCallback(callback_name)
+                    end
                     printdebug("[NPE] Registering CUSTOM callback [" .. callback_name .. "] for [".. context.event.name .. "]")
                     RegisterScriptCallback(callback_name,activate_oneshot_event(context.event, callback_name))
                 end
