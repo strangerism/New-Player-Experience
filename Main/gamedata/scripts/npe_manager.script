@@ -48,10 +48,6 @@ end
 Printlog_npe = printlog
 Printdebug_npe = printdebug
 
-local function map_to_set_key(moduleId, setId)
-    return moduleId .. "/" .. setId
-end
-
 local function print_table(t, indent)
     if not t then
         return
@@ -86,42 +82,39 @@ Debug_table_npe = debug_table
 
 -- NPE hashing functions
 
+local function map_to_set_key(deckId, setId)
+    return deckId .. "/" .. setId
+end
+
 local function map_from_set_key(key)
     local split = string.gmatch(key, "[^/]+")
-    local moduleId = split()
+    local deckId = split()
     local setId = split()
-    return moduleId, setId
+    return deckId, setId
 end
 
 local function get_set_from_key(key)
-    local moduleId, setId = map_from_set_key(key)
-    local set = nil
-    for i, deck in ipairs(npeConfig.decks) do
-        if deck.module == moduleId then
-            for j, setEntry in ipairs(deck.sets) do
-                if setEntry.id == setId then
-                    set = setEntry
-                    break
-                end
-            end
-        end
+    local deckId, setId = map_from_set_key(key)
+    local deck = npeConfig.decks[deckId]
+    if deck ~= nil then
+        return deck.sets[setId], deckId, deck.module
     end
-    return set
+    return nil
 end
 
 -- NPE Modules registration
 
 local function add_deck(npeDeck)
     if npeDeck ~= nil then
-        local deckExists = false
-        for i, deck in ipairs(npeConfig.decks) do
-            if deck.id == npeDeck.id then
-                deckExists = true
-                break
+        if npeConfig.decks[npeDeck.id] == nil then
+            local indexedSets = {}
+            for _, set in pairs(npeDeck.sets) do
+                if not set.disabled then
+                indexedSets[set.id] = set
+                end
             end
-        end
-        if not deckExists then
-            table.insert(npeConfig.decks, npeDeck)
+            npeDeck.sets = indexedSets
+            npeConfig.decks[npeDeck.id] = npeDeck
         else
             printlog("![NPE][CONF] Deck with id [" .. npeDeck.id .. "] already exists.")
         end
@@ -130,7 +123,7 @@ end
 
 function Register_npe_module(deck)
 
-    printlog("//[NPE][".. deck.module .. "] Adding deck " .. deck.title .. " to NPE Manager.")
+    printlog("//[NPE][".. deck.id .. "] Adding deck " .. deck.title .. " to NPE Manager.")
     add_deck(deck)
 end
 
@@ -138,8 +131,8 @@ end
 
 local function update_decks_from_mcm()
     printdebug("//[NPE][CONF] Update decks from MCM")
-    for i, deck in ipairs(npeConfig.decks) do
-        for j, set in ipairs(deck.sets) do
+    for deckId, deck in pairs(npeConfig.decks) do
+        for setId, set in pairs(deck.sets) do
             set.played = npe_mcm.npe_module_get_setting(deck.module, set.id)
             if set.context.event.handler.executed then
                 set.context.event.handler.executed = false
@@ -149,6 +142,9 @@ local function update_decks_from_mcm()
             end
         end
     end
+end
+
+function apply_overrides_to_decks()
 end
 
 -- NPE Queues
@@ -175,9 +171,9 @@ local function find_sets_on(event)
     return setsKeys
 end
 
-local function add_to_sets_queue(set, moduleId)
-    -- printdebug("[NPE][QUEUE] Add sets to activation queue: [%s] [%s]", moduleId, set.id)
-    local setKey = map_to_set_key(moduleId, set.id)
+local function add_to_sets_queue(set, deckId, module)
+    -- printdebug("[NPE][QUEUE] Add sets to activation queue: [%s] [%s]", deckId, set.id)
+    local setKey = map_to_set_key(deckId, set.id)
     -- printdebug("[NPE][QUEUE] setKey [%s]", setKey)
     if set ~= nil then
         local context = {
@@ -186,18 +182,18 @@ local function add_to_sets_queue(set, moduleId)
             pause_game = set.context.pause_game,
         }
         if not context.event.handler.module then
-            context.event.handler.module = moduleId
+            context.event.handler.module = module
         end
         -- Check if a context with the same contextId already exists
-        if npeSetsActivationQueue.contexts[setKey] == nil then
-            -- Add the new context to the table with contextId as the key
-            npeSetsActivationQueue.contexts[setKey] = context
+            if npeSetsActivationQueue.contexts[setKey] == nil then
+                -- Add the new context to the table with contextId as the key
+                npeSetsActivationQueue.contexts[setKey] = context
             printdebug("[NPE][QUEUE] context with id [" .. setKey .. "] added to the queue with event [" .. context.event.name .. "] and module [" .. context.event.handler.module .. "]")
-        else 
+            else 
             -- TODO we should use here THE context.override directive to replace the contexts
-            printlog("![NPE][QUEUE] context with id [" .. setKey .. "] already exists.")
+                printlog("![NPE][QUEUE] context with id [" .. setKey .. "] already exists.")
             printlog("![NPE][QUEUE] context event [" .. context.event.name .. "] and module [" .. context.event.handler.module .. "]")
-        end
+            end
     end
 end
 
@@ -207,7 +203,7 @@ local function add_to_playable_queue(setsKeys)
     end
     for i, setKey in ipairs(setsKeys) do
         -- add set to the playable queue
-        local set = get_set_from_key(setKey)
+        local set, deckId, module = get_set_from_key(setKey)
         if set then
             if set.context.delay then 
                 if set.context.delay == 0 then
@@ -239,11 +235,11 @@ local function update_activation_queue()
     npeSetsActivationQueue = {
         contexts = {},
     }
-    for i, deck in ipairs(npeConfig.decks) do
-        for j, set in ipairs(deck.sets) do
+    for deckId, deck in pairs(npeConfig.decks) do
+        for setId, set in pairs(deck.sets) do
             -- Only call add_to_sets_queue if set.played is false
             if set.played == false then
-                add_to_sets_queue(set, deck.module)
+                add_to_sets_queue(set, deck.id, deck.module)
             end
         end
     end
@@ -252,7 +248,7 @@ end
 local function update_queued_contexts_countdowns()
     if playableOnCountdownQueue.setsKeys and #playableOnCountdownQueue.setsKeys > 0 then
         for i, setKey in ipairs(playableOnCountdownQueue.setsKeys) do
-            local set = get_set_from_key(setKey)
+            local set, deckId, module = get_set_from_key(setKey)
             if set and set.context.delay and set.context.delay > 0 then
                 if not set.context.countdown then
                     printdebug("[NPE][QUEUE] Play Set [%s] has a delay of %s", set.id, set.context.delay)
@@ -303,12 +299,12 @@ end
 
 -- NPE Play sets
 
-local function play_set(set, module)
+local function play_set(set)
     printdebug("[NPE][PLAY] Playing set [%s] from module [%s]", set.id, set.module)
     printdebug("[NPE][PLAY] Set Title: [%s]", set.title)
 
     set.played = true
-    npe_mcm.npe_module_set_setting(module, set.id, true)
+    npe_mcm.npe_module_set_setting(set.module, set.id, true)
     
     Pause_Execution()
     npe_dialog.Play(set)
@@ -317,12 +313,12 @@ end
 local function play_queued_set()
     if playableQueue.setsKeys and #playableQueue.setsKeys > 0 then
         local setKey = table.remove(playableQueue.setsKeys, 1)
-        local set = get_set_from_key(setKey)
+        local set, deckId, module = get_set_from_key(setKey)
         if set ~= nil then
-            local moduleId, unused = map_from_set_key(setKey)
-            set.module = moduleId
+            set.deckId = deckId
+            set.module = module
             if not npe_dialog.GUI then
-                play_set(set, set.module)
+                play_set(set)
             else
                 -- cannot play set, UI is busy. Put it back in the queue
                 table.insert(playableQueue.setsKeys, setKey)
@@ -334,12 +330,12 @@ end
 local function play_now_set()
     if playableHighPrioQueue.setsKeys and #playableHighPrioQueue.setsKeys > 0 then
         local setKey = table.remove(playableHighPrioQueue.setsKeys, 1)
-        local set = get_set_from_key(setKey)    
+        local set, deckId, module = get_set_from_key(setKey)    
         if set ~= nil then
-            local moduleId, unused = map_from_set_key(setKey)
-            set.module = moduleId
+            set.deckId = deckId
+            set.module = module
             if not npe_dialog.GUI then
-                play_set(set, set.module)
+                play_set(set)
             else
                 -- cannot play set, UI is busy. Put it back in the queue
                 table.insert(playableHighPrioQueue.setsKeys, setKey)
@@ -590,7 +586,7 @@ local function first_time_initialization()
     
    -- update the npeConfig table with the Settings from the MCM
    update_decks_from_mcm()
-
+   apply_overrides_to_decks()
    -- Use the function to print the npeConfig.decks table
    printlog("//[NPE][LOG] Decks")
    print_table(npeConfig.decks)
@@ -631,6 +627,9 @@ local function on_option_change()
     update_settings()
 
     update_decks_from_mcm()
+    
+    apply_overrides_to_decks()
+
     -- Use the function to print the npeConfig.decks table
     printdebug("//[NPE][LOG] Decks:")
     debug_table(npeConfig.decks)
