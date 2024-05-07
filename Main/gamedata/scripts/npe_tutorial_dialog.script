@@ -119,6 +119,8 @@ function Play(set)
 		npe_manager.Resume_execution()
 		return
 	end
+	npe_manager.Register_dialog(set.dialog)
+
 	SOUNDS_SET = npe_manager.Settings.sounds_set
 
     printdebug("[NPE][UI] Play set module: " .. set.module .. " set Id:" .. set.id)
@@ -143,12 +145,12 @@ function Play(set)
 end
 
 local xml = nil
-function LoadUIStatic()
+function LoadUIStatic(dialog)
 	printdebug("[NPE][UI] LoadUIStatic")
 	if not xml then
-		printdebug("[NPE][UI] Loading ui_npe_dialog.xml")
+		printdebug("[NPE][UI] Loading ui_npe_tutorial.xml")
 		xml = CScriptXmlInit()
-		xml:ParseFile("ui_npe_dialog.xml")
+		xml:ParseFile(dialog .. ".xml")
 	end
 end
 
@@ -167,17 +169,17 @@ function UINewPlayerExperience:InitControls(set)
 	self:SetWndRect			(Frect():set(0,0,1024,768))
 	self:SetAutoDelete(true)
 	self.set = set
-    LoadUIStatic()
+    LoadUIStatic(set.dialog)
     self.xml = xml
-	self.dialog	= xml:InitStatic("ui_npe_dialog", self)
-	self.frame	= xml:InitFrame("ui_npe_dialog:frame", self.dialog)
+	self.dialog	= xml:InitStatic(set.dialog, self)
+	self.frame	= xml:InitFrame(set.dialog .. ":frame", self.dialog)
 	
-	self.context = xml:InitTextWnd("ui_npe_dialog:context",self.dialog)
+	self.context = xml:InitTextWnd(set.dialog .. ":context",self.dialog)
 	self.context:SetText("%c[0,255,208,0]" .. "NPE > " .. set.context.event.name)
 
 	local text
 	text = game.translate_string(self.set.title)
-	self.set_title = xml:InitTextWnd("ui_npe_dialog:set_title",self.dialog)
+	self.set_title = xml:InitTextWnd(set.dialog .. ":set_title",self.dialog)
 	self.set_title:SetText(text)
 
 	-- card context
@@ -188,43 +190,43 @@ function UINewPlayerExperience:InitControls(set)
 		else
 			text = game.translate_string(self.set.title)
 		end
-		self.card_title = xml:InitTextWnd("ui_npe_dialog:card_title",self.dialog)
+		self.card_title = xml:InitTextWnd(set.dialog .. ":card_title",self.dialog)
 		self.card_title:SetText(text)
 	
-		self.top_line = xml:InitStatic("ui_npe_dialog:top_line",self.dialog)
+		self.top_line = xml:InitStatic(set.dialog .. ":top_line",self.dialog)
 
-		self.card_description = xml:InitTextWnd("ui_npe_dialog:card_description",self.dialog)
+		self.card_description = xml:InitTextWnd(set.dialog .. ":card_description",self.dialog)
 		text = game.translate_string(self.set.cards[self.cardIndex].description)
 		self.card_description:SetText(text)
 
-		self.card_image = xml:InitStatic("ui_npe_dialog:card_image",self.dialog)
+		self.card_image = xml:InitStatic(set.dialog .. ":card_image",self.dialog)
 		self.card_image:InitTexture(self.set.cards[self.cardIndex].image)
 	end
 
-    self.bottom_line = xml:InitStatic("ui_npe_dialog:bottom_line",self.dialog)
+    self.bottom_line = xml:InitStatic(set.dialog .. ":bottom_line",self.dialog)
 
-    self.card_index = xml:InitTextWnd("ui_npe_dialog:card_index",self.dialog)
+    self.card_index = xml:InitTextWnd(set.dialog .. ":card_index",self.dialog)
 	local max_card = #self.set.cards > 3 and 3 or #self.set.cards
 	self.card_index:SetText(self.cardIndex .. "/" .. max_card)
 
-    self.btn_close = xml:Init3tButton("ui_npe_dialog:btn_close", self.dialog)
+    self.btn_close = xml:Init3tButton(set.dialog .. ":btn_close", self.dialog)
 	self:Register(self.btn_close, "btn_close")	
 	self:AddCallback("btn_close", ui_events.BUTTON_CLICKED, self.OnButtonClose, self)
 
 	local current_gametime_state = get_game_time()
-    self.btn_pause = xml:Init3tButton("ui_npe_dialog:btn_pause", self.dialog)
+    self.btn_pause = xml:Init3tButton(set.dialog .. ":btn_pause", self.dialog)
 	self:Register(self.btn_pause, "btn_pause")	
 	self:AddCallback("btn_pause", ui_events.BUTTON_CLICKED, self.OnButtonGametime, self)
 
-    self.btn_resume = xml:Init3tButton("ui_npe_dialog:btn_resume", self.dialog)
+    self.btn_resume = xml:Init3tButton(set.dialog .. ":btn_resume", self.dialog)
 	self:Register(self.btn_resume, "btn_resume")	
 	self:AddCallback("btn_resume", ui_events.BUTTON_CLICKED, self.OnButtonGametime, self)	
 	
-    self.btn_next = xml:Init3tButton("ui_npe_dialog:btn_next", self.dialog)
+    self.btn_next = xml:Init3tButton(set.dialog .. ":btn_next", self.dialog)
 	self:Register(self.btn_next, "btn_next")	
 	self:AddCallback("btn_next", ui_events.BUTTON_CLICKED, self.OnButtonNext, self)
 
-    self.btn_prev = xml:Init3tButton("ui_npe_dialog:btn_prev", self.dialog)
+    self.btn_prev = xml:Init3tButton(set.dialog .. ":btn_prev", self.dialog)
     self:Register(self.btn_prev, "btn_prev")	
 	self:AddCallback("btn_prev", ui_events.BUTTON_CLICKED, self.OnButtonPrev, self)
 
@@ -328,6 +330,7 @@ function UINewPlayerExperience:Close()
 	GUI = nil    
 	play_sound(Sounds[SOUNDS_SET].close)
 	change_gametime_to(GAMETIME_STATE.INMOTION)
+	npe_manager.Unregister_dialog(self.set.dialog)
 	npe_manager.Resume_execution()
 end
 

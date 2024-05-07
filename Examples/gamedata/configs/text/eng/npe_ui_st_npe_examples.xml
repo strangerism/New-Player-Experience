@@ -30,6 +30,9 @@
 	</string>		
 	<string id="ui_mcm_npe_module_npe_examples_actor_hit">
 		<text>Actor receive damage Tutorial</text>
+	</string>		
+	<string id="ui_mcm_npe_module_npe_examples_drunken_introduction">
+		<text>Drunken Introduction (Overrides Introduction from NPE Welcome module)</text>
 	</string>			
 	<!-- deck_npe_examples -->
 
@@ -151,6 +154,10 @@
 		Use healing items to recover health and repair kits to repair your gear.
 		</text>
 	</string>	
+	<!-- encumbrance tutorial set -->
+	<string id="ui_mcm_npe_module_npe_examples_drunken_introduction_set_title">
+		<text>Celebrate your new game</text>
+	</string>
 
 	<!-- encumbrance tutorial set -->
 

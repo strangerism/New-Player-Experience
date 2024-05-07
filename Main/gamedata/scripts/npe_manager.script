@@ -1,3 +1,20 @@
+-- scripts namespace
+local npe = npe
+local npe_mcm = npe_mcm
+local execute_func = execute_func
+local printf = printf
+local unpack = unpack
+-- local table = table
+-- local pairs = pairs
+local AddScriptCallback = AddScriptCallback
+local SendScriptCallback = SendScriptCallback
+local CreateTimeEvent = CreateTimeEvent
+local RemoveTimeEvent = RemoveTimeEvent
+local ResetTimeEvent = ResetTimeEvent
+local UnregisterScriptCallback = UnregisterScriptCallback
+local RegisterScriptCallback = RegisterScriptCallback
+
+-- NPE Data Structures
 
 local npeConfig = {
     decks = {},
@@ -31,6 +48,10 @@ Settings = {
 }
 
 RegisteredCustomCallbacks = {}
+
+-- NPE FLAGS
+Dialog_in_use = false
+Dialog_name = nil
 
 -- NPE Utils
 
@@ -97,7 +118,7 @@ local function get_set_from_key(key)
     local deckId, setId = map_from_set_key(key)
     local deck = npeConfig.decks[deckId]
     if deck ~= nil then
-        return deck.sets[setId], deckId, deck.module
+        return deck.sets[setId], deckId, deck.module, deck.dialog
     end
     return nil
 end
@@ -178,7 +199,7 @@ local function apply_overrides_to_decks()
         printdebug("[NPE][OVERR] Searching into Deck [%s]:", deckId)
         for setId, set in pairs(deck.sets) do
             printdebug("[NPE][OVERR] Searching into Set [%s]:", setId)
-            if set.context and set.context.override then
+            if set.context and set.context.override and not set.played then
                 printdebug("[NPE][OVERR] Set [%s] has override rules:", setId)
                 debug_table(set.context.event.override)
                 local overrideDeckId = set.context.override.deckId
@@ -192,6 +213,8 @@ local function apply_overrides_to_decks()
                         printdebug("[NPE][OVERR] Override set [%s] title with [%s]", setToOverride.id, set.title)
                     end
                     setToOverride = override_contexts(set.context, setToOverride)
+                    setToOverride.played = false
+                    -- set the overridden flag to this set is not added to the activation queue
                     set.overridden = true
                     -- upodate the npeConfig.decks table with the new changes
                     npeConfig.decks[deckId].sets[setId] = set
@@ -359,6 +382,26 @@ end
 
 -- NPE Play sets
 
+local function start_dialog(set)
+    local dialog_functor = {set.dialog .. "_dialog", "Play", set}
+    execute_func(unpack(dialog_functor))
+end
+
+local function tear_down_dialog()
+    local dialog_functor = {Dialog_name .. "_dialog", "TearDown"}
+    execute_func(unpack(dialog_functor))
+end
+
+-- used by the dialog to register back to the NPE
+function Register_dialog(dialog)
+    Dialog_name = dialog
+    Dialog_in_use = true
+end
+function Unregister_dialog()
+    Dialog_name = nil
+    Dialog_in_use = false
+end
+
 local function play_set(set)
     printdebug("[NPE][PLAY] Playing set [%s] from module [%s]", set.id, set.module)
     printdebug("[NPE][PLAY] Set Title: [%s]", set.title)
@@ -367,17 +410,21 @@ local function play_set(set)
     npe_mcm.npe_module_set_setting(set.module, set.id, true)
     
     Pause_Execution()
-    npe_dialog.Play(set)
+
+    start_dialog(set)
 end
 
 local function play_queued_set()
     if playableQueue.setsKeys and #playableQueue.setsKeys > 0 then
         local setKey = table.remove(playableQueue.setsKeys, 1)
-        local set, deckId, module = get_set_from_key(setKey)
+        local set, deckId, module, dialog = get_set_from_key(setKey)
         if set ~= nil then
             set.deckId = deckId
             set.module = module
-            if not npe_dialog.GUI then
+            if not Dialog_in_use then
+                if not set.dialog then
+                    set.dialog = dialog
+                end
                 play_set(set)
             else
                 -- cannot play set, UI is busy. Put it back in the queue
@@ -390,11 +437,14 @@ end
 local function play_now_set()
     if playableHighPrioQueue.setsKeys and #playableHighPrioQueue.setsKeys > 0 then
         local setKey = table.remove(playableHighPrioQueue.setsKeys, 1)
-        local set, deckId, module = get_set_from_key(setKey)    
+        local set, deckId, module, dialog = get_set_from_key(setKey)    
         if set ~= nil then
             set.deckId = deckId
             set.module = module
-            if not npe_dialog.GUI then
+            if not Dialog_in_use then
+                if not set.dialog then
+                    set.dialog = dialog
+                end
                 play_set(set)
             else
                 -- cannot play set, UI is busy. Put it back in the queue
@@ -631,6 +681,10 @@ function Register_npe_callbacks()
 end
 
 local function update_settings()
+    -- NPE FLAGS
+    Dialog_in_use = false
+    Dialog_name = nil
+    -- NPE Settings
     Settings.debug_logs = npe_mcm.npe_get_setting("general", "debug_logs")
     Settings.enable = npe_mcm.npe_get_setting("general", "enable")
     Settings.execution_loop = npe_mcm.npe_get_setting("general", "execution_loop")
@@ -640,7 +694,7 @@ local function update_settings()
 end
 
 local function first_time_initialization()
-
+    printlog("//[NPE][EXEC] First time initialization")
     -- npe Settings
     update_settings()
     
@@ -666,7 +720,7 @@ local function first_time_initialization()
 end
 
 local function npe_actor_on_first_update()
-
+    printlog("//[NPE][EXEC] Actor on first update")
     -- initialize npe configuration
     first_time_initialization()
 
@@ -678,7 +732,8 @@ local function npe_actor_on_first_update()
     Activate_contexts_on(npe.EVENT.GAME_START)
 end
 
-local function on_option_change()
+local function mcm_on_option_change()
+    printdebug("//[NPE][EXEC] On option change")
     -- pausing all loops
     Pause_Execution()
     pause_context_countdowns_loop()
@@ -710,10 +765,10 @@ local function on_option_change()
     resume_context_countdowns_loop()
 end
 
-function teardown_npe()
+local function teardown_npe()
     printlog("//[NPE][EXEC] Teardown")
-	if npe_dialog.GUI ~= nil then
-        npe_dialog.GUI:TearDown()
+	if Dialog_in_use then
+        tear_down_dialog()
 	end
     remove_context_countdowns_loop()
     remove_execution_loop()
@@ -721,7 +776,7 @@ function teardown_npe()
 end
 
 function on_game_start()
-    RegisterScriptCallback("on_option_change", on_option_change)
+    RegisterScriptCallback("on_option_change", mcm_on_option_change)
     RegisterScriptCallback("actor_on_first_update", npe_actor_on_first_update)
     RegisterScriptCallback("actor_on_net_destroy", teardown_npe)
     RegisterScriptCallback("actor_on_before_death",teardown_npe)
