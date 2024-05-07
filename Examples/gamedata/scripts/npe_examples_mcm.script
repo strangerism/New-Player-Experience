@@ -112,9 +112,29 @@ local deck_npe_examples = {
             context = {
                 event = npe.EVENT.ACTOR_HIT,
                 pause_game = true,
-                override = { module_name = "module_name", set_id = "set_id", event = "event" },
             },
-        },                      
+        },
+        {
+            id = "drunken_introduction",
+            title = "ui_mcm_npe_module_npe_examples_drunken_introduction_set_title",
+            cards = {
+                [1] = {
+                },
+                [2] = {
+                    title = "ui_npe_examples_vodka_card_title",
+                    description = "ui_npe_examples_vodka_card_description",
+                    image = "ui_npe_examples_bino_card",
+                },
+                [3] = {
+                },
+            },
+            context = {
+                event = npe.EVENT.GAME_START,
+                delay = 0,
+                override = { deckId = "npe_welcome", setId = "introduction"},                
+            },
+            disabled = false,
+        },                              
         {
             id = "encumbrance",
             title = "ui_mcm_npe_module_npe_examples_encumbrance_set_title",
@@ -154,6 +174,7 @@ function on_mcm_load()
                 {id = "anomalous_field", type = "check", val = 1, def=false},
                 {id = "irradiated", type = "check", val = 1, def=false},
                 {id = "actor_hit", type = "check", val = 1, def=false},
+                {id = "drunken_introduction", type = "check", val = 1, def=false},
 			}
 		}
         -- op =  { id= "npe_examples", sh=true, text="ui_mcm_npe_module_npe_examples", gr=paw_mcm_ext.populate_set_menus(deck_npe_examples)}

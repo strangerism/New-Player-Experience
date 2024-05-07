@@ -134,6 +134,10 @@ local function update_decks_from_mcm()
     for deckId, deck in pairs(npeConfig.decks) do
         for setId, set in pairs(deck.sets) do
             set.played = npe_mcm.npe_module_get_setting(deck.module, set.id)
+            -- reset the overridden flag
+            if set.overridden then
+                set.overridden = false
+            end
             if set.context.event.handler.executed then
                 set.context.event.handler.executed = false
             end
@@ -144,7 +148,60 @@ local function update_decks_from_mcm()
     end
 end
 
-function apply_overrides_to_decks()
+local function override_cards(set, setToOverride)
+    for cardKey, card in pairs(set.cards) do
+        if setToOverride.cards[cardKey] ~= nil then
+            for fieldKey, fieldValue in pairs(card) do
+                if fieldValue ~= nil then
+                    printdebug("[NPE][OVERR] Override card [%s] field [%s] with value [%s]", cardKey, fieldKey, fieldValue)
+                    setToOverride.cards[cardKey][fieldKey] = fieldValue
+                end
+            end
+        end
+    end
+    return setToOverride
+end
+
+local function override_contexts(context, setToOverride)
+    for contextKey, contextValue in pairs(context) do
+        if contextKey ~= "override" and contextValue ~= nil then
+            printdebug("[NPE][OVERR] Override context [%s] with value [%s]", contextKey, contextValue)
+            setToOverride.context[contextKey] = contextValue
+        end
+    end
+    return setToOverride
+end
+
+local function apply_overrides_to_decks()
+    printdebug("//[NPE][CONF] Apply overrides to decks")
+    for deckId, deck in pairs(npeConfig.decks) do
+        printdebug("[NPE][OVERR] Searching into Deck [%s]:", deckId)
+        for setId, set in pairs(deck.sets) do
+            printdebug("[NPE][OVERR] Searching into Set [%s]:", setId)
+            if set.context and set.context.override then
+                printdebug("[NPE][OVERR] Set [%s] has override rules:", setId)
+                debug_table(set.context.event.override)
+                local overrideDeckId = set.context.override.deckId
+                local overrideSetId = set.context.override.setId
+                if npeConfig.decks[overrideDeckId] and npeConfig.decks[overrideDeckId].sets[overrideSetId] then
+                    local setToOverride = npeConfig.decks[overrideDeckId].sets[overrideSetId]
+                    printdebug("[NPE][OVERR] Override set [%s] data with content from set [%s]", setToOverride.id, set.id)
+                    setToOverride = override_cards(set, setToOverride)
+                    if set.title then
+                        setToOverride.title = set.title
+                        printdebug("[NPE][OVERR] Override set [%s] title with [%s]", setToOverride.id, set.title)
+                    end
+                    setToOverride = override_contexts(set.context, setToOverride)
+                    set.overridden = true
+                    -- upodate the npeConfig.decks table with the new changes
+                    npeConfig.decks[deckId].sets[setId] = set
+                    npeConfig.decks[overrideDeckId].sets[overrideSetId] = setToOverride                    
+                else
+                    printlog("![NPE][OVERR] Deck with id [%s] or Set with id [%s] to for overriding, does not exist.", overrideDeckId, overrideSetId)
+                end
+            end
+        end
+    end
 end
 
 -- NPE Queues
@@ -176,6 +233,9 @@ local function add_to_sets_queue(set, deckId, module)
     local setKey = map_to_set_key(deckId, set.id)
     -- printdebug("[NPE][QUEUE] setKey [%s]", setKey)
     if set ~= nil then
+        -- do not queue a set that was used to override another set
+        if set.overridden then return end
+        -- Create a context table with the event and delay from the set
         local context = {
             event = set.context.event,
             delay = set.context.delay,
