@@ -46,6 +46,9 @@ local NPE_LOW = "NPE_LOW"
 local NPE_MEDIUM = "NPE_MEDIUM"
 local RADIO = "RADIO"
 local SOUNDS_SET
+local FROM_HIGH = "FROM_HIGH"
+local FROM_LOW = "FROM_LOW"
+local FROM_MEDIUM = "FROM_MEDIUM"
 Sounds = {
 	[PDA] = {
 		open =  sound_object([[device\pda\pda_guide]]),
@@ -54,20 +57,20 @@ Sounds = {
 		close = sound_object([[device\pda\pda_note]])
 	},
 	[NPE_HIGH] = {
-		open =  sound_object([[interface\npe\open_panel-alt_high]]),
-		next =  sound_object([[interface\npe\next_page_high]]),
+		open =  sound_object([[interface\npe\open_panel-bb-alt_high]]),
+		next =  sound_object([[interface\npe\next_page-bb_high]]),
 		prev =  sound_object([[interface\npe\prev_page_high]]),
 		close = sound_object([[interface\npe\close_panel_high]])
 	},
 	[NPE_MEDIUM] = {
-		open =  sound_object([[interface\npe\open_panel-alt_med]]),
-		next =  sound_object([[interface\npe\next_page_med]]),
+		open =  sound_object([[interface\npe\open_panel-bb-alt_med]]),
+		next =  sound_object([[interface\npe\next_page-bb_med]]),
 		prev =  sound_object([[interface\npe\prev_page_med]]),
 		close = sound_object([[interface\npe\close_panel_med]])
 	},	
 	[NPE_LOW] = {
-		open =  sound_object([[interface\npe\open_panel-alt]]),
-		next =  sound_object([[interface\npe\next_page]]),
+		open =  sound_object([[interface\npe\open_panel-bb-alt]]),
+		next =  sound_object([[interface\npe\next_page-bb]]),
 		prev =  sound_object([[interface\npe\prev_page]]),
 		close = sound_object([[interface\npe\close_panel]])
 	},
@@ -76,7 +79,25 @@ Sounds = {
 		next = sound_object([[detectors\rf\beep]]),
 		prev = sound_object([[detectors\rf\beep]]),
 		close = sound_object([[detectors\rf\off]])
-	}	
+	},
+	[FROM_HIGH] = {
+		open =  sound_object([[interface\npe\open_panel-bb_high]]),
+		next =  sound_object([[interface\npe\next_page-er_high]]),
+		prev =  sound_object([[interface\npe\prev_page_high]]),
+		close = sound_object([[interface\npe\close_panel_high]])
+	},
+	[FROM_MEDIUM] = {
+		open =  sound_object([[interface\npe\open_panel-bb_med]]),
+		next =  sound_object([[interface\npe\next_page-er_med]]),
+		prev =  sound_object([[interface\npe\prev_page_med]]),
+		close = sound_object([[interface\npe\close_panel_med]])
+	},
+	[FROM_LOW] = {
+		open =  sound_object([[interface\npe\open_panel-bb]]),
+		next =  sound_object([[interface\npe\next_page-er]]),
+		prev =  sound_object([[interface\npe\prev_page]]),
+		close = sound_object([[interface\npe\close_panel]])
+	}			
 }
 
 local snd
@@ -324,6 +345,10 @@ function UINewPlayerExperience:OnKeyboard(dik, keyboard_action)
 				printdebug("[NPE] OnKeyboard DIK_ESCAPE")
 				self:Close()
 			end
+			if dik == DIK_keys.DIK_SPACE then
+				printdebug("[NPE] OnKeyboard DIK_ESCAPE")
+				self:OnButtonGametime()
+			end			
 		end
     end
     return res
