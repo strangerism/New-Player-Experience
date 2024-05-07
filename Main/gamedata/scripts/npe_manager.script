@@ -11,6 +11,10 @@ local playableQueue = {
     setsKeys = {},
 }
 
+local playableHighPrioQueue = {
+    setsKeys = {},
+}
+
 local playableOnCountdownQueue = {
     setsKeys = {},
 }
@@ -102,10 +106,16 @@ local function add_to_playable_queue(setsKeys)
     for i, setKey in ipairs(setsKeys) do
         -- add set to the playable queue
         local set = get_set_from_key(setKey)
-        if set and set.context.delay and set.context.delay > 0 then
-            printdebug("[NPE] Set [%s] has a delay of [%s] - Set added to the countdown queue",set.context.delay, setKey)
-            table.insert(playableOnCountdownQueue.setsKeys, setKey)
+        if set and set.context.delay then 
+            if set.context.delay == 0 then
+                printdebug("[NPE] Set [%s] plays instantly - Set added to the high priority queue",set.context.delay, setKey)
+                table.insert(playableHighPrioQueue.setsKeys, setKey)                
+            else 
+                printdebug("[NPE] Set [%s] has a delay of [%s] - Set added to the countdown queue",set.context.delay, setKey)
+                table.insert(playableOnCountdownQueue.setsKeys, setKey)
+            end
         else
+            printdebug("[NPE] Set [%s] plays with default play_loop - Set added to the play queue",set.context.delay, setKey)
             table.insert(playableQueue.setsKeys, setKey)
         end
         -- removes it from the npeSetsContextQueue
@@ -151,8 +161,6 @@ local function update_decks_from_mcm()
         end
     end
 end
-
-
 
 local function update_activation_queue()
     printdebug("// [NPE] Update activation queue")
@@ -274,7 +282,19 @@ local function update_queued_contexts_countdowns()
     end
 end
 
-local function play_random_set(self)
+local function play_set(set, module)
+    printdebug("// [NPE] play_queued_set")
+    -- Call the function that will play the set
+    printdebug("[NPE] Playing set [%s] from module [%s]", set.id, set.module)
+    printdebug("[NPE] Set Title: [%s]", set.title)
+    set.played = true
+    npe_mcm.npe_module_set_setting(module, set.id, true)
+    printdebug("[NPE] starting dialog")
+    Pause_Execution()
+    npe_dialog.Play(set)
+end
+
+local function play_queued_set()
     if playableQueue.setsKeys and #playableQueue.setsKeys > 0 then
         local setKey = table.remove(playableQueue.setsKeys, 1)
         local set = get_set_from_key(setKey)
@@ -282,15 +302,7 @@ local function play_random_set(self)
             local moduleId, unused = map_from_set_key(setKey)
             set.module = moduleId
             if not npe_dialog.GUI then
-                printdebug("// [NPE] play_random_set")
-                -- Call the function that will play the set
-                printdebug("[NPE] Playing set [%s] from module [%s]", set.id, set.module)
-                printdebug("[NPE] Set Title: [%s]", set.title)
-                set.played = true
-                npe_mcm.npe_module_set_setting(moduleId, set.id, true)
-                printdebug("[NPE] starting dialog")
-                Pause_Execution()
-                npe_dialog.Play(set)
+                play_set(set, set.module)
             else
                 -- cannot play set, UI is busy. Put it back in the queue
                 table.insert(playableQueue.setsKeys, setKey)
@@ -299,6 +311,22 @@ local function play_random_set(self)
     end
 end
 
+local function play_now_set(set)
+    if playableHighPrioQueue.setsKeys and #playableHighPrioQueue.setsKeys > 0 then
+        local setKey = table.remove(playableHighPrioQueue.setsKeys, 1)
+        local set = get_set_from_key(setKey)    
+        if set ~= nil then
+            local moduleId, unused = map_from_set_key(setKey)
+            set.module = moduleId
+            if not npe_dialog.GUI then
+                play_set(set, set.module)
+            else
+                -- cannot play set, UI is busy. Put it back in the queue
+                table.insert(playableHighPrioQueue.setsKeys, setKey)
+            end
+        end
+    end
+end
 ---- NPE Execution ----
 
 -- Execution loop
@@ -360,7 +388,7 @@ local function remove_context_countdowns_loop()
     RemoveTimeEvent(run_context_countdowns_name, run_context_countdowns_name)
 end
 
--- Play loop
+-- Play Queued loop
 local run_play_loop = false
 local play_loop_name = 'NPE_Play_Loop'
 
@@ -369,7 +397,7 @@ local function npe_play_loop()
     if not run_play_loop then return true end
     ResetTimeEvent(play_loop_name, play_loop_name, Settings.play_loop)
 
-    play_random_set()
+    play_queued_set()
 
     return false
 end
@@ -390,15 +418,47 @@ local function remove_play_loop()
     RemoveTimeEvent(play_loop_name, play_loop_name)
 end
 
+-- Play Now loop
+local run_play_now_loop = false
+local play_now_loop_name = 'NPE_Play_Now_Loop'
+
+local function npe_play_now_loop()
+    printdebug("// [NPE] Play loop")
+    if not run_play_now_loop then return true end
+    ResetTimeEvent(play_now_loop_name, play_now_loop_name, 1)
+
+    play_now_set()
+
+    return false
+end
+
+local function pause_play_now_loop()
+    printdebug("[NPE] pausing play now loop")
+    run_play_now_loop = false
+end
+
+local function resume_play_now_loop()
+    if run_play_now_loop then return end
+    printdebug("[NPE] resuming play now loop")
+    run_play_now_loop = true
+    CreateTimeEvent(play_now_loop_name, play_now_loop_name, 10, npe_play_now_loop) -- offset time 10 seconds
+end
+
+local function remove_play_now_loop()
+    RemoveTimeEvent(play_now_loop_name, play_now_loop_name)
+end
+
 -- execution controls
 
 function Resume_execution() 
     resume_play_loop()
+    resume_play_now_loop()
     resume_execution_loop()
 end
 
 function Pause_Execution()
     pause_play_loop()
+    pause_play_now_loop()
     pause_execution_loop()
 end
 
@@ -528,6 +588,7 @@ function teardown_npe()
     remove_context_countdowns_loop()
     remove_execution_loop()
     remove_play_loop()
+    remove_play_now_loop()
 end
 
 function on_game_start()

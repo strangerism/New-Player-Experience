@@ -89,7 +89,7 @@
 		<text>Pause game</text>
 	</string>	
 	<string id="ui_npe_dialog_btn_resume">
-		<text>Resume game</text>
+		<text>Game paused</text>
 	</string>	
 	<string id="ui_npe_dialog_btn_next">
 		<text>Next</text>

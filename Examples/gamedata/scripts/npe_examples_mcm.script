@@ -52,7 +52,7 @@ local deck_npe_examples = {
             },
             context = {
                 event = EVENT.BINOCULARS_OWNED,
-                delay = 30,
+                delay = 0,
             },
         },
         {
@@ -155,7 +155,7 @@ function on_mcm_load()
                 {id = "actor_hit", type = "check", val = 1, def=false},
 			}
 		}
-
+        -- op =  { id= "npe_examples", sh=true, text="ui_mcm_npe_module_npe_examples", gr=paw_mcm_ext.populate_set_menus(deck_npe_examples)}
 	return op, "npe_module"
 end
 
