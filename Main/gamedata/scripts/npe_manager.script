@@ -11,6 +11,9 @@ local playableQueue = {
     setsKeys = {},
 }
 
+local playableOnCountdownQueue = {
+    setsKeys = {},
+}
 local npeExecutionQueue = {
     handlers = {},
 }
@@ -98,7 +101,13 @@ local function add_to_playable_queue(setsKeys)
 
     for i, setKey in ipairs(setsKeys) do
         -- add set to the playable queue
-        table.insert(playableQueue.setsKeys, setKey)
+        local set = get_set_from_key(setKey)
+        if set and set.context.delay and set.context.delay > 0 then
+            printdebug("[NPE] Set [%s] has a delay of [%s] - Set added to the countdown queue",set.context.delay, setKey)
+            table.insert(playableOnCountdownQueue.setsKeys, setKey)
+        else
+            table.insert(playableQueue.setsKeys, setKey)
+        end
         -- removes it from the npeSetsContextQueue
         npeSetsContextQueue.contexts[setKey] = nil
     end
@@ -245,12 +254,21 @@ local function run_execution_queue()
 end
 
 local function update_queued_contexts_countdowns()
-    if playableQueue.setsKeys and #playableQueue.setsKeys > 0 then
-        for i, setKey in ipairs(playableQueue.setsKeys) do
+    if playableOnCountdownQueue.setsKeys and #playableOnCountdownQueue.setsKeys > 0 then
+        for i, setKey in ipairs(playableOnCountdownQueue.setsKeys) do
             local set = get_set_from_key(setKey)
-            if set and set.context.countdown and set.context.countdown > 0 then
-                printdebug("[NPE] Context [%s] countdown is %s", set.context.event.name, set.context.countdown)
-                set.context.countdown = set.context.countdown - 1
+            if set and set.context.delay and set.context.delay > 0 then
+                if not set.context.countdown then
+                    printdebug("[NPE] Play Set [%s] has a delay of %s", set.id, set.context.delay)
+                    set.context.countdown = set.context.delay
+                elseif set.context.countdown > 0 then
+                    printdebug("[NPE] Context [%s] countdown is %s", set.context.event.name, set.context.countdown)
+                    set.context.countdown = set.context.countdown - 1
+                elseif set.context.countdown == 0 then
+                    printdebug("[NPE] Context [%s] countdown is over", set.context.event.name)
+                    table.insert(playableQueue.setsKeys, setKey)
+                    table.remove(playableOnCountdownQueue.setsKeys, i)
+                end
             end
         end
     end
@@ -258,23 +276,9 @@ end
 
 local function play_random_set(self)
     if playableQueue.setsKeys and #playableQueue.setsKeys > 0 then
-        local randomIndex = math.random(#playableQueue)
-        local setKey = table.remove(playableQueue.setsKeys, randomIndex)
+        local setKey = table.remove(playableQueue.setsKeys, 1)
         local set = get_set_from_key(setKey)
         if set ~= nil then
-            if set.context.delay and set.context.delay > 0 then
-                if not set.context.countdown then
-                    printdebug("[NPE] Play Set [%s] has a delay of %s", set.id, set.context.delay)
-                    set.context.countdown = set.context.delay
-                    table.insert(playableQueue.setsKeys, setKey)
-                    return
-                elseif set.context.countdown > 0 then
-                    printdebug("[NPE] Play Set [%s] countdown is %s", set.id, set.context.countdown)
-                    table.insert(playableQueue.setsKeys, setKey)
-                    return
-                end
-                -- countdown is over so we can play the set
-            end
             local moduleId, unused = map_from_set_key(setKey)
             set.module = moduleId
             if not npe_dialog.GUI then

@@ -31,6 +31,7 @@ local deck_npe_welcome = {
             context = {
                 event = npe.EVENT.GAME_START,
                 pause_game = true,
+                delay = 30,
             },
         },
     },
