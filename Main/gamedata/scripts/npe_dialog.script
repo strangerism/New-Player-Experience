@@ -5,12 +5,21 @@ local printdebug = npe_manager.Printdebug_npe
 GUI = nil -- instance, don't touch
 
 local GAMETIME_STATE = {
-	STOPPED = 0,
-	INMOTION = 1 
+	STOPPED = 1,
+	INMOTION = 0 
 }
 
 local function change_gametime_to(state)
-	exec_console_cmd("time_factor " .. state)
+	exec_console_cmd("freeze_time " .. state)
+end
+
+local function get_game_time()
+	local state = tonumber(get_console_cmd(0,"time_factor"))
+	if state == 0 then
+		return GAMETIME_STATE.STOPPED
+	else
+		return GAMETIME_STATE.INMOTION
+	end
 end
 
 local function pause_game(pause)
@@ -20,6 +29,15 @@ local function pause_game(pause)
 		exec_console_cmd("freeze_time off")
 	end
 	
+end
+
+local function flip_time()
+	local state = get_game_time()
+	if state == GAMETIME_STATE.STOPPED then
+		change_gametime_to(GAMETIME_STATE.INMOTION)
+	else
+		change_gametime_to(GAMETIME_STATE.STOPPED)
+	end
 end
 
 local PDA = "PDA"
@@ -85,7 +103,7 @@ function Play(set)
     printdebug("[NPE] Play set module: " .. set.module .. " set Id:" .. set.id)
 	printdebug("[NPE] Play set title: " .. set.title)
 	if npe_manager.Settings.pause_game or set.context.pause_game then
-    	pause_game(true)
+    	change_gametime_to(GAMETIME_STATE.STOPPED)
 	end
 	play_sound(Sounds[SOUNDS_SET].open)
     printdebug("[NPE] Creating GUI")
@@ -171,6 +189,15 @@ function UINewPlayerExperience:InitControls(set)
 	self:Register(self.btn_close, "btn_close")	
 	self:AddCallback("btn_close", ui_events.BUTTON_CLICKED, self.OnButtonClose, self)
 
+	local current_gametime_state = get_game_time()
+    self.btn_pause = xml:Init3tButton("ui_npe_dialog:btn_pause", self.dialog)
+	self:Register(self.btn_pause, "btn_pause")	
+	self:AddCallback("btn_pause", ui_events.BUTTON_CLICKED, self.OnButtonGametime, self)
+
+    self.btn_resume = xml:Init3tButton("ui_npe_dialog:btn_resume", self.dialog)
+	self:Register(self.btn_resume, "btn_resume")	
+	self:AddCallback("btn_resume", ui_events.BUTTON_CLICKED, self.OnButtonGametime, self)	
+	
     self.btn_next = xml:Init3tButton("ui_npe_dialog:btn_next", self.dialog)
 	self:Register(self.btn_next, "btn_next")	
 	self:AddCallback("btn_next", ui_events.BUTTON_CLICKED, self.OnButtonNext, self)
@@ -197,7 +224,7 @@ function UINewPlayerExperience:UpdateButtons()
 	else
 		self.btn_next:Show(true)
 	end
-
+	self:UpdateGametimeButtons()
 end
 
 function UINewPlayerExperience:OnButtonClose()
@@ -255,15 +282,30 @@ function UINewPlayerExperience:OnButtonPrev()
 	self:UpdateButtons()
 end
 
+function UINewPlayerExperience:UpdateGametimeButtons()
+	local state = get_game_time()
+	if state == GAMETIME_STATE.STOPPED then
+		self.btn_pause:Show(false)
+		self.btn_resume:Show(true)
+	else
+		self.btn_pause:Show(true)
+		self.btn_resume:Show(false)
+	end
+end
+
+function UINewPlayerExperience:OnButtonGametime()
+	printdebug("[NPE] OnButtonGametime")
+	flip_time()
+	self:UpdateGametimeButtons()
+end
+
 function UINewPlayerExperience:Close()
 	self:HideDialog()
 	self:Show(false)
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
 	play_sound(Sounds[SOUNDS_SET].close)
-	if npe_manager.Settings.pause_game or self.set.context.pause_game then
-    	pause_game(false)
-	end	
+	change_gametime_to(GAMETIME_STATE.INMOTION)
 	npe_manager.Resume_execution()
 end
 
