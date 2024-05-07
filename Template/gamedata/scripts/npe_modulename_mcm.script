@@ -169,7 +169,6 @@ end
 
 function on_game_start()
     if npe then
-        npe_manager.Printlog_npe("// [NPE] Adding deck " .. deck_npe_modulename.title .. " to NPE Manager.")
-        npe_manager.Add_deck(deck_npe_modulename)
+        npe_manager.Register_npe_module(deck_npe_modulename)
     end
 end

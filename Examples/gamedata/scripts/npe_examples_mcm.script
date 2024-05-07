@@ -67,7 +67,7 @@ local deck_npe_examples = {
             },
             context = {
                 event = EVENT.VODKA_OWNED,
-                delay = 15,
+                delay = 0,
             },
         },        
         {
@@ -96,6 +96,7 @@ local deck_npe_examples = {
             },
             context = {
                 event = npe.EVENT.ACTOR_IRRADIATED,
+                delay = 10,
             },
         },
         {
@@ -161,7 +162,6 @@ end
 
 function on_game_start()
     if npe then
-        npe_manager.Printlog_npe("// [NPE] Adding deck " .. deck_npe_examples.title .. " to NPE Manager.")
-        npe_manager.Add_deck(deck_npe_examples)
+        npe_manager.Register_npe_module(deck_npe_examples)
     end
 end

@@ -30,8 +30,6 @@ local deck_npe_welcome = {
             },
             context = {
                 event = npe.EVENT.GAME_START,
-                pause_game = true,
-                delay = 30,
             },
         },
     },
@@ -48,9 +46,9 @@ function on_mcm_load()
 	return op, "npe_module"
 end
 
+
 function on_game_start()
     if npe then
-        npe_manager.Printlog_npe("// [NPE] Adding deck " .. deck_npe_welcome.title .. " to NPE Manager.")
-        npe_manager.Add_deck(deck_npe_welcome)
+        npe_manager.Register_npe_module(deck_npe_welcome)
     end
 end
