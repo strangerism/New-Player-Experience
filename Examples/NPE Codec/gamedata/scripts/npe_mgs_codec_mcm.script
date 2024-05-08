@@ -83,6 +83,7 @@ local deck_npe_mgs_codec = {
         {
             id = "unknown_com",
             title = "ui_mcm_npe_module_mgs_codec_unknown_com_set_title",
+            codec_frequency = 140.85,
             cards = {
                 [1] = {
                     title = "ui_mgs_codec_unknown_com_card_title",
@@ -90,6 +91,12 @@ local deck_npe_mgs_codec = {
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
                 },
+                [2] = {
+                    title = "ui_mgs_codec_unknown_com_card_title",
+                    message = "ui_mgs_codec_unknown_com_card_message",
+                    portrait_caller = "ui_npe_mgs_codec_otacon",
+                    portrait_actor = "ui_npe_mgs_codec_snake",
+                },                
             },
             context = {
                 -- here you are using a custom event

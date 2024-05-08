@@ -1,6 +1,6 @@
 <w>
 	<file name="ui\npe_mgs_codec\mgs_portraits">
-		<texture id="ui_npe_mgs_codec_snake" x="0" y="0" width="185" height="300" />
-		<texture id="ui_npe_mgs_codec_otacon" x="552" y="0" width="185" height="300" />
+		<texture id="ui_npe_mgs_codec_snake" x="6" y="0" width="178" height="300" />
+		<texture id="ui_npe_mgs_codec_otacon" x="550" y="0" width="178" height="300" />
 	</file>		
 </w>

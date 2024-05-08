@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="windows-1251"?>
+
+<string_table>
+	<string id="npe_codec_btn_continue">
+		<text>Continue</text>
+	</string>	
+	<string id="npe_codec_btn_exit">
+		<text>Close</text>
+	</string>						
+</string_table>

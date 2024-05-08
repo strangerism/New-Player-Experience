@@ -1,0 +1,11 @@
+<w>
+	<file name ="ui\npe\mgs2-codec-frame">
+		<texture id = "ui_npe_mgs2_codec_frame" x="0" y="0" width="1024" height="576" />
+	</file>
+	<file name ="ui\npe\mgs2-codec_small">
+		<texture id = "ui_npe_mgs2_codec" x="0" y="0" width="1024" height="576" />
+	</file>
+	<file name ="ui\npe\mgs2-codec_750">
+		<texture id = "ui_npe_mgs2_codec_750" x="0" y="0" width="750" height="422" />
+	</file>  	    
+</w>
