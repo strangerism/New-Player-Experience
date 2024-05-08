@@ -2,9 +2,9 @@
 
 <string_table>
 	<string id="npe_codec_btn_continue">
-		<text>Continue</text>
+		<text>Space to continue</text>
 	</string>	
-	<string id="npe_codec_btn_exit">
-		<text>Close</text>
+	<string id="npe_codec_btn_close">
+		<text>End</text>
 	</string>						
 </string_table>

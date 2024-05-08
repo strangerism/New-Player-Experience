@@ -21,48 +21,20 @@
             <text r="250" g="250" b="250" font="graffiti32" align="c" vert_align="c" complex_mode="1"></text>
         </codec_frequency>
 
-        <card_title x="0" y="220" width="750" height="30" stretch="1">
+        <card_title x="0" y="217" width="750" height="30" stretch="1">
             <text r="250" g="250" b="250" font="letterica18" align="c" vert_align="c" complex_mode="1"></text>
         </card_title>
    
-        <message x="70" y="240" width="180" height="74" stretch="1">
+        <message x="70" y="240" width="500" height="74" stretch="1">
             <text r="250" g="250" b="250" font="letterica18" align="l" vert_align="t" complex_mode="1"></text>
         </message>   
-
-        <btn_close x="53" y="375" width="60" height="30" stretch="1">
-			<text align="c" font="letterica16" complex_mode="1">npe_tutorial_btn_close</text>
-			<!-- <texture>ui_button_ordinary</texture> -->
-        </btn_close>
-
-        <btn_pause x="123" y="375" width="60" height="30" stretch="1">
-			<text align="c" font="letterica16" complex_mode="1">npe_tutorial_btn_pause</text>
-			<!-- <texture>ui_button_ordinary</texture> -->
-        </btn_pause>
-        <btn_resume x="123" y="375" width="60" height="30" stretch="1">
-			<text align="c" font="letterica16" complex_mode="1">npe_tutorial_btn_resume</text>
-			<!-- <texture>ui_button_ordinary</texture> -->
-        </btn_resume>    
-
-        <card_index x="0" y="375" width="750" height="30" stretch="1">
-            <text r="250" g="250" b="250" font="letterica18" align="c" vert_align="c" complex_mode="1"></text>
-        </card_index>    
-
-        <btn_next x="631" y="375" width="60" height="30" stretch="1">
-			<text align="c" font="letterica16" complex_mode="1">npe_tutorial_btn_next</text>
-			<!-- <texture>ui_button_ordinary</texture> -->
-        </btn_next>
-
-        <btn_prev x="561" y="375" width="60" height="30" stretch="1">
-			<text align="c" font="letterica16" complex_mode="1">npe_tutorial_btn_prev</text>
-			<!-- <texture>ui_button_ordinary</texture> -->
-        </btn_prev> 
 
         <btn_continue x="350" y="375" width="60" height="30" stretch="1">
             <text align="c" font="letterica16" complex_mode="1">npe_codec_btn_continue</text>
         </btn_continue>
 
-        <btn_exit x="350" y="375" width="60" height="30" stretch="1">
-            <text align="c" font="letterica16" complex_mode="1">npe_codec_btn_exit</text>
-        </btn_exit>                          
+        <btn_close x="350" y="375" width="60" height="30" stretch="1">
+            <text align="c" font="letterica16" complex_mode="1">npe_codec_btn_close</text>
+        </btn_close>                          
     </npe_codec>
 </w>

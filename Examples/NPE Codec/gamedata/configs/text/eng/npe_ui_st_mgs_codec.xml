@@ -10,20 +10,20 @@
 	<string id="ui_mcm_npe_module_mgs_codec_title">
 		<text>MGS Codec driven questlines</text>
 	</string>
-	<string id="ui_mcm_npe_module_mgs_codec_unknown_com">
-		<text>Unknown communication</text>
+	<string id="ui_mcm_npe_module_mgs_codec_old_friend">
+		<text>An old friend</text>
 	</string>			
 	<!-- deck_mgs_codec -->
 
 	<!-- binoculars tutorial set -->
 
-	<string id="ui_mcm_npe_module_mgs_codec_unknown_com_set_title">
-		<text>Unknown communication</text>
+	<string id="ui_mcm_npe_module_mgs_codec_old_friend_set_title">
+		<text>An old friend</text>
 	</string>
-	<string id="ui_mgs_codec_unknown_com_card_title">
+	<string id="ui_mgs_codec_old_friend_card1_title">
 		<text>%c[d_blue]Snake?</text>
 	</string>
-	<string id="ui_mgs_codec_unknown_com_card_message">
+	<string id="ui_mgs_codec_old_friend_card1_message">
 		<text>Snake, Snake. 
 		\n
 		\n
@@ -33,7 +33,26 @@
 		It can't be.
 		\n
 		\n
-		Snakeeeeee!
+		Snake...
 		</text>
-	</string>	
+	</string>
+	<string id="ui_mgs_codec_old_friend_card2_title">
+		<text>%c[d_blue]You're not supposed to be there</text>
+	</string>
+	<string id="ui_mgs_codec_old_friend_card2_message">
+		<text>This cannot be!
+		\n
+		\n
+		I though you escaped this reality when we jumped togheter through that portal
+		\n
+		\n
+		This is unfortunate
+		\n
+		\n
+		You have to do something, Snake. 
+		\n
+		\n
+		You are in danger! 		
+		</text>
+	</string>		
 </string_table>
