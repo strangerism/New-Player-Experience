@@ -340,7 +340,7 @@ local function update_queued_contexts_countdowns()
                     set.context.countdown = set.context.countdown - 1
                 elseif set.context.countdown == 0 then
                     printdebug("[NPE][QUEUE] Context [%s] countdown is over", set.context.event.name)
-                    table.insert(playableQueue.setsKeys, setKey)
+                    table.insert(playableHighPrioQueue.setsKeys, setKey)
                     table.remove(playableOnCountdownQueue.setsKeys, i)
                 end
             end
