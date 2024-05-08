@@ -138,14 +138,6 @@ local function codec_call_loop(set)
     return false
 end
 
--- local function pause_codec_call_loop()
---     if not run_codec_call_loop then return end
-
---     printdebug("![NPE][EXEC] pausing codec_call loop")
---     run_codec_call_loop = false
--- 	codec_ring_count = 0
--- end
-
 local function start_codec_call_loop(set)
     if run_codec_call_loop then return end
 
@@ -154,6 +146,14 @@ local function start_codec_call_loop(set)
 	codec_ring_count = 0
     CreateTimeEvent(codec_call_loop_name, codec_call_loop_name, 1, codec_call_loop, set)
 end
+
+-- local function pause_codec_call_loop()
+--     if not run_codec_call_loop then return end
+
+--     printdebug("![NPE][EXEC] pausing codec_call loop")
+--     run_codec_call_loop = false
+-- 	codec_ring_count = 0
+-- end
 
 function Play(set)
 	if set == nil then
@@ -260,8 +260,9 @@ function UINewPlayerExperience:InitControls(set)
 	self:UpdateButtons()
 end
 
+local ratio = (device().height / device().width) / (768 / 1024) 
 function UINewPlayerExperience:PositionWindow()
-	local ratio = (device().height / device().width) / (768 / 1024) 
+	ratio = (device().height / device().width) / (768 / 1024) 
 	printdebug("[NPE][UI] PositionWindow ratio: " .. ratio)
 	local x_translate = 200 * ratio
 	local y_translate =  100 * ratio
@@ -269,6 +270,60 @@ function UINewPlayerExperience:PositionWindow()
 	local pos = self.dialog:GetWndPos()
 	self.dialog:SetWndPos( vector2():set(pos.x + x_translate, pos.y - 8 + y_translate))
 end
+
+-- local run_render_animation_loop = false
+-- local render_animation_loop_name = 'NPE_render_animation_Loop'
+-- local render_animation_loop_time = 0.5
+-- local max_dialog_width = nil
+-- local max_dialog_height = nil
+-- local dialog_width_ratio = nil
+-- local dialog_height_ratio = nil
+-- local function render_animation_loop(self)
+--     if not run_render_animation_loop then return true end
+
+--     printdebug("//[NPE][EXEC] render_animation loop")
+-- 	if dialog_width_ratio < 1 then
+-- 		dialog_width_ratio = dialog_width_ratio + 0.05
+-- 	end
+-- 	if dialog_height_ratio < 1 then
+-- 		dialog_height_ratio = dialog_height_ratio + 0.05
+-- 	end
+-- 	printdebug("[NPE][UI] render_animation_loop width_ratio: " .. dialog_width_ratio .. " height_ratio: " .. dialog_height_ratio
+-- )
+-- 	self.codec_bg:SetWndSize(vector2():set(max_dialog_width * ratio * dialog_width_ratio, max_dialog_width * ratio * dialog_height_ratio))
+-- 	-- printdebug("[NPE][UI] render_animation_loop width: " .. self.dialog:GetWidth() .. " height: " .. self.dialog:GetHeight())
+-- 	-- set dialog to show if it's the first loop
+-- 	if not self.dialog:IsShown() then
+-- 		self.dialog:Show(true)
+-- 	end
+-- 	if dialog_width_ratio <= 1 or dialog_height_ratio <= 1 then
+--     	ResetTimeEvent(render_animation_loop_name, render_animation_loop_name,render_animation_loop_time)
+-- 		return
+-- 	end
+
+-- 	run_render_animation_loop = false
+-- 	printlog("[NPE][UI] render_animation_loop ended ")
+
+--     return false
+-- end
+
+-- local function start_render_animation_loop(self)
+--     if run_render_animation_loop then return end
+
+--     printdebug("-[NPE][EXEC] resuming render_animation loop")
+--     run_render_animation_loop = true
+-- 	dialog_width_ratio = 0
+-- 	dialog_height_ratio = 0
+--     CreateTimeEvent(render_animation_loop_name, render_animation_loop_name, render_animation_loop_time, render_animation_loop, self)
+-- end
+
+
+-- function UINewPlayerExperience:StartRenderAnimation()
+-- 	max_dialog_width = self.codec_bg:GetWidth()
+-- 	max_dialog_height = self.codec_bg:GetHeight()
+-- 	printdebug("[NPE][UI] StartRenderAnimation codec_bg max width: " .. max_dialog_width .. " max height: " .. max_dialog_height)
+-- 	start_render_animation_loop(self)
+-- end
 
 function UINewPlayerExperience:UpdateButtons()
 	printdebug("[NPE][UI] UpdateButtons")
