@@ -41,11 +41,11 @@ end
 --      Define here all your custom events that use the custom event handlers defined above
 
 local EVENT = {
-    BINOCULARS_OWNED = { 
-        name = "Binoculars Owned", 
+    RF_RECEIVER_OWNED = { 
+        name = "RF Receiver Owned", 
         handler = { 
-            name = "on_actor_owning_binoculars",
-            functor = {"npe_mgs_codec_mcm", "owns_item", "wpn_binoc_inv" }
+            name = "on_actor_owning_rf-receiver",
+            functor = {"npe_mgs_codec_mcm", "owns_item", "detector_radio" }
         } 
     },
     VODKA_OWNED = { 
@@ -100,7 +100,7 @@ local deck_npe_mgs_codec = {
             },
             context = {
                 -- here you are using a custom event
-                event = EVENT.BINOCULARS_OWNED,
+                event = EVENT.RF_RECEIVER_OWNED,
                 -- delay is optional and it's the time in seconds after the event is triggered before the set is shown 
                 -- this time can vary depending on the number of playable sets in the queued_context at the moment of the activation
                 -- the number set it's the minimum not guaranteed
