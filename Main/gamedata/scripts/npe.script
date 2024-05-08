@@ -2,11 +2,14 @@
 -- The events are defined as constants
 
 MODULE_TYPE = {
-    NONE = "none",
-    NPE = "npe",
-    ANOMALY = "anomaly",
+    NONE = "NONE",
+    NPE = "NPE",
+    ANOMALY = "ANOMALY",
 }
-
+DIALOG = {
+    TUTORIAL = "npe_tutorial",
+    CODEC = "npe_codec"
+}
 EVENT = {
 
     GAME_START = { name = "Game Start", handler = { name ="on_game_start", module = MODULE_TYPE.NONE } },
