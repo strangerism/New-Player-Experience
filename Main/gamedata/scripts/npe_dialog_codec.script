@@ -1,0 +1,310 @@
+
+local printlog = npe_manager.Printlog_npe
+local printdebug = npe_manager.Printdebug_npe
+local get_console_cmd = get_console_cmd
+local exec_console_cmd = exec_console_cmd
+local sound_object = sound_object
+local npe_dialog = npe_dialog
+local db = db
+local game = game
+local ui_events = ui_events
+local DIK_keys = DIK_keys
+local Register_UI = Register_UI
+local Unregister_UI = Unregister_UI
+local CUIScriptWnd = CUIScriptWnd
+local CScriptXmlInit = CScriptXmlInit
+local InitStatic = InitStatic
+local InitFrame = InitFrame
+local InitTextWnd = InitTextWnd
+local Init3tButton = Init3tButton
+local InitTexture = InitTexture
+local vector2 = vector2
+local device = device
+local GetFontGraffiti50Russian = GetFontGraffiti50Russian
+local CreateTimeEvent = CreateTimeEvent
+local ResetTimeEvent = ResetTimeEvent
+GUI = nil -- instance, don't touch
+
+GAMETIME_STATE = npe_dialog.GAMETIME_STATE
+Sounds = npe_dialog.Sounds
+-- codec dialog force use MGS_CODEC sounds
+local SOUNDS_SET = npe_dialog.MGS_CODEC
+
+local function open_codec(set)
+    printdebug("[NPE][UI] Play set module: " .. set.module .. " set Id:" .. set.id)
+	printdebug("[NPE][UI] Play set title: " .. set.title)
+	printdebug("[NPE][UI] Sounds set: " .. SOUNDS_SET)
+	-- Change_gametime_to(GAMETIME_STATE.STOPPED)
+
+	npe_dialog.Play_sound(Sounds[SOUNDS_SET].open)
+    printdebug("[NPE][UI] Creating GUI")
+    GUI = UINewPlayerExperience(set)
+
+	if (GUI) and (not GUI:IsShown()) then
+        printdebug("[NPE][UI] Showing GUI")
+		GUI:ShowDialog(true)
+		Register_UI("UINewPlayerExperience","npe_dialog")
+    else
+        printdebug("[NPE][UI] GUI already shown")
+		npe_manager.Resume_execution()
+		return
+    end
+end
+
+local run_codec_call_loop = false
+local codec_call_loop_name = 'NPE_codec_call_Loop'
+local codec_ring_count = 0
+local codec_ring_count_answer = 3
+local function codec_call_loop(set)
+    if not run_codec_call_loop then return true end
+
+    printdebug("//[NPE][EXEC] codec_call loop")
+	npe_dialog.Play_sound(Sounds[SOUNDS_SET].call)
+
+	codec_ring_count = codec_ring_count + 1
+	if codec_ring_count < codec_ring_count_answer then
+    	ResetTimeEvent(codec_call_loop_name, codec_call_loop_name, 2)
+		return
+	end
+
+	printlog("[NPE][UI] codec_call_loop ended ")
+	run_codec_call_loop = false
+	codec_ring_count = 0
+
+    open_codec(set)
+
+    return false
+end
+
+local function start_codec_call_loop(set)
+    if run_codec_call_loop then return end
+
+    printdebug("-[NPE][EXEC] resuming codec_call loop")
+    run_codec_call_loop = true
+	codec_ring_count = 0
+    CreateTimeEvent(codec_call_loop_name, codec_call_loop_name, 1, codec_call_loop, set)
+end
+
+-- local function pause_codec_call_loop()
+--     if not run_codec_call_loop then return end
+
+--     printdebug("![NPE][EXEC] pausing codec_call loop")
+--     run_codec_call_loop = false
+-- 	codec_ring_count = 0
+-- end
+
+function Play(set)
+	if set == nil then
+		printdebug("[NPE][UI] Play set is nil")
+		npe_manager.Resume_execution()
+		return
+	end
+	npe_manager.Register_dialog(set.dialog)
+
+	start_codec_call_loop(set)
+end
+
+
+
+local xml = nil
+function LoadUIStatic(dialog)
+	printdebug("[NPE][UI] LoadUIStatic")
+	if not xml then
+		printdebug("[NPE][UI] Loading " .. dialog .. ".xml")
+		xml = CScriptXmlInit()
+		xml:ParseFile(dialog .. ".xml")
+	end
+	return xml
+end
+
+-------------------------------------------------------------------
+class "UINewPlayerExperience" (CUIScriptWnd)
+
+function UINewPlayerExperience:__init(set) super()
+	self:InitControls(set)
+end
+
+function UINewPlayerExperience:__finalize()
+end
+
+function UINewPlayerExperience:InitControls(set)
+    printdebug("[NPE][UI] Init Codec UI")
+	self:SetWndRect			(Frect():set(0,0,1024,768))
+	self:SetAutoDelete(true)
+	self.set = set
+    LoadUIStatic(set.dialog)
+    self.xml = xml
+	if not xml then
+		printdebug("[NPE][UI] Error loading " .. set.dialog .. ".xml")
+		return
+	end
+
+	printdebug("[NPE][UI] Creating Codec frame")
+	self.dialog	= xml:InitStatic(set.dialog, self)
+	self.frame	= xml:InitFrame(set.dialog .. ":frame", self.dialog)
+
+	self.codec_bg = xml:InitStatic(set.dialog .. ":codec_bg",self.dialog)
+	self.codec_bg:InitTexture("ui_npe_mgs2_codec_750")	
+
+	local text
+	text = game.translate_string(self.set.title)
+	self.set_title = xml:InitTextWnd(set.dialog .. ":set_title",self.dialog)
+	self.set_title:SetText(text)
+
+    self.codec_frequency = xml:InitTextWnd(set.dialog .. ":codec_frequency",self.dialog)
+	self.codec_frequency:SetFont(GetFontGraffiti50Russian())
+	self.codec_frequency:SetText(self.set.codec_frequency)
+
+	-- card context
+	self.cardIndex = 1
+	if self.set.cards[self.cardIndex] then
+		printdebug("[NPE][UI] Creating Codec cards panel")
+
+		self.portrait_caller = xml:InitStatic(set.dialog .. ":portrait_caller",self.dialog)
+		self.portrait_caller:InitTexture(self.set.cards[self.cardIndex].portrait_caller)
+
+		self.portrait_actor = xml:InitStatic(set.dialog .. ":portrait_actor",self.dialog)
+		self.portrait_actor:InitTexture(self.set.cards[self.cardIndex].portrait_actor)		
+
+		if self.set.cards[self.cardIndex].title then
+			text = game.translate_string(self.set.cards[self.cardIndex].title)
+		else
+			text = game.translate_string(self.set.title)
+		end
+		self.card_title = xml:InitTextWnd(set.dialog .. ":card_title",self.dialog)
+		self.card_title:SetText(text)
+
+		self.message = xml:InitTextWnd(set.dialog .. ":message",self.dialog)
+		text = game.translate_string(self.set.cards[self.cardIndex].message)
+		self.message:SetText(text)
+
+		if self.set.cards[self.cardIndex].sound then 
+			local delay = 0.5
+			npe_dialog.Play_sound_with_delay(self.set.cards[self.cardIndex].sound, delay)
+		end
+	end
+
+	printdebug("[NPE][UI] Creating Codec controls")
+
+	-- btn_continue
+    self.btn_continue = xml:Init3tButton(set.dialog .. ":btn_continue", self.dialog)
+	self:Register(self.btn_continue, "btn_continue")	
+	self:AddCallback("btn_continue", ui_events.BUTTON_CLICKED, self.OnButtonContinue, self)
+
+	-- btn_close
+    self.btn_close = xml:Init3tButton(set.dialog .. ":btn_close", self.dialog)
+	self:Register(self.btn_close, "btn_close")	
+	self:AddCallback("btn_close", ui_events.BUTTON_CLICKED, self.OnButtonClose, self)
+
+	printdebug("[NPE][UI] Rendering Codec UI")
+	self:PositionWindow()
+	self:UpdateButtons()
+end
+
+local ratio = (device().height / device().width) / (768 / 1024) 
+function UINewPlayerExperience:PositionWindow()
+	ratio = (device().height / device().width) / (768 / 1024) 
+	printdebug("[NPE][UI] PositionWindow ratio: " .. ratio)
+	local x_translate = 200 * ratio
+	local y_translate =  100 * ratio
+
+	local pos = self.dialog:GetWndPos()
+	self.dialog:SetWndPos( vector2():set(pos.x + x_translate, pos.y - 8 + y_translate))
+end
+
+function UINewPlayerExperience:UpdateButtons()
+	printdebug("[NPE][UI] UpdateButtons")
+
+	if self.cardIndex < #self.set.cards then
+		self.btn_continue:Show(true)
+		self.btn_close:Show(false)
+	end
+
+	if self.cardIndex == #self.set.cards then
+		self.btn_continue:Show(false)
+		self.btn_close:Show(true)
+	end
+end
+
+function UINewPlayerExperience:OnButtonClose()
+    self:Close()
+end
+
+function UINewPlayerExperience:OnButtonContinue()
+    printdebug("[NPE][UI] OnButtonContinue")
+	self.cardIndex = self.cardIndex + 1
+	if self.cardIndex <= #self.set.cards and self.set.cards[self.cardIndex] then
+
+		self.portrait_caller:InitTexture(self.set.cards[self.cardIndex].portrait_caller)
+		self.portrait_actor:InitTexture(self.set.cards[self.cardIndex].portrait_actor)
+
+		local text
+		if self.set.cards[self.cardIndex].title then
+			text = game.translate_string(self.set.cards[self.cardIndex].title)
+		else
+			text = game.translate_string(self.set.title)
+		end
+		self.card_title:SetText(text)
+	
+		text = game.translate_string(self.set.cards[self.cardIndex].message)
+		self.message:SetText(text)
+	else
+		self.cardIndex = #self.set.cards
+	end
+	if self.set.cards[self.cardIndex].sound then 
+		npe_dialog.Play_sound(self.set.cards[self.cardIndex].sound)
+	else
+		npe_dialog.Play_sound(Sounds[SOUNDS_SET].next)
+	end
+	self:UpdateButtons()
+end
+
+local function close_dialog(dialog)
+	printlog("[NPE][UI] close_dialog_after_delay")
+	GUI:HideDialog()
+	GUI:Show(false)
+	Unregister_UI("UINewPlayerExperience")
+	GUI = nil    
+	npe_dialog.Play_sound(Sounds[SOUNDS_SET].close)
+	npe_dialog.Change_gametime_to(GAMETIME_STATE.INMOTION)
+	npe_manager.Unregister_dialog(dialog)
+	npe_manager.Resume_execution()
+	return true
+end
+
+function UINewPlayerExperience:Close()
+	printlog("[NPE][UI] Close")
+	if self.set.end_sound then 
+		printdebug("[NPE][UI] Play end sound")
+		npe_dialog.Play_sound(self.set.end_sound)
+		CreateTimeEvent("close_dialog_after_delay", "close_dialog_after_delay", 2, close_dialog, self.set.dialog)
+	else
+		-- delay is 0
+		close_dialog(self.set.dialog)
+		printdebug("[NPE][UI] close_dialog_after_delay")
+	end
+end
+
+function UINewPlayerExperience:TearDown()
+	self:HideDialog()
+	self:Show(false)
+	Unregister_UI("UINewPlayerExperience")
+	GUI = nil    
+end
+function UINewPlayerExperience:OnKeyboard(dik, keyboard_action)
+	local res = CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
+
+	if (res == false) then
+		if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+			if dik == DIK_keys.DIK_SPACE then
+				printdebug("[NPE][UI] OnKeyboard DIK_SPACE")
+				if self.cardIndex == #self.set.cards then
+					self:Close()
+				else
+					self:OnButtonContinue()					
+				end
+			end			
+		end
+    end
+    return res
+end

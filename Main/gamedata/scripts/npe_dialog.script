@@ -1,0 +1,145 @@
+
+local printlog = npe_manager.Printlog_npe
+local printdebug = npe_manager.Printdebug_npe
+local get_console_cmd = get_console_cmd
+local exec_console_cmd = exec_console_cmd
+local sound_object = sound_object
+
+GUI = nil -- instance, don't touch
+
+GAMETIME_STATE = {
+	STOPPED = 1,
+	INMOTION = 0 
+}
+
+function Change_gametime_to(state)
+    printdebug("[NPE][UI] Change game time to: " .. state)
+	exec_console_cmd("freeze_time " .. state)
+end
+
+function Get_game_time()
+	local state = tonumber(get_console_cmd(0,"time_factor"))
+	if state == 0 then
+		return GAMETIME_STATE.STOPPED
+	else
+		return GAMETIME_STATE.INMOTION
+	end
+end
+
+function Pause_game(pause)
+	if pause then
+		exec_console_cmd("freeze_time on")
+	else
+		exec_console_cmd("freeze_time off")
+	end
+	
+end
+
+function Flip_time()
+	local state = Get_game_time()
+	if state == GAMETIME_STATE.STOPPED then
+		Change_gametime_to(GAMETIME_STATE.INMOTION)
+	else
+		Change_gametime_to(GAMETIME_STATE.STOPPED)
+	end
+end
+
+PDA = "PDA"
+NPE_HIGH = "NPE_HIGH"
+NPE_LOW = "NPE_LOW"
+NPE_MEDIUM = "NPE_MEDIUM"
+RADIO = "RADIO"
+FROM_HIGH = "FROM_HIGH"
+FROM_LOW = "FROM_LOW"
+FROM_MEDIUM = "FROM_MEDIUM"
+MGS_CODEC = "MGS_CODEC"
+
+Sounds = {
+	[PDA] = {
+		open =  "device\\pda\\pda_guide",
+		next =  "radio\\interact\\click",
+		prev =  "radio\\interact\\click",
+		close = "device\\pda\\pda_note"
+	},
+	[NPE_HIGH] = {
+		open =  "interface\\npe\\open_panel-bb-alt_high",
+		next =  "interface\\npe\\next_page-bb_high",
+		prev =  "interface\\npe\\prev_page_high",
+		close = "interface\\npe\\close_panel_high"
+	},
+	[NPE_MEDIUM] = {
+		open =  "interface\\npe\\open_panel-bb-alt_med",
+		next =  "interface\\npe\\next_page-bb_med",
+		prev =  "interface\\npe\\prev_page_med",
+		close = "interface\\npe\\close_panel_med"
+	},	
+	[NPE_LOW] = {
+		open =  "interface\\npe\\open_panel-bb-alt",
+		next =  "interface\npe\next_page-bb",
+		prev =  "interface\\npe\\prev_page",
+		close = "interface\\npe\\close_panel"
+	},
+    [RADIO] = {
+        open = "detectors\\rf\\on",
+        next = "detectors\\rf\\beep",
+        prev = "detectors\\rf\\beep",
+        close = "detectors\\rf\\off"
+    },
+    [FROM_HIGH] = {
+        open = "interface\\npe\\open_panel-bb_high",
+        next = "interface\\npe\\next_page-er_high",
+        prev = "interface\\npe\\prev_page_high",
+        close = "interface\\npe\\close_panel_high"
+    },
+    [FROM_MEDIUM] = {
+        open = "interface\\npe\\open_panel-bb_med",
+        next = "interface\\npe\\next_page-er_med",
+        prev = "interface\\npe\\prev_page_med",
+        close = "interface\\npe\\close_panel_med"
+    },
+    [FROM_LOW] = {
+        open = "interface\\npe\\open_panel-bb",
+        next = "interface\\npe\\next_page-er",
+        prev = "interface\\npe\\prev_page",
+        close = "interface\\npe\\close_panel"
+    },
+	[MGS_CODEC] = {
+		call =  "interface\\npe\\mgs-codec-call",
+		open =  "interface\\npe\\mgs-codec-on",
+		next =  "interface\\npe\\mgs_item_picku",
+		prev =  "interface\\npe\\mgs_item_picku",
+		close = "interface\\npe\\mgs-codec-close"
+	},    			
+}
+
+local snd
+function Stop_sound()
+	printdebug("[NPE][UI] Stop sound")
+	if snd then
+		snd:stop()
+		snd = nil
+	end
+end
+function Play_sound(sound)
+	Stop_sound()
+    if sound == nil then
+       printdebug("[NPE][UI] Play sound: sound is nil")
+    end
+	printdebug("[NPE][UI] Play sound: %s", sound)
+	snd = sound_object(sound)
+	snd:play(db.actor,0,sound_object.s2d)
+	return true
+end
+
+function Play_delayed_sound(sound)
+	Stop_sound()
+	printdebug("[NPE][UI] Play delayed sound: %s", sound)
+	snd = sound_object(sound)
+	snd:play(db.actor,0,sound_object.s2d)
+	return true
+end
+
+function Play_sound_with_delay(sound, delay)
+	printdebug("[NPE][UI] Play sound with delay: " .. sound .. " delay: " .. delay)
+	CreateTimeEvent("play_sound_with_delay", "play_sound_with_delay", delay, Play_delayed_sound, sound)
+end
