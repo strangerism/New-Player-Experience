@@ -90,12 +90,14 @@ local deck_npe_mgs_codec = {
                     message = "ui_mgs_codec_old_friend_card1_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
+                    sound = "npe\\mgs_codec\\voiceover\\otacon\\listentome",
                 },
                 [2] = {
                     title = "ui_mgs_codec_old_friend_card2_title",
                     message = "ui_mgs_codec_old_friend_card2_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
+                    sound = "npe\\mgs_codec\\voiceover\\otacon\\becareful",
                 },                
             },
             context = {
@@ -108,6 +110,7 @@ local deck_npe_mgs_codec = {
                 -- pause_game is optional and if true the game is paused when the set is shown
                 pause_game = false,
             },
+            end_sound = "npe\\mgs_codec\\voiceover\\otacon\\just-hold-on-ok",
         },    
     },
 }
