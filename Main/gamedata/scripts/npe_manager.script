@@ -213,7 +213,6 @@ local function apply_overrides_to_decks()
                         printdebug("[NPE][OVERR] Override set [%s] title with [%s]", setToOverride.id, set.title)
                     end
                     setToOverride = override_contexts(set.context, setToOverride)
-                    setToOverride.played = false
                     -- set the overridden flag to this set is not added to the activation queue
                     set.overridden = true
                     -- upodate the npeConfig.decks table with the new changes
@@ -383,6 +382,7 @@ end
 -- NPE Play sets
 
 local function start_dialog(set)
+    printlog("[NPE][PLAY] Starting dialog [%s]",set.dialog .. "_dialog")
     local dialog_functor = {set.dialog .. "_dialog", "Play", set}
     execute_func(unpack(dialog_functor))
 end

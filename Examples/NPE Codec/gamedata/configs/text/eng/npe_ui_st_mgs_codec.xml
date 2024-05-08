@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="windows-1251"?>
+
+<string_table>
+
+	<!-- mcm menu (mandatory) -->
+
+	<string id="ui_mcm_npe_module_mgs_codec">
+		<text>MGS Codec</text>
+	</string>
+	<string id="ui_mcm_npe_module_mgs_codec_title">
+		<text>MGS Codec driven questlines</text>
+	</string>
+	<string id="ui_mcm_npe_module_mgs_codec_unknown_com">
+		<text>Unknown communication</text>
+	</string>			
+	<!-- deck_mgs_codec -->
+
+	<!-- binoculars tutorial set -->
+
+	<string id="ui_mcm_npe_module_mgs_codec_unknown_com_set_title">
+		<text>Unknown communication</text>
+	</string>
+	<string id="ui_mgs_codec_unknown_com_card_title">
+		<text>%c[d_blue]Snake?</text>
+	</string>
+	<string id="ui_mgs_codec_unknown_com_card_message">
+		<text>Snake, Snake. 
+		\n
+		\n
+		Is it really you Snake?
+		\n
+		\n
+		It can't be.
+		\n
+		\n
+		Snakeeeeee!
+		</text>
+	</string>	
+</string_table>

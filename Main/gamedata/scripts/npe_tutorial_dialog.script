@@ -148,7 +148,7 @@ local xml = nil
 function LoadUIStatic(dialog)
 	printdebug("[NPE][UI] LoadUIStatic")
 	if not xml then
-		printdebug("[NPE][UI] Loading ui_npe_tutorial.xml")
+		printdebug("[NPE][UI] Loading " .. dialog .. ".xml")
 		xml = CScriptXmlInit()
 		xml:ParseFile(dialog .. ".xml")
 	end
@@ -350,7 +350,7 @@ function UINewPlayerExperience:OnKeyboard(dik, keyboard_action)
 				self:Close()
 			end
 			if dik == DIK_keys.DIK_SPACE then
-				printdebug("[NPE][UI] OnKeyboard DIK_ESCAPE")
+				printdebug("[NPE][UI] OnKeyboard DIK_SPACE")
 				self:OnButtonGametime()
 			end			
 		end
