@@ -78,7 +78,7 @@ local deck_npe_mgs_codec = {
     title = "MGS Codec", -- e.g. "My Mod Introduction" -- only used internally by the NPE Manager
     module= "mgs_codec", -- must be unique thus the use of modulename whatever you have choosen above
     id="mgs_codec", -- must be unique thus the use of modulename whatever you have choosen above
-    dialog= npe.DIALOG.CODEC,
+    dialog= npe.DIALOG.UI_CODEC,
     sets = {
         {
             id = "old_friend",

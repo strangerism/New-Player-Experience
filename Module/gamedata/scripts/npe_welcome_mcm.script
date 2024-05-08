@@ -7,7 +7,7 @@ local deck_npe_welcome = {
     title = "New Player Experience Welcome Deck",
     module= "npe_welcome",
     id="npe_welcome",
-    dialog= npe.DIALOG.TUTORIAL,
+    dialog= npe.DIALOG.UI_TUTORIAL,
     sets = {
         {
             id = "introduction",

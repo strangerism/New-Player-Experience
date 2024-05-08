@@ -78,7 +78,7 @@ local deck_npe_modulename = {
     title = "Your module title", -- e.g. "My Mod Introduction" -- only used internally by the NPE Manager
     module= "modulename", -- must be unique thus the use of modulename whatever you have choosen above
     id="modulename", -- must be unique thus the use of modulename whatever you have choosen above
-    dialog= npe.DIALOG.TUTORIAL,
+    dialog= npe.DIALOG.UI_TUTORIAL,
     sets = {
         {
             id = "setname", -- e.g. "encumbrance"

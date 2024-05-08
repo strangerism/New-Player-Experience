@@ -7,8 +7,8 @@ MODULE_TYPE = {
     ANOMALY = "ANOMALY",
 }
 DIALOG = {
-    TUTORIAL = "npe_tutorial",
-    CODEC = "npe_codec"
+    UI_TUTORIAL = "npe_tutorial",
+    UI_CODEC = "npe_codec"
 }
 EVENT = {
 
