@@ -5,6 +5,7 @@ local get_console_cmd = get_console_cmd
 local exec_console_cmd = exec_console_cmd
 local sound_object = sound_object
 local npe_dialog = npe_dialog
+local npe_actions = npe_actions
 local db = db
 local game = game
 local ui_events = ui_events
@@ -34,7 +35,6 @@ local function open_codec(set)
     printdebug("[NPE][UI] Play set module: " .. set.module .. " set Id:" .. set.id)
 	printdebug("[NPE][UI] Play set title: " .. set.title)
 	printdebug("[NPE][UI] Sounds set: " .. SOUNDS_SET)
-	-- Change_gametime_to(GAMETIME_STATE.STOPPED)
 
 	npe_dialog.Play_sound(Sounds[SOUNDS_SET].open)
     printdebug("[NPE][UI] Creating GUI")
@@ -62,6 +62,10 @@ local function codec_call_loop(set)
 	npe_dialog.Play_sound(Sounds[SOUNDS_SET].call)
 
 	codec_ring_count = codec_ring_count + 1
+	if codec_ring_count == 2 then
+		-- start equipping animation
+		npe_actions.select_detector(npe_actions.Devices.radio)
+	end
 	if codec_ring_count < codec_ring_count_answer then
     	ResetTimeEvent(codec_call_loop_name, codec_call_loop_name, 2)
 		return
@@ -79,7 +83,7 @@ end
 local function start_codec_call_loop(set)
     if run_codec_call_loop then return end
 
-    printdebug("-[NPE][EXEC] resuming codec_call loop")
+    printdebug("-[NPE][EXEC] starting codec_call loop")
     run_codec_call_loop = true
 	codec_ring_count = 0
     CreateTimeEvent(codec_call_loop_name, codec_call_loop_name, 1, codec_call_loop, set)
@@ -266,9 +270,9 @@ local function close_dialog(dialog)
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
 	npe_dialog.Play_sound(Sounds[SOUNDS_SET].close)
-	npe_dialog.Change_gametime_to(GAMETIME_STATE.INMOTION)
 	npe_manager.Unregister_dialog(dialog)
 	npe_manager.Resume_execution()
+	npe_actions.Unequip_detector()
 	return true
 end
 

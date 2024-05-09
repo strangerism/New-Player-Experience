@@ -1,0 +1,160 @@
+
+local printlog = npe_manager.Printlog_npe
+local printdebug = npe_manager.Printdebug_npe
+
+-- monkey patching radio stuff from item_radio.script
+
+local snd_noise_original = sound_object("detectors\\RF\\noise")
+local snd_white_noise_original = sound_object("detectors\\RF\\noise")
+
+local snd_noise_muted = sound_object("radio\\no_sound")
+local snd_white_noise__muted = sound_object("radio\\no_sound")
+
+local function silence_radio(silence)
+    printdebug("[NPE][ACTIONS] silence_radio("..tostring(silence)..")")
+    no_radio_sound = silence
+        if silence then
+            item_radio.snd_noise = snd_noise_muted
+            item_radio.snd_white_noise = snd_white_noise__muted
+        else
+            item_radio.snd_noise = snd_noise_original
+            item_radio.snd_white_noise = snd_white_noise_original            
+        end
+end
+
+function set_radio_freq(new_frequency)
+    printdebug("[NPE][ACTIONS] set_radio_freq("..new_frequency..")")
+
+	local oldf = math.floor(item_radio.get_freq())
+    printdebug("[NPE][ACTIONS] oldf = "..oldf)
+    local increment = 0
+    if oldf >= new_frequency then
+        increment = oldf - new_frequency
+    else
+        increment = new_frequency - oldf
+    end
+    printdebug("[NPE][ACTIONS] increment = "..increment)
+    if increment == 0 then
+        return
+    end
+	item_radio.change_freq(increment)
+end
+
+-- functions lifted from Haru's Detector Selector mod script detector_selector_mcm
+-- credits to Haru for the original code
+
+Devices = {
+    anomaly = {
+        devices = {
+			["detector_grizzly_up"] = 10,
+            ["detector_scientific_up"] = 9,
+            ["detector_elite_up"] = 8,
+            ["detector_advanced_up"] = 7,
+            ["detector_simple_up"] = 6,
+			["detector_grizzly"] = 5,
+            ["detector_scientific"] = 4,
+            ["detector_elite"] = 3,
+            ["detector_advanced"] = 2,
+            ["detector_simple"] = 1
+        }
+    },
+    radio = {
+        devices = {
+            ["detector_radio"] = 1
+        },
+    },
+    geiger = {
+        devices = {
+            ["detector_geiger"] = 1
+        },
+    },
+    lights = {
+        devices = {
+            ["device_flashlight"] = 1
+        },
+    },
+    detector_anomaly = {
+        devices = {
+            ["detector_anomaly"] = 1
+        },
+    }
+}
+
+function show_event()
+
+    db.actor:show_detector(true)
+    set_radio_freq(140)
+    silence_radio(true)
+    return true
+end
+
+function hide_detector(obj)
+    obj:switch_state(2)
+    local det_hide_time = (obj:play_hud_motion("anm_hide_fast", true, 3, 2, 0) / 1000) + 0.25
+    CreateTimeEvent("haru_hide_detector", "haru_hide_detector", det_hide_time, hide_event, obj)
+end
+
+function Unequip_detector()
+    printdebug("[NPE][ACTIONS] Unequip_detector()")
+    local actor = db.actor
+    local device_in_slot = actor:item_in_slot(9)
+    if device_in_slot then
+        hide_detector(device_in_slot)
+    end
+end
+
+function hide_event(obj)
+    Radio_sound = false
+    silence_radio(false)
+    db.actor:force_hide_detector()
+    obj:switch_state(3)
+    return true
+end
+
+function cycle_detector(prev, next)
+    prev:switch_state(2)
+    local det_hide_time = (prev:play_hud_motion("anm_hide_fast", true, 3, 2, 0) / 1000) + 0.25
+    CreateTimeEvent("haru_hide_detector", "haru_hide_detector", det_hide_time, function(prev, next)
+        hide_event(prev)
+        db.actor:move_to_slot(next, 9)
+        CreateTimeEvent("haru_show_detector","haru_show_detector", 0.1, show_event)
+        return true
+    end, prev, next)
+end
+
+function select_detector(category)
+    local devices = category.devices
+    local actor = db.actor
+    local device_in_slot = actor:item_in_slot(9)
+    local active_device = actor:active_detector()
+    if device_in_slot and devices[device_in_slot:section()] then
+        if active_device then
+            hide_detector(device_in_slot)
+        else
+            actor:show_detector(true)
+        end
+        return
+    end
+    local devices_ruck = {}
+    actor:iterate_inventory(function(owner, obj)
+        local sec = obj and obj:section()
+        if sec and devices[sec] then
+            devices_ruck[#devices_ruck + 1] = {
+                ["object"] = obj, 
+                ["weight"] = devices[sec] + obj:condition()
+            }
+        end
+    end, actor)
+    if is_empty(devices_ruck) then
+        return
+    end
+    table.sort(devices_ruck, function(a,b) return a.weight > b.weight end)
+    if active_device then
+        cycle_detector(active_device, devices_ruck[1].object)
+        return
+    end
+    actor:move_to_slot(devices_ruck[1].object, 9)
+    CreateTimeEvent("haru_show_detector","haru_show_detector", 0.1, show_event)
+end
+
+-- end of Haru's Detector Selector mod script detector_selector_mcm
