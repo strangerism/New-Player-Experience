@@ -35,7 +35,7 @@
         </card_title>
    
         <message x="70" y="240" width="500" height="74" stretch="1">
-            <text r="250" g="250" b="250" font="letterica18" align="l" vert_align="t" complex_mode="1"></text>
+            <text r="250" g="250" b="250" font="letterica16" align="l" vert_align="t" complex_mode="1"></text>
         </message>   
 
         <btn_continue x="350" y="375" width="60" height="30" stretch="1">
