@@ -12,7 +12,6 @@ local snd_white_noise__muted = sound_object("radio\\no_sound")
 
 local function silence_radio(silence)
     printdebug("[NPE][ACTIONS] silence_radio("..tostring(silence)..")")
-    no_radio_sound = silence
         if silence then
             item_radio.snd_noise = snd_noise_muted
             item_radio.snd_white_noise = snd_white_noise__muted
@@ -104,7 +103,6 @@ function Unequip_detector()
 end
 
 function hide_event(obj)
-    Radio_sound = false
     silence_radio(false)
     db.actor:force_hide_detector()
     obj:switch_state(3)
@@ -128,11 +126,7 @@ function select_detector(category)
     local device_in_slot = actor:item_in_slot(9)
     local active_device = actor:active_detector()
     if device_in_slot and devices[device_in_slot:section()] then
-        if active_device then
-            hide_detector(device_in_slot)
-        else
-            actor:show_detector(true)
-        end
+        CreateTimeEvent("haru_show_detector","haru_show_detector", 0.1, show_event)
         return
     end
     local devices_ruck = {}
