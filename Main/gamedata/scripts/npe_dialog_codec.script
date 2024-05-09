@@ -34,6 +34,149 @@ GAMETIME_STATE = npe_dialog.GAMETIME_STATE
 Sounds = npe_dialog.Sounds
 local SOUNDS_SET = npe_dialog.MGS_CODEC -- codec dialog force use MGS_CODEC sounds
 
+-- codec signal bands loop
+
+DIRECTION_UP = 1
+DIRECTION_DOWN = 0
+
+local function set_codec_signal_band_to(level, direction)
+	-- printdebug("[NPE][EXEC] set_codec_signal_band_to: " .. level .. " direction: " .. direction)
+    if not GUI then return end
+    local start, stop, step = 1, 9, 1
+    if direction == DIRECTION_DOWN then
+        start, stop, step = 9, 1, -1
+    end
+    for i = start, stop, step do
+        GUI.codec_signal_band[i].enabled = (i <= level)
+        if not GUI.codec_signal_band[i].enabled then
+            GUI.codec_signal_band[i].mask:Show(true)
+			-- printdebug("[NPE][EXEC] codec_signal_band[" .. i .. "] mask: Show(true)")
+        else
+            GUI.codec_signal_band[i].mask:Show(false)
+			-- printdebug("[NPE][EXEC] codec_signal_band[" .. i .. "] mask: Show(false)")
+        end
+    end
+end
+
+local run_change_level_loop = false
+local run_change_level_loop_name = 'NPE_change_level_Loop'
+local change_level_loop = 0.25
+local bootstrap_loop = 0.10
+local bootstrapping = false
+local direction
+local target_level
+local current_level
+local codec_signal_manager_cooldown = 0
+local function npe_run_change_level_loop()
+	printdebug("[NPE][EXEC] run_change_level_loop current_level: " .. current_level .. " direction: " .. direction .. " target_level: " .. target_level)
+
+    if not run_change_level_loop then return true end
+	if not GUI then return false end
+	if (direction == DIRECTION_UP and current_level >= target_level) or (direction == DIRECTION_DOWN and current_level <= target_level) then 
+		-- ends the loop
+		printdebug("![NPE][EXEC] change_level loop ended ")
+		if bootstrapping then
+			bootstrapping = false
+		end
+		current_level = target_level
+		run_change_level_loop = false
+		codec_signal_manager_cooldown = time_global() + math.random(2, 6) * 500
+		printlog("[NPE][EXEC] codec_signal_manager_cooldown: " .. codec_signal_manager_cooldown)
+		return true 
+	end
+    printdebug("[NPE][EXEC] change level loop")
+	local loop = change_level_loop
+	if bootstrapping then
+		loop = bootstrap_loop
+	end
+    ResetTimeEvent(run_change_level_loop_name, run_change_level_loop_name, loop)
+	-- update current level
+	set_codec_signal_band_to(current_level, direction)
+	printdebug("[NPE][EXEC] current_level: " .. current_level .. " --> target_level: " .. target_level)
+	if direction == DIRECTION_UP then
+		current_level = current_level + 1
+	else
+		current_level = current_level - 1
+	end
+	-- continue loop
+    return false
+end
+
+local function start_change_level_loop()
+	if run_change_level_loop then return end
+	printdebug("-[NPE][EXEC] starting change level loop")
+	run_change_level_loop = true
+	local loop = change_level_loop
+	if bootstrapping then
+		printdebug("-[NPE][EXEC] bootstrapping")
+		direction = DIRECTION_UP
+		target_level = 6		
+		loop = bootstrap_loop
+	end	
+	CreateTimeEvent(run_change_level_loop_name, run_change_level_loop_name, loop, npe_run_change_level_loop)
+end
+
+local run_codec_signal_manager_loop = false
+local run_codec_signal_manager_loop_name = 'NPE_codec_signal_manager_Loop'
+local codec_signal_manager_loop = 1
+
+local function npe_codec_signal_manager_loop()
+    if not run_codec_signal_manager_loop then return true end
+	if not GUI then return false end
+
+    printdebug("//[NPE][EXEC] codec_signal_manager loop")
+    ResetTimeEvent(run_codec_signal_manager_loop_name, run_codec_signal_manager_loop_name, codec_signal_manager_loop)
+
+	-- codec signal band management
+	if codec_signal_manager_cooldown == 0 and not run_change_level_loop then
+		-- we need to decide if we go up or down
+		direction = math.random(0, 1)
+		if direction == DIRECTION_UP and current_level == 9 then
+			direction = DIRECTION_DOWN
+			printdebug("[NPE][EXEC] overriding direction to: " .. direction)
+		elseif direction == DIRECTION_DOWN and current_level == 4 then
+			direction = DIRECTION_UP
+			printdebug("[NPE][EXEC] overriding direction to: " .. direction)
+		end
+		-- how much to change the level
+		local change_target_to = math.random(1, 5) 
+		if direction == DIRECTION_UP then
+			target_level = math.max(current_level + change_target_to, 9)
+		else
+			target_level = math.min(current_level + change_target_to, 4)
+		end
+		-- start change level loop
+		printdebug("[NPE][EXEC] start_change_level_loop current_level: " .. current_level .. " direction: " .. direction .. " target_level: " .. target_level)
+		start_change_level_loop()
+	else
+		if time_global() > codec_signal_manager_cooldown then
+			codec_signal_manager_cooldown = 0
+		end
+	end 
+
+	-- continue loop
+    return false
+end
+
+local function start_codec_signal_manager_loop()
+    if run_codec_signal_manager_loop then return end
+    printdebug("-[NPE][EXEC] starting codec_signal_manager loop")
+    run_codec_signal_manager_loop = true
+	set_codec_signal_band_to(0,0)
+	current_level = 0
+	bootstrapping = true
+    CreateTimeEvent(run_codec_signal_manager_loop_name, run_codec_signal_manager_loop_name, codec_signal_manager_loop, npe_codec_signal_manager_loop)
+end
+
+local function stop_codec_signal_manager_loop()
+	if not run_codec_signal_manager_loop then return end
+	printdebug("![NPE][EXEC] stopping codec_signal_manager loop")
+	run_codec_signal_manager_loop = false
+	codec_signal_manager_cooldown = 0
+	run_change_level_loop = false
+	printdebug("![NPE][EXEC] stopping change_level loop")
+end
+
 -- Portraits scanlines loops
 
 -- caller portrait scanlines loop
@@ -258,6 +401,7 @@ local function open_codec_dialog(set, callback)
 		Register_UI("UINewPlayerExperience","npe_dialog")
 		start_portrait_secondary_scanlines_loop()
 		start_portraits_scanlines_manager_loop()
+		start_codec_signal_manager_loop()
     else
         printdebug("[NPE][UI] GUI already shown")
 		npe_manager.Resume_execution()
@@ -374,6 +518,17 @@ function UINewPlayerExperience:InitControls(set)
 
 	self.codec_bg = xml:InitStatic(set.dialog .. ":codec_bg",self.dialog)
 	self.codec_bg:InitTexture("ui_npe_mgs2_codec_750")	
+	self.codec_signal_band = {
+		[1] = {enabled = false , mask = xml:InitStatic(set.dialog .. ":codec_band1",self.dialog)},
+		[2] = {enabled = false , mask = xml:InitStatic(set.dialog .. ":codec_band2",self.dialog)},
+		[3] = {enabled = false , mask = xml:InitStatic(set.dialog .. ":codec_band3",self.dialog)},
+		[4] = {enabled = false , mask = xml:InitStatic(set.dialog .. ":codec_band4",self.dialog)},
+		[5] = {enabled = false , mask = xml:InitStatic(set.dialog .. ":codec_band5",self.dialog)},
+		[6] = {enabled = false , mask = xml:InitStatic(set.dialog .. ":codec_band6",self.dialog)},
+		[7] = {enabled = false , mask = xml:InitStatic(set.dialog .. ":codec_band7",self.dialog)},
+		[8] = {enabled = false , mask = xml:InitStatic(set.dialog .. ":codec_band8",self.dialog)},
+		[9] = {enabled = false , mask = xml:InitStatic(set.dialog .. ":codec_band9",self.dialog)},
+	} 
 
 	local text
 	text = game.translate_string(self.set.title)
@@ -502,6 +657,7 @@ local function close_dialog(dialog)
 	printlog("[NPE][UI] close_dialog_after_delay")
 	stop_portrait_secondary_scanlines_loop()
 	stop_portraits_scanlines_manager_loop()
+	stop_codec_signal_manager_loop()
 	GUI:HideDialog()
 	GUI:Show(false)
 	Unregister_UI("UINewPlayerExperience")
