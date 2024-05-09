@@ -114,11 +114,16 @@ local callback_name_on_equip = nil
 function set_callback_on_equip(callback_name)
     callback_name_on_equip = callback_name
 end
-function show_event()
-    db.actor:show_detector(true)
+function timed_callback_notification()
     if callback_name_on_equip then
         SendScriptCallback(callback_name_on_equip)
     end
+
+    return true
+end
+function show_event()
+    db.actor:show_detector(true)
+    CreateTimeEvent("haru_timed_callback_notification", "haru_timed_callback_notification", 0.3, timed_callback_notification)
     return true
 end
 

@@ -122,11 +122,6 @@ local codec_call_loop_name = 'NPE_codec_call_Loop'
 local codec_ring_count = 0
 local codec_ring_count_answer = 3
 
--- function open_detector(set)
--- 	printdebug("[NPE][UI] open_detector")
--- 	npe_actions.select_detector(npe_actions.Devices.radio)
--- end
-
 local function codec_call_loop(set)
     if not run_codec_call_loop then return true end
 
@@ -135,13 +130,6 @@ local function codec_call_loop(set)
 
 	codec_ring_count = codec_ring_count + 1
 	printdebug("[NPE][EXEC] codec_ring_count: " .. codec_ring_count)
-	-- if codec_ring_count == 2 then
-	-- 	-- start muting radio and setting codec frequency if present
-	-- 	npe_actions.Mute_radio(true)
-	-- 	if set.codec_frequency then
-	-- 		npe_actions.set_radio_freq(math.floor(set.codec_frequency))
-	-- 	end
-	-- end
 	if codec_ring_count < codec_ring_count_answer then
 		-- play another ring tune
     	ResetTimeEvent(codec_call_loop_name, codec_call_loop_name, 2)
@@ -164,11 +152,11 @@ local function codec_call_loop(set)
 		npe_actions.set_radio_freq(math.floor(set.codec_frequency))
 	end	
 	npe_actions.Mute_radio(true)
-	npe_actions.set_detector_close_sound(Sounds[SOUNDS_SET].close)
 	npe_actions.set_detector_open_sound(Sounds[SOUNDS_SET].open)
 	npe_actions.select_detector(npe_actions.Devices.radio)
 	
-    return false
+	-- returns true to stop the loop automatically 
+    return true
 end
 
 local function start_codec_call_loop(set)
@@ -179,12 +167,6 @@ local function start_codec_call_loop(set)
 	codec_ring_count = 0
     CreateTimeEvent(codec_call_loop_name, codec_call_loop_name, 1, codec_call_loop, set)
 end
-
--- function Stop_codec_call_loop()
---     if not run_codec_call_loop then return end
---     printdebug("![NPE][EXEC] stopping codec call loop")
---     run_codec_call_loop = false
--- end
 
 -- api to start the codec dialog
 
@@ -371,25 +353,29 @@ local function close_dialog(dialog)
 	GUI:Show(false)
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
-	-- npe_dialog.Play_sound(Sounds[SOUNDS_SET].close)
+	npe_actions.Unequip_detector()
+	npe_dialog.Play_sound(Sounds[SOUNDS_SET].close)
 	npe_manager.Unregister_dialog(dialog)
 	npe_manager.Resume_execution()
-	npe_actions.Unequip_detector()
 	CreateTimeEvent("npe_dialog_codec", "restore_radio_sounds", 1, npe_actions.Mute_radio, false)
 	closing_dialog = false
 	return true
 end
 
 function UINewPlayerExperience:Close()
-	printlog("[NPE][UI] Close with Closing dialog %s", closing_dialog)
-	if self.set.end_sound then 
-		printdebug("[NPE][UI] Play set end sound")
-		npe_dialog.Play_sound(self.set.end_sound)
-		CreateTimeEvent("close_dialog_after_delay", "close_dialog_after_delay", 2, close_dialog, self.set.dialog)
-	else
-		-- delay is 0
-		close_dialog(self.set.dialog)
-		printdebug("[NPE][UI] close_dialog_after_delay")
+	if not closing_dialog then
+		closing_dialog = true
+
+		printlog("[NPE][UI] Close with Closing dialog %s", closing_dialog)
+		if self.set.end_sound then 
+			printdebug("[NPE][UI] Play set end sound")
+			npe_dialog.Play_sound(self.set.end_sound)
+			CreateTimeEvent("close_dialog_after_delay", "close_dialog_after_delay", 2, close_dialog, self.set.dialog)
+		else
+			-- delay is 0
+			close_dialog(self.set.dialog)
+			printdebug("[NPE][UI] close_dialog_after_delay")
+		end
 	end
 end
 
@@ -404,13 +390,8 @@ function UINewPlayerExperience:OnKeyboard(dik, keyboard_action)
 	if (res == false) then
 		if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
 			if dik == DIK_keys.DIK_SPACE then
-				printlog("-[NPE][UI] OnKeyboard DIK_SPACE")
 				if self.cardIndex == #self.set.cards then
-					printlog("![NPE][UI] Closing dialog %s", closing_dialog)
-					if not closing_dialog then
-						closing_dialog = true
-						self:Close()
-					end
+					self:Close()
 				else
 					self:OnButtonContinue()					
 				end
