@@ -24,12 +24,15 @@ local device = device
 local GetFontGraffiti50Russian = GetFontGraffiti50Russian
 local CreateTimeEvent = CreateTimeEvent
 local ResetTimeEvent = ResetTimeEvent
+local time_global = time_global
+local AddScriptCallback = AddScriptCallback
+local RegisterScriptCallback = RegisterScriptCallback
+local UnregisterScriptCallback = UnregisterScriptCallback
 GUI = nil -- instance, don't touch
 
 GAMETIME_STATE = npe_dialog.GAMETIME_STATE
 Sounds = npe_dialog.Sounds
--- codec dialog force use MGS_CODEC sounds
-local SOUNDS_SET = npe_dialog.MGS_CODEC
+local SOUNDS_SET = npe_dialog.MGS_CODEC -- codec dialog force use MGS_CODEC sounds
 
 -- Portraits scanlines loops
 
