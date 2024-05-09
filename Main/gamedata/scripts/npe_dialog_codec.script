@@ -31,12 +31,73 @@ Sounds = npe_dialog.Sounds
 -- codec dialog force use MGS_CODEC sounds
 local SOUNDS_SET = npe_dialog.MGS_CODEC
 
-local function open_codec(set)
+-- scanlines loop
+
+local run_portrait_scanlines_loop = false
+local portrait_scanlines_loop_name = 'NPE_portrait_scanlines_loop_Loop'
+local portrait_scanlines_loop = 0.015
+local portrait_scanlines_loop_count = 0
+local starting_y = 0
+local ending_y = 193
+local function npe_portrait_scanlines_loop()
+    if not run_portrait_scanlines_loop then return true end
+    -- printdebug("//[NPE][EXEC] portrait scanlines loop")
+    ResetTimeEvent(portrait_scanlines_loop_name, portrait_scanlines_loop_name, portrait_scanlines_loop) -- offset time context_countdowns_loop
+	if not GUI then return false end
+	portrait_scanlines_loop_count = portrait_scanlines_loop_count + 1
+	if (portrait_scanlines_loop_count % 2 == 0) then
+		-- update big scanlines at half frequency
+		local x_l = GUI.codec_scanline_big_l:GetWndPos().x
+		local x_r = GUI.codec_scanline_big_r:GetWndPos().x
+		local y = GUI.codec_scanline_big_l:GetWndPos().y
+		y = y + 1
+		-- printdebug("[NPE][EXEC] portrait scanlines loop y: " .. y)
+		if y > ending_y then y = starting_y end
+		GUI.codec_scanline_big_l:SetWndPos(vector2():set(x_l, y))
+		GUI.codec_scanline_big_r:SetWndPos(vector2():set(x_r, y))			
+	end
+	-- update scanlines
+	local x_l = GUI.codec_scanline_l:GetWndPos().x
+	local x_r = GUI.codec_scanline_r:GetWndPos().x
+	local y = GUI.codec_scanline_l:GetWndPos().y
+	y = y + 1
+	-- printdebug("[NPE][EXEC] portrait scanlines loop y: " .. y)
+	if y > ending_y then y = starting_y end
+	GUI.codec_scanline_l:SetWndPos(vector2():set(x_l, y))
+	GUI.codec_scanline_r:SetWndPos(vector2():set(x_r, y))	
+
+	return false
+end
+
+local function start_portrait_scanlines_loop()
+	printdebug("[NPE][EXEC] starting portrait scanlines loop")
+    if run_portrait_scanlines_loop then return end
+	if not GUI then return end
+    run_portrait_scanlines_loop = true
+	starting_y = GUI.codec_scanline_l:GetWndPos().y
+    CreateTimeEvent(portrait_scanlines_loop_name, portrait_scanlines_loop_name, portrait_scanlines_loop, npe_portrait_scanlines_loop)
+end
+
+local function stop_portrait_scanlines_loop()
+    if not run_portrait_scanlines_loop then return end
+    printdebug("![NPE][EXEC] stopping portrait scanlines loop")
+    run_portrait_scanlines_loop = false
+	portrait_scanlines_loop_count = 0
+end
+
+-- open codec dialog function as callback
+
+local function open_codec_dialog(set, callback)
+
+	local f
+    f = function() 
+
+	printdebug("![NPE][RGSTR] Unregistering callback [" ..callback .. "]")
+	UnregisterScriptCallback(callback, f)
+
     printdebug("[NPE][UI] Play set module: " .. set.module .. " set Id:" .. set.id)
 	printdebug("[NPE][UI] Play set title: " .. set.title)
 	printdebug("[NPE][UI] Sounds set: " .. SOUNDS_SET)
-
-	npe_dialog.Play_sound(Sounds[SOUNDS_SET].open)
     printdebug("[NPE][UI] Creating GUI")
     GUI = UINewPlayerExperience(set)
 
@@ -44,58 +105,88 @@ local function open_codec(set)
         printdebug("[NPE][UI] Showing GUI")
 		GUI:ShowDialog(true)
 		Register_UI("UINewPlayerExperience","npe_dialog")
+		start_portrait_scanlines_loop()
     else
         printdebug("[NPE][UI] GUI already shown")
 		npe_manager.Resume_execution()
-		return
     end
+
+	end
+	return f
 end
+
+-- codec call loop functions
 
 local run_codec_call_loop = false
 local codec_call_loop_name = 'NPE_codec_call_Loop'
 local codec_ring_count = 0
 local codec_ring_count_answer = 3
+
+-- function open_detector(set)
+-- 	printdebug("[NPE][UI] open_detector")
+-- 	npe_actions.select_detector(npe_actions.Devices.radio)
+-- end
+
 local function codec_call_loop(set)
     if not run_codec_call_loop then return true end
 
-    printdebug("//[NPE][EXEC] codec_call loop")
+    printdebug("//[NPE][EXEC] codec call loop")
 	npe_dialog.Play_sound(Sounds[SOUNDS_SET].call)
 
 	codec_ring_count = codec_ring_count + 1
-	if codec_ring_count == 2 then
-		-- start equipping animation
-		npe_actions.select_detector(npe_actions.Devices.radio)
-	end
+	printdebug("[NPE][EXEC] codec_ring_count: " .. codec_ring_count)
+	-- if codec_ring_count == 2 then
+	-- 	-- start muting radio and setting codec frequency if present
+	-- 	npe_actions.Mute_radio(true)
+	-- 	if set.codec_frequency then
+	-- 		npe_actions.set_radio_freq(math.floor(set.codec_frequency))
+	-- 	end
+	-- end
 	if codec_ring_count < codec_ring_count_answer then
+		-- play another ring tune
     	ResetTimeEvent(codec_call_loop_name, codec_call_loop_name, 2)
 		return
 	end
 
-	printlog("[NPE][UI] codec_call_loop ended ")
+	-- reset state
+	printlog("![NPE][UI] codec call loop ended ")
 	run_codec_call_loop = false
 	codec_ring_count = 0
 
-    open_codec(set)
+	-- register callback to detector on equipping
+	local callback_name = "npe_dialog_codec_open_detector"
+	AddScriptCallback(callback_name)
+	RegisterScriptCallback(callback_name,open_codec_dialog(set, callback_name))
+	npe_actions.set_callback_on_equip(callback_name)
 
+	-- configure radio and start equipping animation
+	if set.codec_frequency then
+		npe_actions.set_radio_freq(math.floor(set.codec_frequency))
+	end	
+	npe_actions.Mute_radio(true)
+	npe_actions.set_detector_close_sound(Sounds[SOUNDS_SET].close)
+	npe_actions.set_detector_open_sound(Sounds[SOUNDS_SET].open)
+	npe_actions.select_detector(npe_actions.Devices.radio)
+	
     return false
 end
 
 local function start_codec_call_loop(set)
     if run_codec_call_loop then return end
 
-    printdebug("-[NPE][EXEC] starting codec_call loop")
+    printdebug("-[NPE][EXEC] starting codec call loop")
     run_codec_call_loop = true
 	codec_ring_count = 0
     CreateTimeEvent(codec_call_loop_name, codec_call_loop_name, 1, codec_call_loop, set)
 end
 
--- local function pause_codec_call_loop()
+-- function Stop_codec_call_loop()
 --     if not run_codec_call_loop then return end
-
---     printdebug("![NPE][EXEC] pausing codec_call loop")
+--     printdebug("![NPE][EXEC] stopping codec call loop")
 --     run_codec_call_loop = false
--- 	codec_ring_count = 0
 -- end
+
+-- api to start the codec dialog
 
 function Play(set)
 	if set == nil then
@@ -170,6 +261,15 @@ function UINewPlayerExperience:InitControls(set)
 		self.portrait_actor = xml:InitStatic(set.dialog .. ":portrait_actor",self.dialog)
 		self.portrait_actor:InitTexture(self.set.cards[self.cardIndex].portrait_actor)		
 
+		self.codec_scanline_l = xml:InitStatic(set.dialog .. ":codec_scanline_l",self.dialog)
+		self.codec_scanline_l:InitTexture("ui_npe_mgs2_codec_750_scanline")	
+		self.codec_scanline_r = xml:InitStatic(set.dialog .. ":codec_scanline_r",self.dialog)
+		self.codec_scanline_r:InitTexture("ui_npe_mgs2_codec_750_scanline")	
+		
+		self.codec_scanline_big_l = xml:InitStatic(set.dialog .. ":codec_scanline_big_l",self.dialog)
+		self.codec_scanline_big_l:InitTexture("ui_npe_mgs2_codec_750_scanline")	
+		self.codec_scanline_big_r = xml:InitStatic(set.dialog .. ":codec_scanline_big_r",self.dialog)
+		self.codec_scanline_big_r:InitTexture("ui_npe_mgs2_codec_750_scanline")	
 		if self.set.cards[self.cardIndex].title then
 			text = game.translate_string(self.set.cards[self.cardIndex].title)
 		else
@@ -263,23 +363,27 @@ function UINewPlayerExperience:OnButtonContinue()
 	self:UpdateButtons()
 end
 
+local closing_dialog = false
 local function close_dialog(dialog)
 	printlog("[NPE][UI] close_dialog_after_delay")
+	stop_portrait_scanlines_loop()
 	GUI:HideDialog()
 	GUI:Show(false)
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
-	npe_dialog.Play_sound(Sounds[SOUNDS_SET].close)
+	-- npe_dialog.Play_sound(Sounds[SOUNDS_SET].close)
 	npe_manager.Unregister_dialog(dialog)
 	npe_manager.Resume_execution()
 	npe_actions.Unequip_detector()
+	CreateTimeEvent("npe_dialog_codec", "restore_radio_sounds", 1, npe_actions.Mute_radio, false)
+	closing_dialog = false
 	return true
 end
 
 function UINewPlayerExperience:Close()
-	printlog("[NPE][UI] Close")
+	printlog("[NPE][UI] Close with Closing dialog %s", closing_dialog)
 	if self.set.end_sound then 
-		printdebug("[NPE][UI] Play end sound")
+		printdebug("[NPE][UI] Play set end sound")
 		npe_dialog.Play_sound(self.set.end_sound)
 		CreateTimeEvent("close_dialog_after_delay", "close_dialog_after_delay", 2, close_dialog, self.set.dialog)
 	else
@@ -297,13 +401,16 @@ function UINewPlayerExperience:TearDown()
 end
 function UINewPlayerExperience:OnKeyboard(dik, keyboard_action)
 	local res = CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
-
 	if (res == false) then
 		if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
 			if dik == DIK_keys.DIK_SPACE then
-				printdebug("[NPE][UI] OnKeyboard DIK_SPACE")
+				printlog("-[NPE][UI] OnKeyboard DIK_SPACE")
 				if self.cardIndex == #self.set.cards then
-					self:Close()
+					printlog("![NPE][UI] Closing dialog %s", closing_dialog)
+					if not closing_dialog then
+						closing_dialog = true
+						self:Close()
+					end
 				else
 					self:OnButtonContinue()					
 				end

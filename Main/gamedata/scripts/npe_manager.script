@@ -382,6 +382,10 @@ end
 -- NPE Play sets
 
 local function start_dialog(set)
+    -- if dialog is null, use the default dialog
+    if not set.dialog then
+        set.dialog = npe.DIALOG.UI_TUTORIAL
+    end
     printlog("[NPE][PLAY] Starting dialog [%s]",set.dialog )
     local dialog_functor = {set.dialog, "Play", set}
     execute_func(unpack(dialog_functor))

@@ -7,5 +7,6 @@
 	</file>
 	<file name ="ui\npe\mgs2-codec_750">
 		<texture id = "ui_npe_mgs2_codec_750" x="0" y="0" width="750" height="422" />
+		<texture id = "ui_npe_mgs2_codec_750_scanline" x="530" y="192" width="136" height="1" />
 	</file>  	    
 </w>

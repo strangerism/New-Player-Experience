@@ -1,24 +1,56 @@
 
 local printlog = npe_manager.Printlog_npe
 local printdebug = npe_manager.Printdebug_npe
+local sound_object = sound_object
+local item_radio = item_radio
+local CreateTimeEvent = CreateTimeEvent
+local db = db
+local is_empty = is_empty
 
 -- monkey patching radio stuff from item_radio.script
 
-local snd_noise_original = sound_object("detectors\\RF\\noise")
-local snd_white_noise_original = sound_object("detectors\\RF\\noise")
+-- saving correct radio sounds settings
 
-local snd_noise_muted = sound_object("radio\\no_sound")
-local snd_white_noise__muted = sound_object("radio\\no_sound")
+local snd_on_original = item_radio.snd_on
+local snd_off_original = item_radio.snd_off
+local snd_noise_original = item_radio.snd_noise
+local snd_white_noise_original = item_radio.snd_noise
+local snd_emission_original = item_radio.snd_emission
+local snd_random_original = item_radio.snd_random
+local snd_talk_original = item_radio.snd_talk
 
-local function silence_radio(silence)
-    printdebug("[NPE][ACTIONS] silence_radio("..tostring(silence)..")")
+-- creating silent sounds library
+
+local no_sound = sound_object("radio\\no_sound")
+local snd_emission = {}
+for i=1,8 do snd_emission[i] = no_sound end
+local snd_random = {}
+for i=1,13 do snd_random[i] = no_sound end
+local snd_talk = {}
+for i=1,33 do snd_talk[i] = no_sound end
+
+-- updates radio sounds
+function Mute_radio(silence)
+    printdebug("[NPE][ACTIONS] Mute radio ("..tostring(silence)..")")
         if silence then
-            item_radio.snd_noise = snd_noise_muted
-            item_radio.snd_white_noise = snd_white_noise__muted
+            item_radio.snd_noise = no_sound
+            item_radio.snd_white_noise = no_sound
+            item_radio.snd_on = no_sound
+            item_radio.snd_off = no_sound
+            item_radio.snd_emission = snd_emission     
+            item_radio.snd_random = snd_random
+            item_radio.snd_talk = snd_talk  
         else
             item_radio.snd_noise = snd_noise_original
-            item_radio.snd_white_noise = snd_white_noise_original            
+            item_radio.snd_white_noise = snd_white_noise_original
+            item_radio.snd_on = snd_on_original
+            item_radio.snd_off = snd_off_original
+            item_radio.snd_emission = snd_emission_original     
+            item_radio.snd_random = snd_random_original
+            item_radio.snd_talk = snd_talk_original                                         
         end
+        -- returns true to prevent further execution of the function (e.g. from timed events)
+        return true
 end
 
 function set_radio_freq(new_frequency)
@@ -78,13 +110,28 @@ Devices = {
         },
     }
 }
-
+local callback_name_on_equip = nil
+function set_callback_on_equip(callback_name)
+    callback_name_on_equip = callback_name
+end
 function show_event()
-
     db.actor:show_detector(true)
-    set_radio_freq(140)
-    silence_radio(true)
+    if callback_name_on_equip then
+        SendScriptCallback(callback_name_on_equip)
+    end
     return true
+end
+
+function set_detector_open_sound(sound)
+    if sound then
+        item_radio.snd_on = sound_object(sound)
+    end
+end
+
+function set_detector_close_sound(sound)
+    if sound then
+        item_radio.snd_off = sound_object(sound)
+    end
 end
 
 function hide_detector(obj)
@@ -103,7 +150,6 @@ function Unequip_detector()
 end
 
 function hide_event(obj)
-    silence_radio(false)
     db.actor:force_hide_detector()
     obj:switch_state(3)
     return true
