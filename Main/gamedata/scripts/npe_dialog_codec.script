@@ -31,21 +31,157 @@ Sounds = npe_dialog.Sounds
 -- codec dialog force use MGS_CODEC sounds
 local SOUNDS_SET = npe_dialog.MGS_CODEC
 
--- scanlines loop
+-- Portraits scanlines loops
 
-local run_portrait_scanlines_loop = false
-local portrait_scanlines_loop_name = 'NPE_portrait_scanlines_loop_Loop'
-local portrait_scanlines_loop = 0.015
-local portrait_scanlines_loop_count = 0
+-- caller portrait scanlines loop
+
+local run_caller_scanlines_loop = false
+local run_caller_scanlines_loop_name = 'NPE_caller_scanlines_Loop'
+local caller_scanlines_loop = 0.015
+local caller_scanlines_duration = 0
+local function npe_caller_scanlines_loop()
+    if not run_caller_scanlines_loop then return true end
+	if not GUI then return false end
+	if time_global() > caller_scanlines_duration then 
+		-- ends the loop
+		GUI.portrait_caller:Show(true)
+		run_caller_scanlines_loop = false
+		caller_scanlines_duration = 0
+		return true 
+	end
+
+    printdebug("//[NPE][EXEC] caller_scanlines loop")
+    ResetTimeEvent(run_caller_scanlines_loop_name, run_caller_scanlines_loop_name, caller_scanlines_loop)
+	if GUI.portrait_caller:IsShown() then
+		GUI.portrait_caller:Show(false)
+	else
+		GUI.portrait_caller:Show(true)
+	end
+	-- continue loop
+    return false
+end
+
+local function start_caller_scanlines_loop()
+    if run_caller_scanlines_loop then return end
+    printdebug("-[NPE][EXEC] resuming caller_scanlines loop")
+    run_caller_scanlines_loop = true
+    CreateTimeEvent(run_caller_scanlines_loop_name, run_caller_scanlines_loop_name, caller_scanlines_loop, npe_caller_scanlines_loop) -- offset time caller_scanlines_loop
+end
+
+-- actor portrait scanlines loop
+
+local run_actor_scanlines_loop = false
+local run_actor_scanlines_loop_name = 'NPE_actor_scanlines_Loop'
+local actor_scanlines_loop = 0.015
+local actor_scanlines_duration = 0
+local function npe_actor_scanlines_loop()
+    if not run_actor_scanlines_loop then return true end
+	if not GUI then return false end
+	if time_global() > actor_scanlines_duration then 
+		-- ends the loop
+		GUI.portrait_actor:Show(true)
+		run_actor_scanlines_loop = false
+		actor_scanlines_duration = 0
+		return true 
+	end
+    printdebug("//[NPE][EXEC] actor_scanlines loop")
+    ResetTimeEvent(run_actor_scanlines_loop_name, run_actor_scanlines_loop_name, actor_scanlines_loop)
+	if GUI.portrait_actor:IsShown() then
+		GUI.portrait_actor:Show(false)
+	else
+		GUI.portrait_actor:Show(true)
+	end
+	-- continue loop
+    return false
+end
+
+local function start_actor_scanlines_loop()
+    if run_actor_scanlines_loop then return end
+    printdebug("-[NPE][EXEC] resuming actor_scanlines loop")
+    run_actor_scanlines_loop = true
+    CreateTimeEvent(run_actor_scanlines_loop_name, run_actor_scanlines_loop_name, actor_scanlines_loop, npe_actor_scanlines_loop) -- offset time actor_scanlines_loop
+end
+
+-- Portraits transparency manager loop
+
+local run_portraits_scanlines_manager_loop = false
+local run_portraits_scanlines_manager_loop_name = 'NPE_portraits_scanlines_manager_loop'
+local portraits_scanlines_manager_loop = 1
+local caller_scanlines_cooldown = 0
+local actor_scanlines_cooldown = 0
+local function npe_portraits_scanlines_manager_loop()
+    if not run_portraits_scanlines_manager_loop then return true end
+    printdebug("//[NPE][EXEC] portraits transparency loop")
+    ResetTimeEvent(run_portraits_scanlines_manager_loop_name, run_portraits_scanlines_manager_loop_name, portraits_scanlines_manager_loop)
+
+	-- caller scanlines loop management - cannot run if any scanline loop is active and it has a cooldown
+	if caller_scanlines_cooldown == 0 and not run_caller_scanlines_loop and not run_actor_scanlines_loop then
+		-- start caller scanlines loop by chance
+		local caller_chance = math.random(1, 100)
+		if caller_chance > 70 then
+			caller_scanlines_duration = time_global() + math.random(10, 50) * 5
+			start_caller_scanlines_loop()
+			caller_scanlines_cooldown = time_global() + math.random(1, 10) * 500
+		end
+	else 
+		if time_global() > caller_scanlines_cooldown then
+			caller_scanlines_cooldown = 0
+		end
+	end
+	-- actor scanlines loop management - cannot run if any scanline loop is active and it has a cooldown
+	if actor_scanlines_cooldown == 0 and not run_actor_scanlines_loop and not run_caller_scanlines_loop then
+		-- start actor scanlines loop by chance
+		local actor_chance = math.random(1, 100)
+		if actor_chance > 70 then
+			actor_scanlines_duration = time_global() + math.random(50, 100) * 5
+			start_actor_scanlines_loop()
+			actor_scanlines_cooldown = time_global() + math.random(1, 10) * 500
+		end
+	else 
+		if time_global() > actor_scanlines_cooldown then
+			actor_scanlines_cooldown = 0
+		end
+	end
+
+    return false
+end
+local function stop_portraits_scanlines_manager_loop()
+    if not run_portraits_scanlines_manager_loop then return end
+    printdebug("![NPE][EXEC] stop resume portraits transparency loop")
+    run_portraits_scanlines_manager_loop = false
+	run_actor_scanlines_loop = false
+	run_caller_scanlines_loop = false
+	caller_scanlines_cooldown = 0
+	actor_scanlines_cooldown = 0	
+end
+
+local function start_portraits_scanlines_manager_loop()
+    if run_portraits_scanlines_manager_loop then return end
+    printdebug("-[NPE][EXEC] resuming start portraits transparency loop")
+    run_portraits_scanlines_manager_loop = true
+	run_actor_scanlines_loop = false
+	run_caller_scanlines_loop = false
+	caller_scanlines_cooldown = 0
+	actor_scanlines_cooldown = 0		
+    CreateTimeEvent(run_portraits_scanlines_manager_loop_name, run_portraits_scanlines_manager_loop_name, portraits_scanlines_manager_loop, npe_portraits_scanlines_manager_loop)
+end
+
+-- portraits secondary scanlines loop
+
+local run_portrait_secondary_scanlines_loop = false
+local portrait_secondary_scanlines_loop_name = 'NPE_portrait_secondary_scanlines_loop_Loop'
+local portrait_secondary_scanlines_loop = 0.015
+local portrait_secondary_scanlines_loop_count = 0
 local starting_y = 0
 local ending_y = 193
-local function npe_portrait_scanlines_loop()
-    if not run_portrait_scanlines_loop then return true end
+local function npe_portrait_secondary_scanlines_loop()
+    if not run_portrait_secondary_scanlines_loop then return true end
     -- printdebug("//[NPE][EXEC] portrait scanlines loop")
-    ResetTimeEvent(portrait_scanlines_loop_name, portrait_scanlines_loop_name, portrait_scanlines_loop) -- offset time context_countdowns_loop
+    ResetTimeEvent(portrait_secondary_scanlines_loop_name, portrait_secondary_scanlines_loop_name, portrait_secondary_scanlines_loop) -- offset time context_countdowns_loop
 	if not GUI then return false end
-	portrait_scanlines_loop_count = portrait_scanlines_loop_count + 1
-	if (portrait_scanlines_loop_count % 2 == 0) then
+	portrait_secondary_scanlines_loop_count = portrait_secondary_scanlines_loop_count + 1
+	if portrait_secondary_scanlines_loop_count > 1000 then portrait_secondary_scanlines_loop_count = 0 end
+	if (portrait_secondary_scanlines_loop_count % 2 == 0) then
 		-- update big scanlines at half frequency
 		local x_l = GUI.codec_scanline_big_l:GetWndPos().x
 		local x_r = GUI.codec_scanline_big_r:GetWndPos().x
@@ -65,24 +201,36 @@ local function npe_portrait_scanlines_loop()
 	if y > ending_y then y = starting_y end
 	GUI.codec_scanline_l:SetWndPos(vector2():set(x_l, y))
 	GUI.codec_scanline_r:SetWndPos(vector2():set(x_r, y))	
+	-- alternate visibility of scanlines
+	if (portrait_secondary_scanlines_loop_count % 2 == 0) then
+		GUI.codec_scanline_l:Show(false)
+		GUI.codec_scanline_r:Show(false)		
+		GUI.codec_scanline_big_l:Show(false)
+		GUI.codec_scanline_big_r:Show(false)
+	else
+		GUI.codec_scanline_l:Show(true)
+		GUI.codec_scanline_r:Show(true)		
+		GUI.codec_scanline_big_l:Show(true)
+		GUI.codec_scanline_big_r:Show(true)
+	end
 
 	return false
 end
 
-local function start_portrait_scanlines_loop()
+local function start_portrait_secondary_scanlines_loop()
 	printdebug("[NPE][EXEC] starting portrait scanlines loop")
-    if run_portrait_scanlines_loop then return end
+    if run_portrait_secondary_scanlines_loop then return end
 	if not GUI then return end
-    run_portrait_scanlines_loop = true
+    run_portrait_secondary_scanlines_loop = true
 	starting_y = GUI.codec_scanline_l:GetWndPos().y
-    CreateTimeEvent(portrait_scanlines_loop_name, portrait_scanlines_loop_name, portrait_scanlines_loop, npe_portrait_scanlines_loop)
+    CreateTimeEvent(portrait_secondary_scanlines_loop_name, portrait_secondary_scanlines_loop_name, portrait_secondary_scanlines_loop, npe_portrait_secondary_scanlines_loop)
 end
 
-local function stop_portrait_scanlines_loop()
-    if not run_portrait_scanlines_loop then return end
+local function stop_portrait_secondary_scanlines_loop()
+    if not run_portrait_secondary_scanlines_loop then return end
     printdebug("![NPE][EXEC] stopping portrait scanlines loop")
-    run_portrait_scanlines_loop = false
-	portrait_scanlines_loop_count = 0
+    run_portrait_secondary_scanlines_loop = false
+	portrait_secondary_scanlines_loop_count = 0
 end
 
 -- open codec dialog function as callback
@@ -105,7 +253,8 @@ local function open_codec_dialog(set, callback)
         printdebug("[NPE][UI] Showing GUI")
 		GUI:ShowDialog(true)
 		Register_UI("UINewPlayerExperience","npe_dialog")
-		start_portrait_scanlines_loop()
+		start_portrait_secondary_scanlines_loop()
+		start_portraits_scanlines_manager_loop()
     else
         printdebug("[NPE][UI] GUI already shown")
 		npe_manager.Resume_execution()
@@ -348,7 +497,8 @@ end
 local closing_dialog = false
 local function close_dialog(dialog)
 	printlog("[NPE][UI] close_dialog_after_delay")
-	stop_portrait_scanlines_loop()
+	stop_portrait_secondary_scanlines_loop()
+	stop_portraits_scanlines_manager_loop()
 	GUI:HideDialog()
 	GUI:Show(false)
 	Unregister_UI("UINewPlayerExperience")
