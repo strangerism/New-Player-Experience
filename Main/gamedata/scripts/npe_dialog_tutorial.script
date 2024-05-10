@@ -1,28 +1,7 @@
 
 local printlog = npe_manager.Printlog_npe
 local printdebug = npe_manager.Printdebug_npe
-local get_console_cmd = get_console_cmd
-local exec_console_cmd = exec_console_cmd
-local sound_object = sound_object
-local npe_dialog = npe_dialog
-local db = db
-local game = game
-local ui_events = ui_events
-local DIK_keys = DIK_keys
-local Register_UI = Register_UI
-local Unregister_UI = Unregister_UI
-local CUIScriptWnd = CUIScriptWnd
-local CScriptXmlInit = CScriptXmlInit
-local InitStatic = InitStatic
-local InitFrame = InitFrame
-local InitTextWnd = InitTextWnd
-local Init3tButton = Init3tButton
-local InitTexture = InitTexture
-local vector2 = vector2
-local device = device
-local GetFontGraffiti50Russian = GetFontGraffiti50Russian
-local CreateTimeEvent = CreateTimeEvent
-local ResetTimeEvent = ResetTimeEvent
+
 GUI = nil -- instance, don't touch
 
 GAMETIME_STATE = npe_dialog.GAMETIME_STATE
@@ -55,6 +34,7 @@ function Play(set)
 	if (GUI) and (not GUI:IsShown()) then
         printdebug("[NPE][UI] Showing GUI")
 		GUI:ShowDialog(true)
+		npe_dialog.Enable_dof()
 		Register_UI("UINewPlayerExperience","npe_dialog")
     else
         printdebug("[NPE][UI] GUI already shown")
@@ -247,6 +227,7 @@ function UINewPlayerExperience:Close()
 	self:Show(false)
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
+	npe_dialog.Disable_dof()
 	npe_dialog.Play_sound(Sounds[SOUNDS_SET].close)
 	npe_dialog.Change_gametime_to(GAMETIME_STATE.INMOTION)
 	npe_manager.Unregister_dialog(self.set.dialog)

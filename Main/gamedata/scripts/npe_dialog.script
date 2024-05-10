@@ -1,9 +1,6 @@
 
 local printlog = npe_manager.Printlog_npe
 local printdebug = npe_manager.Printdebug_npe
-local get_console_cmd = get_console_cmd
-local exec_console_cmd = exec_console_cmd
-local sound_object = sound_object
 
 GUI = nil -- instance, don't touch
 
@@ -142,4 +139,18 @@ end
 function Play_sound_with_delay(sound, delay)
 	printdebug("[NPE][UI] Play sound with delay: " .. sound .. " delay: " .. delay)
 	CreateTimeEvent("play_sound_with_delay", "play_sound_with_delay", delay, Play_delayed_sound, sound)
+end
+
+function Enable_dof(enable)
+	printdebug("[NPE][UI] Enable DOF: " .. tostring(enable))
+	if ssfx_weapons_dof then
+		actor_menu.last_mode = 1
+	end	
+end
+
+function Disable_dof()
+	printdebug("[NPE][UI] Disable DOF")
+	if ssfx_weapons_dof then
+		actor_menu.last_mode = 0
+	end	
 end

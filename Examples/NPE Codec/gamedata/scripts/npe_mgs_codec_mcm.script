@@ -110,7 +110,7 @@ local deck_npe_mgs_codec = {
                 -- pause_game is optional and if true the game is paused when the set is shown
                 pause_game = false,
             },
-            end_sound = "npe\\mgs_codec\\voiceover\\otacon\\just-hold-on-ok",
+            completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\just-hold-on-ok", duration = 2 },
         },    
     },
 }

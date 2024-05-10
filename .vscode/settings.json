@@ -1,0 +1,7 @@
+{
+    "Lua.diagnostics.globals": [
+        "Unregister_UI",
+        "npe_dialog",
+        "npe_manager"
+    ]
+}
