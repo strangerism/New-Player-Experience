@@ -5,6 +5,7 @@
             <texture r="0" g="0" b="0" a="255">ui_icons_PDA_tooltips</texture>
         </frame>
         <codec_bg x="0" y="0" width="750" height="422" stretch="1">
+            <texture a="255">ui_npe_mgs2_codec_750</texture>        
         </codec_bg>
 
         <codec_band9 x="269" y="60" width="159" height="13" stretch="1">
@@ -41,20 +42,24 @@
         </portrait_actor>  
 
         <codec_scanline_l x="73" y="20" width="147" height="1" stretch="1">
+            <texture a="100">ui_npe_mgs2_codec_750_scanline</texture>
         </codec_scanline_l>        
         <codec_scanline_r x="525" y="20" width="147" height="1" stretch="1">
+            <texture a="100">ui_npe_mgs2_codec_750_scanline</texture>
         </codec_scanline_r>
 
-        <codec_scanline_big_l x="73" y="20" width="147" height="10" stretch="1">
+        <codec_scanline_big_l x="73" y="20" width="147" height="15" stretch="1">
+            <texture a="100">ui_npe_mgs2_codec_750_scanline</texture>
         </codec_scanline_big_l>        
-        <codec_scanline_big_r x="525" y="20" width="147" height="10" stretch="1">
+        <codec_scanline_big_r x="525" y="20" width="147" height="15" stretch="1">
+            <texture a="100">ui_npe_mgs2_codec_750_scanline</texture>
         </codec_scanline_big_r>
 
         <set_title x="0" y="10" width="750" height="30" stretch="1">
             <text r="250" g="250" b="250" font="letterica18" align="c" vert_align="c" complex_mode="1"></text>
         </set_title>
 
-        <codec_frequency x="360" y="130" width="100" height="30" stretch="1">
+        <codec_frequency x="380" y="110" width="100" height="30" stretch="1">
             <text r="250" g="250" b="250" font="graffiti32" align="c" vert_align="c" complex_mode="1"></text>
         </codec_frequency>
 
