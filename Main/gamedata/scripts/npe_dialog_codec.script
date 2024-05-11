@@ -635,22 +635,11 @@ function UINewPlayerExperience:InitControls(set)
 		
 		self.codec_scanline_big_l = xml:InitStatic(set.dialog .. ":codec_scanline_big_l",self.dialog)
 		self.codec_scanline_big_r = xml:InitStatic(set.dialog .. ":codec_scanline_big_r",self.dialog)	
-		if self.set.cards[self.cardIndex].title then
-			text = game.translate_string(self.set.cards[self.cardIndex].title)
-		else
-			text = game.translate_string(self.set.title)
-		end
+
 		self.card_title = xml:InitTextWnd(set.dialog .. ":card_title",self.dialog)
-		self.card_title:SetText(text)
-
 		self.message = xml:InitTextWnd(set.dialog .. ":message",self.dialog)
-		text = game.translate_string(self.set.cards[self.cardIndex].message)
-		self.message:SetText(text)
 
-		if self.set.cards[self.cardIndex].sound then 
-			local delay = 0.5
-			npe_dialog.Play_sound_with_delay(self.set.cards[self.cardIndex].sound, delay)
-		end
+		self:PlayCard()
 	end
 
 	printdebug("[NPE][UI] Creating Codec controls")
@@ -681,6 +670,49 @@ function UINewPlayerExperience:PositionWindow()
 	self.dialog:SetWndPos( vector2():set(pos.x + x_translate, pos.y - 8 + y_translate))
 end
 
+function UINewPlayerExperience:PlayCard()
+	printdebug("[NPE][UI] PlayCard")
+	local text
+
+	-- update card context
+	if self.set.cards[self.cardIndex].title then
+		text = game.translate_string(self.set.cards[self.cardIndex].title)
+	else
+		text = game.translate_string(self.set.title)
+	end
+	self.card_title:SetText(text)
+
+	-- update portraits
+
+	self.portrait_caller:InitTexture(self.set.cards[self.cardIndex].portrait_caller)
+	self.portrait_actor:InitTexture(self.set.cards[self.cardIndex].portrait_actor)	
+
+	-- update card message
+	text = game.translate_string(self.set.cards[self.cardIndex].message)
+	self.message:SetText(text)
+
+	-- play start sound
+	local start_sound_delay = 0
+	local tts_starting_delay = 0
+	if self.set.cards[self.cardIndex].start_sound then 
+		start_sound_delay = 0.5
+		tts_starting_delay = self.set.cards[self.cardIndex].start_sound.duration
+		npe_dialog.Play_sound_with_delay(self.set.cards[self.cardIndex].start_sound.sound, start_sound_delay)
+	end
+	
+	-- play text to speech sounds
+	local tts_sounds = self.set.cards[self.cardIndex].tts_sounds
+	if tts_sounds then
+		local starting_delay = start_sound_delay + tts_starting_delay
+		for i = 1, #tts_sounds do
+			npe_dialog.Play_sound_with_delay(tts_sounds[i].sound, starting_delay)
+			starting_delay = starting_delay + tts_sounds[i].duration + 1
+		end
+	end
+	local start_sound_delay = 0
+	local tts_starting_delay = 0
+end
+
 function UINewPlayerExperience:UpdateButtons()
 	printdebug("[NPE][UI] UpdateButtons")
 
@@ -704,26 +736,9 @@ function UINewPlayerExperience:OnButtonContinue()
 	self.cardIndex = self.cardIndex + 1
 	if self.cardIndex <= #self.set.cards and self.set.cards[self.cardIndex] then
 
-		self.portrait_caller:InitTexture(self.set.cards[self.cardIndex].portrait_caller)
-		self.portrait_actor:InitTexture(self.set.cards[self.cardIndex].portrait_actor)
-
-		local text
-		if self.set.cards[self.cardIndex].title then
-			text = game.translate_string(self.set.cards[self.cardIndex].title)
-		else
-			text = game.translate_string(self.set.title)
-		end
-		self.card_title:SetText(text)
-	
-		text = game.translate_string(self.set.cards[self.cardIndex].message)
-		self.message:SetText(text)
+		self:PlayCard()
 	else
 		self.cardIndex = #self.set.cards
-	end
-	if self.set.cards[self.cardIndex].sound then 
-		npe_dialog.Play_sound(self.set.cards[self.cardIndex].sound)
-	else
-		npe_dialog.Play_sound(Sounds[SOUNDS_SET].next)
 	end
 	self:UpdateButtons()
 end
