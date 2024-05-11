@@ -175,6 +175,41 @@ end
 
 -- Portraits flickering loops
 
+clr_cache = {}
+
+local function change_alpha(clr, a)
+    if not (clr and a ) then return end
+
+    if not clr_cache[clr .. "_" .. a] then
+        b = bit.band(clr, 255)
+        g = bit.band(bit.rshift(clr, 8), 255)
+        r = bit.band(bit.rshift(clr, 16), 255)
+        clr_cache[clr .. "_" .. a] = GetARGB(a, r, g, b)
+    end
+
+    return clr_cache[clr .. "_" .. a]
+end
+
+
+local CODEC_PORTAIT_DEFAULT_ALPHA = 220
+local CODEC_PORTAIT_FLICKERING_ALPHA = 180
+
+function change_portrait_alpha(portrait, a)
+	if not portrait then return end
+	local clr = portrait:GetTextureColor()
+	change_alpha(clr, a)
+	portrait:SetTextureColor(clr_cache[clr .. "_" .. a])
+end
+
+function get_flicker_chance()
+	local chance = math.random(1, 100)
+	if current_level < 7 then
+		chance = chance + (7 - current_level) * 10
+	elseif current_level == 9 then
+		chance = chance - 50
+	end
+	return chance
+end
 -- caller portrait flickering loop
 
 local run_caller_flickering_loop = false
@@ -186,7 +221,10 @@ local function npe_caller_flickering_loop()
 	if not GUI then return false end
 	if time_global() > caller_flickering_duration then 
 		-- ends the loop
+		change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_DEFAULT_ALPHA)
+		-- show portrait
 		GUI.portrait_caller:Show(true)
+		-- reset state
 		run_caller_flickering_loop = false
 		caller_flickering_duration = 0
 		return true 
@@ -207,6 +245,8 @@ local function start_caller_flickering_loop()
     if run_caller_flickering_loop then return end
     printdebug("-[NPE][EXEC] resuming caller_flickering loop")
     run_caller_flickering_loop = true
+	if not GUI then return false end
+	change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_FLICKERING_ALPHA)
     CreateTimeEvent(run_caller_flickering_loop_name, run_caller_flickering_loop_name, caller_flickering_loop, npe_caller_flickering_loop) -- offset time caller_flickering_loop
 end
 
@@ -221,6 +261,7 @@ local function npe_actor_flickering_loop()
 	if not GUI then return false end
 	if time_global() > actor_flickering_duration then 
 		-- ends the loop
+		change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_DEFAULT_ALPHA)
 		GUI.portrait_actor:Show(true)
 		run_actor_flickering_loop = false
 		actor_flickering_duration = 0
@@ -240,6 +281,8 @@ end
 local function start_actor_flickering_loop()
     if run_actor_flickering_loop then return end
     printdebug("-[NPE][EXEC] resuming actor_flickering loop")
+	if not GUI then return false end
+	change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_FLICKERING_ALPHA)
     run_actor_flickering_loop = true
     CreateTimeEvent(run_actor_flickering_loop_name, run_actor_flickering_loop_name, actor_flickering_loop, npe_actor_flickering_loop) -- offset time actor_flickering_loop
 end
@@ -258,9 +301,8 @@ local function npe_portraits_scanlines_manager_loop()
 
 	-- caller scanlines loop management - cannot run if any scanline loop is active and it has a cooldown
 	if caller_flickering_cooldown == 0 and not run_caller_flickering_loop and not run_actor_flickering_loop then
-		-- start caller scanlines loop by chance
-		local caller_chance = math.random(1, 100)
-		if caller_chance > 70 then
+		-- start caller scanlines loop by chance			
+		if get_flicker_chance() > 70 then
 			caller_flickering_duration = time_global() + math.random(10, 50) * 5
 			start_caller_flickering_loop()
 			caller_flickering_cooldown = time_global() + math.random(1, 10) * 500
@@ -273,9 +315,8 @@ local function npe_portraits_scanlines_manager_loop()
 	-- actor scanlines loop management - cannot run if any scanline loop is active and it has a cooldown
 	if actor_flickering_cooldown == 0 and not run_actor_flickering_loop and not run_caller_flickering_loop then
 		-- start actor scanlines loop by chance
-		local actor_chance = math.random(1, 100)
-		if actor_chance > 70 then
-			actor_flickering_duration = time_global() + math.random(50, 100) * 5
+		if get_flicker_chance() > 70 then
+			actor_flickering_duration = time_global() + math.random(10, 50) * 5
 			start_actor_flickering_loop()
 			actor_flickering_cooldown = time_global() + math.random(1, 10) * 500
 		end
@@ -715,9 +756,10 @@ local function unequip_nerfs_radio(radio_type, dialog)
 		CreateTimeEvent("npe_dialog_codec", "close_dialog", close_time, close_dialog, dialog)
 	else
 		local close_time = 0.9
+		local close_snd_time = 0.8
 		local unmute_time = 2
 		printdebug("[NPE][UI] Play close sound after delay %s", close_time)
-		CreateTimeEvent("npe_dialog_codec", "play_close_sound", close_time, npe_dialog.Play_sound, Sounds[SOUNDS_SET].close)
+		CreateTimeEvent("npe_dialog_codec", "play_close_sound", close_snd_time, npe_dialog.Play_sound, Sounds[SOUNDS_SET].close)
 		CreateTimeEvent("npe_dialog_codec", "unmute_anomaly_radio", unmute_time, npe_actions.Mute_radio, false)
 		CreateTimeEvent("npe_dialog_codec", "close_dialog", close_time, close_dialog, dialog)
 	end

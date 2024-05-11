@@ -2,10 +2,10 @@
 	<npe_dialog_codec x="0" y="0" width="1024" height="768">
 
         <frame x="0" y="0" width="750" height="422" stretch="1">
-            <texture r="0" g="0" b="0" a="255">ui_icons_PDA_tooltips</texture>
+            <texture r="255" g="255" b="255" a="255">ui_icons_PDA_tooltips</texture>
         </frame>
         <codec_bg x="0" y="0" width="750" height="422" stretch="1">
-            <texture a="255">ui_npe_mgs2_codec_750</texture>        
+            <texture r="255" g="255" b="255" a="180">ui_npe_mgs2_codec_750</texture>        
         </codec_bg>
 
         <codec_band9 x="269" y="60" width="159" height="13" stretch="1">
@@ -37,8 +37,10 @@
         </codec_band1> 
 
         <portrait_caller x="83" y="20" width="127" height="190" stretch="1">
+            <texture r="255" g="255" b="255" a="220">ui_npe_mgs_codec_otacon</texture>
         </portrait_caller>
         <portrait_actor x="535" y="20" width="127" height="190" stretch="1">
+            <texture r="255" g="255" b="255" a="220">ui_npe_mgs_codec_snake</texture>
         </portrait_actor>  
 
         <codec_scanline_l x="73" y="20" width="147" height="1" stretch="1">

@@ -11,7 +11,7 @@ RADIO_TYPE = {
 }
 
 NERFS_RADIO = "<NERFS> "
-NERFS_VANILLA = "1.5.2"
+NERFS_VANILLA = "1.6-b2"
 NERFS_DAR = "1.5-DAR"
 
 -- saving radio sounds for restoration
@@ -34,7 +34,7 @@ function Get_radio_type()
     if item_radio.logprefix and item_radio.logprefix == NERFS_RADIO then
         if item_radio.script_version == NERFS_VANILLA then
             return RADIO_TYPE.NERFS
-        elseif item_radio.script_version == NERFS_DAR then
+        elseif dar_rf_noise then
             return RADIO_TYPE.DAR
         else
             return RADIO_TYPE.NERFS
@@ -61,12 +61,24 @@ local function configure_radio_sounds_for_restoration()
         snd_emission_restore = item_radio.snd_emission
         snd_random_restore = item_radio.snd_random
         snd_talk_restore = item_radio.snd_talk    
+    else
+        -- creating silent sounds library
+        snd_noise_restore = item_radio.get_signal_sound("noise")
+        snd_white_noise_restore = item_radio.get_signal_sound("white_noise")
+        
     end
 end
 
 
 local function silence_nerf_radio(silence)
     item_radio.disable_all_sounds = silence
+    if silence then
+        item_radio.set_signal_sound("noise", "$no_sound")
+        item_radio.set_signal_sound("white_noise", "$no_sound")
+    else
+        item_radio.set_signal_sound("noise", snd_noise_restore)
+        item_radio.set_signal_sound("white_noise", snd_white_noise_restore)
+    end
 end
 
 local function silence_vanilla_radio(silence)
@@ -91,12 +103,10 @@ end
 
 -- updates radio sounds
 function Mute_radio(silence)
-    printdebug("[NPE][ACTIONS] Mute radio ("..tostring(silence)..")")
+    printdebug("[NPE][ACTIONS] Mute radio " .. Get_radio_type() .. " ("..tostring(silence)..")")
     if Get_radio_type() == RADIO_TYPE.VANILLA then
-        printdebug("[NPE][ACTIONS] vanilla radio detected")
         silence_vanilla_radio(silence)
     else
-        printlog("[NPE][ACTIONS] NERFS radio detected")
         silence_nerf_radio(silence)        
     end
     -- returns true to prevent further execution of the function (e.g. from timed events)
