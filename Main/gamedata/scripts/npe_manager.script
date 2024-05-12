@@ -350,16 +350,6 @@ end
 
 -- NPE Activation and Execution
 
-function Activate_contexts_on(event)
-    printdebug("//[NPE][ACTIV] Activate contexts on [%s]", event.name)
-    local setsKeys = find_sets_on(event)
-    if setsKeys then
-        printdebug("-[NPE][ACTIV] Found sets on [%s]", event.name)
-        print_table(setsKeys)
-        add_to_playable_queue(setsKeys)
-    end
-end
-
 local function print_functor(functor)
     for i, v in ipairs(functor) do
         if type(v) == "table" then
@@ -471,13 +461,13 @@ end
 
 ---- NPE Execution ----
 
--- Execution loop
+-- Execution loop - this will always run
 local run_execution_loop = false
 local run_execution_loop_name = 'NPE_Execution_Loop'
 
 local function npe_execution_loop()
+    printdebug("//[NPE][EXEC] Contexts Activation execution loop")
     if not run_execution_loop then return true end
-    printdebug("//[NPE][EXEC] Execution loop")
     ResetTimeEvent(run_execution_loop_name, run_execution_loop_name, Settings.execution_loop)
 
     run_execution_queue()
@@ -485,20 +475,21 @@ local function npe_execution_loop()
     return false
 end
 local function pause_execution_loop()
-    if not run_execution_loop then return end
     printdebug("![NPE][EXEC] pausing contexts activation loop")
+    if not run_execution_loop then return end
     run_execution_loop = false
 end
 
 local function resume_execution_loop()
-    if run_execution_loop then return end
     printdebug("-[NPE][EXEC] resuming contexts activation loop")
+    if run_execution_loop then return end
     run_execution_loop = true
 
     CreateTimeEvent(run_execution_loop_name, run_execution_loop_name, Settings.execution_loop, npe_execution_loop) -- offset time execution_loop
 end
 
 local function remove_execution_loop()
+    printdebug("![NPE][EXEC] removing contexts activation loop")
     RemoveTimeEvent(run_execution_loop_name, run_execution_loop_name)
 end
 
@@ -507,13 +498,13 @@ local run_actions_execution_loop = false
 local run_actions_execution_loop_name = 'NPE_actions_execution_loop'
 
 local function pause_actions_execution_loop()
+    printdebug("![NPE][EXEC] pausing actions execution loop")
     if not run_actions_execution_loop then return end
-    printdebug("![NPE][EXEC] pausing contexts activation loop")
     run_actions_execution_loop = false
 end
 
 local function run_actions_execution_queue()
-    printdebug("//[NPE][EXEC] Run execution queue")
+    printdebug("//[NPE][EXEC] Run actions execution queue")
     if #npeActionsQueue.actions == 0 then pause_actions_execution_loop() end
     for i, action in ipairs(npeActionsQueue.actions) do
             printdebug("[NPE][EXEC] Running action [%s]", action.name)
@@ -526,8 +517,8 @@ local function run_actions_execution_queue()
 end
 
 local function npe_actions_execution_loop()
+    printdebug("//[NPE][EXEC] Actions Execution loop")
     if not run_actions_execution_loop then return true end
-    printdebug("//[NPE][EXEC] Execution loop")
     ResetTimeEvent(run_actions_execution_loop_name, run_actions_execution_loop_name, Settings.actions_execution_loop)
 
     run_actions_execution_queue()
@@ -535,14 +526,15 @@ local function npe_actions_execution_loop()
     return false
 end
 local function resume_actions_execution_loop()
-    if run_actions_execution_loop then return end
     printdebug("-[NPE][EXEC] resuming contexts activation loop")
+    if run_actions_execution_loop then return end
     run_actions_execution_loop = true
 
     CreateTimeEvent(run_actions_execution_loop_name, run_actions_execution_loop_name, Settings.actions_execution_loop, npe_actions_execution_loop) -- offset time actions_execution_loop
 end
 
 local function remove_actions_execution_loop()
+    printdebug("![NPE][EXEC] removing actions execution loop")
     RemoveTimeEvent(run_actions_execution_loop_name, run_actions_execution_loop_name)
 end
 
@@ -551,8 +543,8 @@ local run_context_countdowns_loop = false
 local run_context_countdowns_name = 'NPE_Countdowns_Loop'
 local context_countdowns_loop = 1
 local function npe_context_countdowns_loop()
-    if not run_context_countdowns_loop then return true end
     printdebug("//[NPE][EXEC] Context Countdown loop")
+    if not run_context_countdowns_loop then return true end
     ResetTimeEvent(run_context_countdowns_name, run_context_countdowns_name, context_countdowns_loop) -- offset time context_countdowns_loop
 
     update_queued_contexts_countdowns()
@@ -560,19 +552,20 @@ local function npe_context_countdowns_loop()
     return false
 end
 local function pause_context_countdowns_loop()
-    if not run_context_countdowns_loop then return end
     printdebug("![NPE][EXEC] pausing context countdowns loop")
+    if not run_context_countdowns_loop then return end
     run_context_countdowns_loop = false
 end
 
 local function resume_context_countdowns_loop()
-    if run_context_countdowns_loop then return end
     printdebug("-[NPE][EXEC] resuming context countdowns loop")
+    if run_context_countdowns_loop then return end
     run_context_countdowns_loop = true
     CreateTimeEvent(run_context_countdowns_name, run_context_countdowns_name, context_countdowns_loop, npe_context_countdowns_loop) -- offset time context_countdowns_loop
 end
 
 local function remove_context_countdowns_loop()
+    printdebug("![NPE][EXEC] removing context countdowns loop")
     RemoveTimeEvent(run_context_countdowns_name, run_context_countdowns_name)
 end
 
@@ -581,8 +574,8 @@ local run_play_loop = false
 local play_loop_name = 'NPE_Play_Loop'
 
 local function npe_play_loop()
-    if not run_play_loop then return true end
     printdebug("//[NPE][EXEC] Play loop")
+    if not run_play_loop then return true end
     ResetTimeEvent(play_loop_name, play_loop_name, Settings.play_loop)
 
     play_queued_set()
@@ -591,14 +584,14 @@ local function npe_play_loop()
 end
 
 local function pause_play_loop()
+    printdebug("![NPE][EXEC] pausing play loop")    
     if not run_play_loop then return end
-    printdebug("![NPE][EXEC] pausing play loop")
     run_play_loop = false
 end
 
 local function resume_play_loop()
-    if run_play_loop then return end
     printdebug("-[NPE][EXEC] resuming play loop")
+    if run_play_loop then return end
     run_play_loop = true
     CreateTimeEvent(play_loop_name, play_loop_name, Settings.play_loop, npe_play_loop) -- offset time play_loop
 end
@@ -612,8 +605,8 @@ local run_play_now_loop = false
 local play_now_loop_name = 'NPE_Play_Now_Loop'
 local play_now_loop = 1
 local function npe_play_now_loop()
-    if not run_play_now_loop then return true end
     printdebug("//[NPE][EXEC] Play Now loop")
+    if not run_play_now_loop then return true end
     ResetTimeEvent(play_now_loop_name, play_now_loop_name, play_now_loop) -- offset time play_now_loop
 
     play_now_set()
@@ -622,19 +615,20 @@ local function npe_play_now_loop()
 end
 
 local function pause_play_now_loop()
-    if not run_play_now_loop then return end
     printdebug("![NPE][EXEC] pausing play_now loop")
+    if not run_play_now_loop then return end
     run_play_now_loop = false
 end
 
 local function resume_play_now_loop()
-    if run_play_now_loop then return end
     printdebug("-[NPE][EXEC] resuming play_now loop")
+    if run_play_now_loop then return end
     run_play_now_loop = true
     CreateTimeEvent(play_now_loop_name, play_now_loop_name, play_now_loop, npe_play_now_loop) -- offset time play_now_loop
 end
 
 local function remove_play_now_loop()
+    printdebug("![NPE][EXEC] removing play_now loop")
     RemoveTimeEvent(play_now_loop_name, play_now_loop_name)
 end
 
@@ -643,8 +637,8 @@ local run_play_queues_manager_loop = false
 local play_queues_manager_loop_name = 'NPE_Play_Queues_Manager_Loop'
 local queue_manager_loop = 1
 local function play_queues_manager_loop()
-    if not run_play_queues_manager_loop then return true end
     printdebug("//[NPE][EXEC] Play Queues Manager loop")
+    if not run_play_queues_manager_loop then return true end
     ResetTimeEvent(play_queues_manager_loop_name, play_queues_manager_loop_name, queue_manager_loop) -- offset time queue_manager_loop
 
     -- manages the play queues
@@ -666,24 +660,38 @@ local function play_queues_manager_loop()
 end
 
 local function pause_play_queues_manager_loop()
-    if not run_play_queues_manager_loop then return end
     printdebug("![NPE][EXEC] pausing play_queues_manager loop")
+    if not run_play_queues_manager_loop then return end
     run_play_queues_manager_loop = false
     pause_play_loop()
     pause_play_now_loop()    
 end
 
 local function resume_play_queues_manager_loop()
-    if run_play_queues_manager_loop then return end
     printdebug("-[NPE][EXEC] resuming play_queues_manager loop")
+    if run_play_queues_manager_loop then return end
     run_play_queues_manager_loop = true
     CreateTimeEvent(play_queues_manager_loop_name, play_queues_manager_loop_name, queue_manager_loop, play_queues_manager_loop) -- offset time queue_manager_loop
 end
 
 local function remove_play_queues_manager_loop()
+    printdebug("![NPE][EXEC] removing play_queues_manager loop")
     remove_play_loop()
     remove_play_now_loop()
     RemoveTimeEvent(play_queues_manager_loop_name, play_queues_manager_loop_name)
+end
+
+-- NPE Activation
+
+function Activate_contexts_on(event)
+    printdebug("//[NPE][ACTIV] Activate contexts on [%s]", event.name)
+    local setsKeys = find_sets_on(event)
+    if setsKeys then
+        printdebug("-[NPE][ACTIV] Found sets on [%s]", event.name)
+        print_table(setsKeys)
+        add_to_playable_queue(setsKeys)
+        resume_play_queues_manager_loop()
+    end
 end
 
 -- NPE Actions
@@ -698,11 +706,13 @@ end
 -- Execution controls
 
 function Resume_execution() 
+    printdebug("//[NPE][EXEC] Resume execution")
     resume_play_queues_manager_loop()
     resume_execution_loop()
 end
 
 function Pause_Execution()
+    printdebug("![NPE][EXEC] Pause execution")
     pause_play_queues_manager_loop()
     pause_execution_loop()
 end
@@ -756,6 +766,7 @@ local function update_settings()
     Settings.debug_logs = npe_mcm.npe_get_setting("general", "debug_logs")
     Settings.enable = npe_mcm.npe_get_setting("general", "enable")
     Settings.execution_loop = npe_mcm.npe_get_setting("general", "execution_loop")
+    -- Settings.actions_execution_loop = npe_mcm.npe_get_setting("general", "actions_execution_loop")
     Settings.play_loop = npe_mcm.npe_get_setting("general", "play_loop")  
     Settings.sounds_set = npe_mcm.npe_get_setting("general", "sounds_set")  
     Settings.pause_game = npe_mcm.npe_get_setting("general", "pause_game")  
