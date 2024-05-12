@@ -53,7 +53,7 @@ local MIN_LEVEL = 5
 local BOOTSTRAP_LEVEL = 7
 local MAX_LEVEL_CHANGE = 4
 local function npe_run_change_level_loop()
-	printdebug(LOG.RUN, LOG.POOL, LOG.UI_EXEC," run change level loop")
+	printdebug(LOG.POOL, LOG.UI_EXEC," run change level loop")
 	if not run_change_level_loop then return true end
 	if not GUI then return false end
 	printdebug(LOG.RUN, LOG.UI_EXEC," change_level_loop current_level: " .. current_level .. " direction: " .. get_direction_str(direction) .. " target_level: " .. target_level)
@@ -108,7 +108,7 @@ local run_codec_signal_manager_loop_name = 'NPE_codec_signal_manager_Loop'
 local codec_signal_manager_loop = 0.5
 
 local function npe_codec_signal_manager_loop()
-	printdebug(LOG.RUN, LOG.POOL, LOG.UI_EXEC," run codec_signal_manager loop")
+	printdebug(LOG.POOL, LOG.UI_EXEC," run codec_signal_manager loop")
     if not run_codec_signal_manager_loop then return true end
 	if not GUI then return false end
     ResetTimeEvent(run_codec_signal_manager_loop_name, run_codec_signal_manager_loop_name, codec_signal_manager_loop)
@@ -219,7 +219,7 @@ local run_caller_flickering_loop_name = 'NPE_caller_flickering_Loop'
 local caller_flickering_loop = 0.015
 local caller_flickering_duration = 0
 local function npe_caller_flickering_loop()
-	printdebug(LOG.RUN, LOG.POOL, LOG.UI_EXEC," run caller_flickering loop")
+	printdebug(LOG.POOL, LOG.UI_EXEC," run caller_flickering loop")
     if not run_caller_flickering_loop then return true end
 	if not GUI then return false end
 	printdebug(LOG.RUN, LOG.UI_EXEC," caller_flickering loop")
@@ -261,7 +261,7 @@ local run_actor_flickering_loop_name = 'NPE_actor_flickering_Loop'
 local actor_flickering_loop = 0.015
 local actor_flickering_duration = 0
 local function npe_actor_flickering_loop()
-	printdebug(LOG.RUN, LOG.POOL, LOG.UI_EXEC," run actor_flickering loop")
+	printdebug(LOG.POOL, LOG.UI_EXEC," run actor_flickering loop")
     if not run_actor_flickering_loop then return true end
 	if not GUI then return false end
 	if time_global() > actor_flickering_duration then 
@@ -301,7 +301,7 @@ local portraits_scanlines_manager_loop = 1
 local caller_flickering_cooldown = 0
 local actor_flickering_cooldown = 0
 local function npe_portraits_scanlines_manager_loop()
-	printdebug(LOG.RUN, LOG.POOL, LOG.UI_EXEC," run portraits_scanlines_manager loop")
+	printdebug(LOG.POOL, LOG.UI_EXEC," run portraits_scanlines_manager loop")
     if not run_portraits_scanlines_manager_loop then return true end
     ResetTimeEvent(run_portraits_scanlines_manager_loop_name, run_portraits_scanlines_manager_loop_name, portraits_scanlines_manager_loop)
 	printdebug(LOG.RUN, LOG.UI_EXEC," portraits_scanlines_manager loop")
@@ -366,7 +366,7 @@ local portrait_scanlines_loop_count = 0
 local starting_y = 0
 local ending_y = 193
 local function npe_portrait_scanlines_loop()
-	printdebug(LOG.RUN, LOG.POOL, LOG.UI_EXEC," run portrait_scanlines loop")
+	printdebug(LOG.POOL, LOG.UI_EXEC," run portrait_scanlines loop")
     if not run_portrait_scanlines_loop then return true end
 	if not GUI then return false end
     ResetTimeEvent(portrait_scanlines_loop_name, portrait_scanlines_loop_name, portrait_scanlines_loop) -- offset time context_countdowns_loop
@@ -517,7 +517,7 @@ local codec_ring_count = 0
 local codec_ring_count_answer = 3
 
 local function codec_call_loop(set)
-	printdebug(LOG.RUN, LOG.POOL, LOG.UI_EXEC," run codec call loop")
+	printdebug(LOG.POOL, LOG.UI_EXEC," run codec call loop")
     if not run_codec_call_loop then return true end
 	printdebug(LOG.RUN, LOG.UI_EXEC," codec call loop")
 	npe_dialog.Play_sound(Sounds[SOUNDS_SET].call)
