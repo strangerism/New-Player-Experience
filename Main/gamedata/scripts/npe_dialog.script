@@ -1,6 +1,7 @@
 
 local printlog = npe_manager.Printlog_npe
 local printdebug = npe_manager.Printdebug_npe
+local LOG = npe_manager.LOG
 
 GUI = nil -- instance, don't touch
 
@@ -16,7 +17,7 @@ function GetFilename(path)
 end
 
 function Change_gametime_to(state)
-    printdebug("[NPE][UI] Change game time to: " .. state)
+    printdebug(LOG.INFO, LOG.UI," Change game time to: " .. state)
 	exec_console_cmd("freeze_time " .. state)
 end
 
@@ -117,7 +118,7 @@ Sounds = {
 
 local snd
 function Stop_sound()
-	printdebug("[NPE][UI] Stop sound")
+	printdebug(LOG.INFO, LOG.UI," Stop sound")
 	if snd then
 		snd:stop()
 		snd = nil
@@ -126,9 +127,9 @@ end
 function Play_sound(sound)
 	Stop_sound()
     if sound == nil then
-       printdebug("[NPE][UI] Play sound: sound is nil")
+       printdebug(LOG.INFO, LOG.UI," Play sound: sound is nil")
     end
-	printdebug("[NPE][UI] Play sound: %s", sound)
+	printdebug(LOG.INFO, LOG.UI," Play sound: %s", sound)
 	snd = sound_object(sound)
 	snd:play(db.actor,0,sound_object.s2d)
 	return true
@@ -136,28 +137,37 @@ end
 
 function Play_delayed_sound(sound)
 	Stop_sound()
-	printdebug("[NPE][UI] Play delayed sound: %s", sound)
+	printdebug(LOG.INFO, LOG.UI," Play delayed sound: %s", sound)
 	snd = sound_object(sound)
 	snd:play(db.actor,0,sound_object.s2d)
 	return true
 end
 
 function Play_sound_with_delay(sound, delay)
-	printdebug("[NPE][UI] Play sound with delay: " .. sound .. " delay: " .. delay)
+	printdebug(LOG.INFO, LOG.UI," Play sound with delay: " .. sound .. " delay: " .. delay)
 	local sound_name = GetFilename(sound .. ".ogg")
 	CreateTimeEvent("play_sound_with_delay", "play_sound_with_delay" .. sound_name, delay, Play_delayed_sound, sound)
 end
 
 function Enable_dof(enable)
-	printdebug("[NPE][UI] Enable DOF: " .. tostring(enable))
+	printdebug(LOG.INFO, LOG.UI," Enable DOF: " .. tostring(enable))
 	if ssfx_weapons_dof then
 		actor_menu.last_mode = 1
 	end	
 end
 
 function Disable_dof()
-	printdebug("[NPE][UI] Disable DOF")
+	printdebug(LOG.INFO, LOG.UI," Disable DOF")
 	if ssfx_weapons_dof then
 		actor_menu.last_mode = 0
 	end	
+end
+
+function npe_on_log_update()
+    printf("NPE EVENT LOG UPDATE")
+    LOG = npe_manager.LOG
+end
+
+function on_game_start()
+    RegisterScriptCallback("npe_on_log_update", npe_on_log_update)
 end

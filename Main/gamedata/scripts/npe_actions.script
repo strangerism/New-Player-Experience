@@ -1,7 +1,7 @@
 
 local printlog = npe_manager.Printlog_npe
 local printdebug = npe_manager.Printdebug_npe
-
+local LOG = npe_manager.LOG
 -- monkey patching radio stuff from item_radio.script
 
 RADIO_TYPE = {
@@ -103,7 +103,7 @@ end
 
 -- updates radio sounds
 function Mute_radio(silence)
-    printdebug("[NPE][ACTIONS] Mute radio " .. Get_radio_type() .. " ("..tostring(silence)..")")
+    printdebug(LOG.INFO, LOG.ACTION," Mute radio " .. Get_radio_type() .. " ("..tostring(silence)..")")
     if Get_radio_type() == RADIO_TYPE.VANILLA then
         silence_vanilla_radio(silence)
     else
@@ -114,17 +114,17 @@ function Mute_radio(silence)
 end
 
 function set_radio_freq(new_frequency)
-    printdebug("[NPE][ACTIONS] set_radio_freq("..new_frequency..")")
+    printdebug(LOG.INFO, LOG.ACTION," set_radio_freq("..new_frequency..")")
 
 	local oldf = math.floor(item_radio.get_freq())
-    printdebug("[NPE][ACTIONS] oldf = "..oldf)
+    printdebug(LOG.INFO, LOG.ACTION," oldf = "..oldf)
     local increment = 0
     if oldf >= new_frequency then
         increment = oldf - new_frequency
     else
         increment = new_frequency - oldf
     end
-    printdebug("[NPE][ACTIONS] increment = "..increment)
+    printdebug(LOG.INFO, LOG.ACTION," increment = "..increment)
     if increment == 0 then
         return
     end
@@ -210,7 +210,7 @@ function hide_detector(obj)
 end
 
 function Unequip_detector()
-    printdebug("[NPE][ACTIONS] Unequip_detector()")
+    printdebug(LOG.INFO, LOG.ACTION," Unequip_detector()")
     local actor = db.actor
     local device_in_slot = actor:item_in_slot(9)
     if device_in_slot then
@@ -279,7 +279,7 @@ EFFECTOR = {
 }
 
 function remove_all_psy_ppe_effects()
-    printdebug("[NPE][ACTIONS] remove_all_psy_ppe_effects")
+    printdebug(LOG.INFO, LOG.ACTION," remove_all_psy_ppe_effects")
     level.remove_pp_effector(EFFECTOR.BLUR.c_id)
     -- level.remove_pp_effector(EFFECTOR.BLACK_INFINITE.name)
     level.remove_pp_effector(EFFECTOR.AUDIO_SHOCK.c_id)
@@ -289,7 +289,7 @@ function remove_all_psy_ppe_effects()
 end
 
 function set_all_psy_ppe_effects(duration, set_id)
-    printdebug("[NPE][ACTIONS] set_all_psy_ppe_effects with duration = " .. duration .. " for set_id = " .. set_id)
+    printdebug(LOG.INFO, LOG.ACTION," set_all_psy_ppe_effects with duration = " .. duration .. " for set_id = " .. set_id)
     level.add_pp_effector(EFFECTOR.BLUR.name, EFFECTOR.BLUR.c_id, true)
     -- level.add_pp_effector(EFFECTOR.BLACK_INFINITE.name, EFFECTOR.BLACK_INFINITE.c_id, true)
     level.add_pp_effector(EFFECTOR.AUDIO_SHOCK.name, EFFECTOR.AUDIO_SHOCK.c_id, true)
@@ -300,13 +300,13 @@ function set_all_psy_ppe_effects(duration, set_id)
 end
 
 function npe_remove_effector(effector)
-    printdebug("[NPE][ACTIONS] npe_remove_effector("..effector.name..")")
+    printdebug(LOG.INFO, LOG.ACTION," npe_remove_effector("..effector.name..")")
     level.remove_pp_effector(effector.c_id)
     return true
 end
 
 function npe_remove_effectors(effectors_table)
-    printdebug("[NPE][ACTIONS] npe_remove_effectors")
+    printdebug(LOG.INFO, LOG.ACTION," npe_remove_effectors")
     for i, effector in ipairs(effectors_table) do
         npe_remove_effector(effector)
     end
@@ -314,7 +314,7 @@ function npe_remove_effectors(effectors_table)
 end
 
 function npe_add_effector(effector, duration, set_id)
-    printdebug("[NPE][ACTIONS] npe_add_effector("..effector.name..", "..duration..", "..set_id..")")
+    printdebug(LOG.INFO, LOG.ACTION," npe_add_effector("..effector.name..", "..duration..", "..set_id..")")
     level.add_pp_effector(effector.name. effector.c_id, true)
     if duration then
         CreateTimeEvent("npe_remove_effector", "npe_remove_effector" .. set_id, duration, npe_remove_effector, effector)
@@ -323,7 +323,7 @@ function npe_add_effector(effector, duration, set_id)
 end
 
 function npe_add_effectors(effectors_table, duration, set_id)
-    printdebug("[NPE][ACTIONS] npe_add_effectors")
+    printdebug(LOG.INFO, LOG.ACTION," npe_add_effectors")
     for i, effector in ipairs(effectors_table) do
         npe_add_effector(effector, duration, set_id)
     end
@@ -331,7 +331,7 @@ function npe_add_effectors(effectors_table, duration, set_id)
 end
 
 function add_to_actor(money, items)
-    printdebug("[NPE][ACTIONS] add_to_actor("..money..", items)")
+    printdebug(LOG.INFO, LOG.ACTION," add_to_actor("..money..", items)")
     local reward = {
         [1] = { reward_money = money, reward_item = items}
     }
@@ -341,16 +341,16 @@ function add_to_actor(money, items)
 end
 
 function remove_from_actor(items)
-    printdebug("[NPE][ACTIONS] remove_from_actor(items)")
+    printdebug(LOG.INFO, LOG.ACTION," remove_from_actor(items)")
     xr_effects.remove_item(db.actor, nil, items)
     return true
 end
 
 function add_to_stash(items, stash_id)
-    printdebug("[NPE][ACTIONS] add_to_stash(items, "..stash_id..")")
+    printdebug(LOG.INFO, LOG.ACTION," add_to_stash(items, "..stash_id..")")
     local stash_obj = alife_object(stash_id) 
     if not stash_obj then
-        printdebug("[NPE][ACTIONS] stash does not exists")
+        printdebug(LOG.INFO, LOG.ACTION," stash does not exists")
         return true
     end
 	for i=1,#items do
@@ -365,12 +365,12 @@ end
 
 --     local se_obj = alife_object(id) 
 --     if not se_obj then
---         printdebug("[NPE][ACTIONS] stash does not exists")
+--         printdebug(LOG.INFO, LOG.ACTION," stash does not exists")
 --         return
 --     end
 
 --     local lvl = alife():level_name(game_graph():vertex(se_obj.m_game_vertex_id):level_id())
---     printdebug("[NPE][ACTIONS] spawn_lootbox() level = " .. lvl)
+--     printdebug(LOG.INFO, LOG.ACTION," spawn_lootbox() level = " .. lvl)
 -- 	for i=1,#spawned_item do
 -- 		local section = spawned_item[i]
 --         local se_itm = alife_create_item(section, box, nil)
@@ -387,11 +387,21 @@ end
 
 
 function actor_on_item_put_in_box(box, itm)
-	printdebug("[NPE][ACTIONS] box_id = " .. box:id())
+	printdebug(LOG.INFO, LOG.ACTION," box_id = " .. box:id())
+end
+
+function npe_on_log_update()
+    printf("NPE EVENT LOG UPDATE")
+    LOG = npe_manager.LOG
 end
 
 function on_game_start()
-    printlog("[NPE][ACTIONS] on_game_start()")
+    RegisterScriptCallback("npe_on_log_update", npe_on_log_update)
+end
+
+function on_game_start()
+    RegisterScriptCallback("npe_on_log_update", npe_on_log_update)
     configure_radio_sounds_for_restoration()
     -- RegisterScriptCallback("actor_on_item_put_in_box",actor_on_item_put_in_box)
 end
+

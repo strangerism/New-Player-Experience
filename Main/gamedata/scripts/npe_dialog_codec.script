@@ -1,6 +1,7 @@
 
 local printlog = npe_manager.Printlog_npe
 local printdebug = npe_manager.Printdebug_npe
+local LOG = npe_manager.LOG
 
 GUI = nil -- instance, don't touch
 
@@ -14,7 +15,7 @@ DIRECTION_UP = 1
 DIRECTION_DOWN = 0
 
 local function set_codec_signal_band_to(level, direction)
-	-- printdebug("[NPE][EXEC] set_codec_signal_band_to: " .. level .. " direction: " .. direction)
+	-- printdebug(LOG.INFO, LOG.UI_EXEC," set_codec_signal_band_to: " .. level .. " direction: " .. direction)
     if not GUI then return end
     local start, stop, step = 1, 9, 1
     if direction == DIRECTION_DOWN then
@@ -24,10 +25,10 @@ local function set_codec_signal_band_to(level, direction)
         GUI.codec_signal_band[i].enabled = (i <= level)
         if not GUI.codec_signal_band[i].enabled then
             GUI.codec_signal_band[i].mask:Show(true)
-			-- printdebug("[NPE][EXEC] codec_signal_band[" .. i .. "] mask: Show(true)")
+			-- printdebug(LOG.INFO, LOG.UI_EXEC," codec_signal_band[" .. i .. "] mask: Show(true)")
         else
             GUI.codec_signal_band[i].mask:Show(false)
-			-- printdebug("[NPE][EXEC] codec_signal_band[" .. i .. "] mask: Show(false)")
+			-- printdebug(LOG.INFO, LOG.UI_EXEC," codec_signal_band[" .. i .. "] mask: Show(false)")
         end
     end
 end
@@ -52,23 +53,23 @@ local MIN_LEVEL = 5
 local BOOTSTRAP_LEVEL = 7
 local MAX_LEVEL_CHANGE = 4
 local function npe_run_change_level_loop()
-	printdebug("[NPE][EXEC] run_change_level_loop current_level: " .. current_level .. " direction: " .. get_direction_str(direction) .. " target_level: " .. target_level)
-
-    if not run_change_level_loop then return true end
+	printdebug(LOG.RUN, LOG.POOL, LOG.UI_EXEC," run change level loop")
+	if not run_change_level_loop then return true end
 	if not GUI then return false end
+	printdebug(LOG.RUN, LOG.UI_EXEC," change_level_loop current_level: " .. current_level .. " direction: " .. get_direction_str(direction) .. " target_level: " .. target_level)
 	if (direction == DIRECTION_UP and current_level > target_level) or (direction == DIRECTION_DOWN and current_level < target_level) then 
 		-- ends the loop
-		printdebug("![NPE][EXEC] change_level loop ended ")
+		printdebug(LOG.STOP, LOG.UI_EXEC," change_level loop ended ")
 		if bootstrapping then
 			bootstrapping = false
 		end
 		current_level = target_level
 		run_change_level_loop = false
 		codec_signal_manager_cooldown = time_global() + math.random(2, 6) * 250
-		printdebug("[NPE][EXEC] codec_signal_manager_cooldown: " .. codec_signal_manager_cooldown)
+		printdebug(LOG.INFO, LOG.UI_EXEC," codec_signal_manager_cooldown: " .. codec_signal_manager_cooldown)
 		return true 
 	end
-    printdebug("[NPE][EXEC] change level loop - going " .. get_direction_str(direction))	
+    printdebug(LOG.INFO, LOG.UI_EXEC," change level loop - going " .. get_direction_str(direction))	
 
 	local loop = change_level_loop
 	if bootstrapping then
@@ -77,7 +78,7 @@ local function npe_run_change_level_loop()
     ResetTimeEvent(run_change_level_loop_name, run_change_level_loop_name, loop)
 	-- update current level
 	set_codec_signal_band_to(current_level, direction)
-	printdebug("[NPE][EXEC] current_level: " .. current_level .. " --> target_level: " .. target_level)
+	printdebug(LOG.INFO, LOG.UI_EXEC," current_level: " .. current_level .. " --> target_level: " .. target_level)
 	if direction == DIRECTION_UP then
 		current_level = current_level + 1
 	else
@@ -88,17 +89,18 @@ local function npe_run_change_level_loop()
 end
 
 local function start_change_level_loop()
+	printdebug(LOG.RUN, LOG.UI_EXEC," starting change level loop")
 	if run_change_level_loop then return end
-	printdebug("-[NPE][EXEC] starting change level loop")
 	run_change_level_loop = true
 	local loop = change_level_loop
 	if bootstrapping then
-		printdebug("-[NPE][EXEC] bootstrapping")
+		printdebug(LOG.INFO, LOG.UI_EXEC," bootstrapping")
 		direction = DIRECTION_UP
 		target_level = BOOTSTRAP_LEVEL		
 		loop = bootstrap_loop
 	end	
 	CreateTimeEvent(run_change_level_loop_name, run_change_level_loop_name, loop, npe_run_change_level_loop)
+	printdebug(LOG.START, LOG.UI_EXEC," started change level loop")
 end
 
 local run_codec_signal_manager_loop = false
@@ -106,15 +108,14 @@ local run_codec_signal_manager_loop_name = 'NPE_codec_signal_manager_Loop'
 local codec_signal_manager_loop = 0.5
 
 local function npe_codec_signal_manager_loop()
+	printdebug(LOG.RUN, LOG.POOL, LOG.UI_EXEC," run codec_signal_manager loop")
     if not run_codec_signal_manager_loop then return true end
 	if not GUI then return false end
-
-    printdebug("//[NPE][EXEC] codec_signal_manager loop")
     ResetTimeEvent(run_codec_signal_manager_loop_name, run_codec_signal_manager_loop_name, codec_signal_manager_loop)
-
+	printdebug(LOG.RUN, LOG.UI_EXEC," codec_signal_manager loop")
 	-- codec signal band management
 	if codec_signal_manager_cooldown == 0 and not run_change_level_loop then
-		printdebug("[NPE][EXEC] current_level: " .. current_level)
+		printdebug(LOG.INFO, LOG.UI_EXEC," current_level: " .. current_level)
 		-- we need to decide if we go up or down
 		direction = math.random(0, 9)
 		if direction > 6 then
@@ -125,24 +126,24 @@ local function npe_codec_signal_manager_loop()
 			-- 40% change for no change level
 			return false
 		end
-		printdebug("[NPE][EXEC] random direction : " .. get_direction_str(direction))
+		printdebug(LOG.INFO, LOG.UI_EXEC," random direction : " .. get_direction_str(direction))
 		if direction == DIRECTION_UP and current_level == MAX_LEVEL then
 			direction = DIRECTION_DOWN
-			printdebug("[NPE][EXEC] overriding direction to: " .. get_direction_str(direction))
+			printdebug(LOG.INFO, LOG.UI_EXEC," overriding direction to: " .. get_direction_str(direction))
 		elseif direction == DIRECTION_DOWN and current_level == MIN_LEVEL then
 			direction = DIRECTION_UP
-			printdebug("[NPE][EXEC] overriding direction to: " .. get_direction_str(direction))
+			printdebug(LOG.INFO, LOG.UI_EXEC," overriding direction to: " .. get_direction_str(direction))
 		end
 		-- how much to change the level
 		local change_target_to = math.random(1, MAX_LEVEL_CHANGE) 
-		printdebug("[NPE][EXEC] change_target_to: " .. change_target_to)
+		printdebug(LOG.INFO, LOG.UI_EXEC," change_target_to: " .. change_target_to)
 		if direction == DIRECTION_UP then
 			target_level = math.min(current_level + change_target_to, MAX_LEVEL)
 		else
 			target_level = math.max(current_level - change_target_to, MIN_LEVEL)
 		end
 		-- start change level loop
-		printdebug("[NPE][EXEC] start_change_level_loop current_level: " .. current_level .. " direction: " .. get_direction_str(direction) .. " target_level: " .. target_level)
+		printdebug(LOG.INFO, LOG.UI_EXEC," start_change_level_loop current_level: " .. current_level .. " direction: " .. get_direction_str(direction) .. " target_level: " .. target_level)
 		start_change_level_loop()
 	else
 		if time_global() > codec_signal_manager_cooldown then
@@ -155,22 +156,23 @@ local function npe_codec_signal_manager_loop()
 end
 
 local function start_codec_signal_manager_loop()
+	printdebug(LOG.RUN, LOG.UI_EXEC," starting codec_signal_manager loop")
     if run_codec_signal_manager_loop then return end
-    printdebug("-[NPE][EXEC] starting codec_signal_manager loop")
     run_codec_signal_manager_loop = true
 	set_codec_signal_band_to(0,0)
 	current_level = 0
 	bootstrapping = true
     CreateTimeEvent(run_codec_signal_manager_loop_name, run_codec_signal_manager_loop_name, codec_signal_manager_loop, npe_codec_signal_manager_loop)
+	printdebug(LOG.START, LOG.UI_EXEC," started change_level loop")
 end
 
 local function stop_codec_signal_manager_loop()
+	printdebug(LOG.RUN, LOG.UI_EXEC," stopping codec_signal_manager loop")
 	if not run_codec_signal_manager_loop then return end
-	printdebug("![NPE][EXEC] stopping codec_signal_manager loop")
 	run_codec_signal_manager_loop = false
 	codec_signal_manager_cooldown = 0
 	run_change_level_loop = false
-	printdebug("![NPE][EXEC] stopping change_level loop")
+	printdebug(LOG.START, LOG.UI_EXEC," stopped codec_signal_manager loops")
 end
 
 -- Portraits flickering loops
@@ -217,8 +219,10 @@ local run_caller_flickering_loop_name = 'NPE_caller_flickering_Loop'
 local caller_flickering_loop = 0.015
 local caller_flickering_duration = 0
 local function npe_caller_flickering_loop()
+	printdebug(LOG.RUN, LOG.POOL, LOG.UI_EXEC," run caller_flickering loop")
     if not run_caller_flickering_loop then return true end
 	if not GUI then return false end
+	printdebug(LOG.RUN, LOG.UI_EXEC," caller_flickering loop")
 	if time_global() > caller_flickering_duration then 
 		-- ends the loop
 		change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_DEFAULT_ALPHA)
@@ -230,7 +234,6 @@ local function npe_caller_flickering_loop()
 		return true 
 	end
 
-    printdebug("//[NPE][EXEC] caller_flickering loop")
     ResetTimeEvent(run_caller_flickering_loop_name, run_caller_flickering_loop_name, caller_flickering_loop)
 	if GUI.portrait_caller:IsShown() then
 		GUI.portrait_caller:Show(false)
@@ -242,12 +245,13 @@ local function npe_caller_flickering_loop()
 end
 
 local function start_caller_flickering_loop()
+	printdebug(LOG.RUN, LOG.UI_EXEC," resuming caller_flickering loop")
     if run_caller_flickering_loop then return end
-    printdebug("-[NPE][EXEC] resuming caller_flickering loop")
     run_caller_flickering_loop = true
 	if not GUI then return false end
 	change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_FLICKERING_ALPHA)
     CreateTimeEvent(run_caller_flickering_loop_name, run_caller_flickering_loop_name, caller_flickering_loop, npe_caller_flickering_loop) -- offset time caller_flickering_loop
+	printdebug(LOG.START, LOG.UI_EXEC," resumed caller_flickering loop")
 end
 
 -- actor portrait flickering loop
@@ -257,6 +261,7 @@ local run_actor_flickering_loop_name = 'NPE_actor_flickering_Loop'
 local actor_flickering_loop = 0.015
 local actor_flickering_duration = 0
 local function npe_actor_flickering_loop()
+	printdebug(LOG.RUN, LOG.POOL, LOG.UI_EXEC," run actor_flickering loop")
     if not run_actor_flickering_loop then return true end
 	if not GUI then return false end
 	if time_global() > actor_flickering_duration then 
@@ -267,7 +272,7 @@ local function npe_actor_flickering_loop()
 		actor_flickering_duration = 0
 		return true 
 	end
-    printdebug("//[NPE][EXEC] actor_flickering loop")
+    printdebug(LOG.RUN, LOG.UI_EXEC," actor_flickering loop")
     ResetTimeEvent(run_actor_flickering_loop_name, run_actor_flickering_loop_name, actor_flickering_loop)
 	if GUI.portrait_actor:IsShown() then
 		GUI.portrait_actor:Show(false)
@@ -279,12 +284,13 @@ local function npe_actor_flickering_loop()
 end
 
 local function start_actor_flickering_loop()
+	printdebug(LOG.RUN, LOG.UI_EXEC," resuming actor_flickering loop")
     if run_actor_flickering_loop then return end
-    printdebug("-[NPE][EXEC] resuming actor_flickering loop")
 	if not GUI then return false end
 	change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_FLICKERING_ALPHA)
     run_actor_flickering_loop = true
     CreateTimeEvent(run_actor_flickering_loop_name, run_actor_flickering_loop_name, actor_flickering_loop, npe_actor_flickering_loop) -- offset time actor_flickering_loop
+	printdebug(LOG.START, LOG.UI_EXEC," resumed actor_flickering loop")
 end
 
 -- Portraits transparency manager loop
@@ -295,10 +301,10 @@ local portraits_scanlines_manager_loop = 1
 local caller_flickering_cooldown = 0
 local actor_flickering_cooldown = 0
 local function npe_portraits_scanlines_manager_loop()
+	printdebug(LOG.RUN, LOG.POOL, LOG.UI_EXEC," run portraits_scanlines_manager loop")
     if not run_portraits_scanlines_manager_loop then return true end
-    printdebug("//[NPE][EXEC] portraits transparency loop")
     ResetTimeEvent(run_portraits_scanlines_manager_loop_name, run_portraits_scanlines_manager_loop_name, portraits_scanlines_manager_loop)
-
+	printdebug(LOG.RUN, LOG.UI_EXEC," portraits_scanlines_manager loop")
 	-- caller scanlines loop management - cannot run if any scanline loop is active and it has a cooldown
 	if caller_flickering_cooldown == 0 and not run_caller_flickering_loop and not run_actor_flickering_loop then
 		-- start caller scanlines loop by chance			
@@ -329,24 +335,26 @@ local function npe_portraits_scanlines_manager_loop()
     return false
 end
 local function stop_portraits_scanlines_manager_loop()
+	printdebug(LOG.RUN, LOG.UI_EXEC," stopping portraits_scanlines_manager loop")
     if not run_portraits_scanlines_manager_loop then return end
-    printdebug("![NPE][EXEC] stop resume portraits transparency loop")
     run_portraits_scanlines_manager_loop = false
 	run_actor_flickering_loop = false
 	run_caller_flickering_loop = false
 	caller_flickering_cooldown = 0
 	actor_flickering_cooldown = 0	
+	printdebug(LOG.STOP, LOG.UI_EXEC," stopped portraits transparency loop")
 end
 
 local function start_portraits_scanlines_manager_loop()
+	printdebug(LOG.RUN, LOG.UI_EXEC," starting portraits_scanlines_manager loop")
     if run_portraits_scanlines_manager_loop then return end
-    printdebug("-[NPE][EXEC] resuming start portraits transparency loop")
     run_portraits_scanlines_manager_loop = true
 	run_actor_flickering_loop = false
 	run_caller_flickering_loop = false
 	caller_flickering_cooldown = 0
 	actor_flickering_cooldown = 0		
     CreateTimeEvent(run_portraits_scanlines_manager_loop_name, run_portraits_scanlines_manager_loop_name, portraits_scanlines_manager_loop, npe_portraits_scanlines_manager_loop)
+	printdebug(LOG.START, LOG.UI_EXEC," started portraits transparency loop")
 end
 
 -- portraits secondary scanlines loop
@@ -358,10 +366,11 @@ local portrait_scanlines_loop_count = 0
 local starting_y = 0
 local ending_y = 193
 local function npe_portrait_scanlines_loop()
+	printdebug(LOG.RUN, LOG.POOL, LOG.UI_EXEC," run portrait_scanlines loop")
     if not run_portrait_scanlines_loop then return true end
-    -- printdebug("//[NPE][EXEC] portrait scanlines loop")
-    ResetTimeEvent(portrait_scanlines_loop_name, portrait_scanlines_loop_name, portrait_scanlines_loop) -- offset time context_countdowns_loop
 	if not GUI then return false end
+    ResetTimeEvent(portrait_scanlines_loop_name, portrait_scanlines_loop_name, portrait_scanlines_loop) -- offset time context_countdowns_loop
+	printdebug(LOG.RUN, LOG.UI_EXEC," portrait scanlines loop")
 	portrait_scanlines_loop_count = portrait_scanlines_loop_count + 1
 	if portrait_scanlines_loop_count > 1000 then portrait_scanlines_loop_count = 0 end
 	if (portrait_scanlines_loop_count % 2 == 0) then
@@ -370,7 +379,7 @@ local function npe_portrait_scanlines_loop()
 		local x_r = GUI.codec_scanline_big_r:GetWndPos().x
 		local y = GUI.codec_scanline_big_l:GetWndPos().y
 		y = y + 1
-		-- printdebug("[NPE][EXEC] portrait scanlines loop y: " .. y)
+		-- printdebug(LOG.INFO, LOG.UI_EXEC," portrait scanlines loop y: " .. y)
 		if y > ending_y then y = starting_y end
 		GUI.codec_scanline_big_l:SetWndPos(vector2():set(x_l, y))
 		GUI.codec_scanline_big_r:SetWndPos(vector2():set(x_r, y))			
@@ -380,7 +389,7 @@ local function npe_portrait_scanlines_loop()
 	local x_r = GUI.codec_scanline_r:GetWndPos().x
 	local y = GUI.codec_scanline_l:GetWndPos().y
 	y = y + 1
-	-- printdebug("[NPE][EXEC] portrait scanlines loop y: " .. y)
+	-- printdebug(LOG.INFO, LOG.UI_EXEC," portrait scanlines loop y: " .. y)
 	if y > ending_y then y = starting_y end
 	GUI.codec_scanline_l:SetWndPos(vector2():set(x_l, y))
 	GUI.codec_scanline_r:SetWndPos(vector2():set(x_r, y))	
@@ -388,32 +397,34 @@ local function npe_portrait_scanlines_loop()
 end
 
 local function start_portrait_scanlines_loop()
-	printdebug("[NPE][EXEC] starting portrait scanlines loop")
+	printdebug(LOG.RUN, LOG.UI_EXEC," starting portrait scanlines loop")
     if run_portrait_scanlines_loop then return end
 	if not GUI then return end
     run_portrait_scanlines_loop = true
 	starting_y = GUI.codec_scanline_l:GetWndPos().y
     CreateTimeEvent(portrait_scanlines_loop_name, portrait_scanlines_loop_name, portrait_scanlines_loop, npe_portrait_scanlines_loop)
+	printdebug(LOG.START, LOG.UI_EXEC," started portrait scanlines loop")
 end
 
 local function stop_portrait_scanlines_loop()
+	printdebug(LOG.RUN, LOG.UI_EXEC," stopping portrait scanlines loop")
     if not run_portrait_scanlines_loop then return end
-    printdebug("![NPE][EXEC] stopping portrait scanlines loop")
     run_portrait_scanlines_loop = false
 	portrait_scanlines_loop_count = 0
+	printdebug(LOG.STOP, LOG.UI_EXEC," stopped portrait scanlines loop")
 end
 
 -- open codec dialog function as callback or timed event
 
 local function open_codec_dialog_ui(set)
-    printdebug("[NPE][UI] Play set module: " .. set.module .. " set Id:" .. set.id)
-	printdebug("[NPE][UI] Play set title: " .. set.title)
-	printdebug("[NPE][UI] Sounds set: " .. SOUNDS_SET)
-    printdebug("[NPE][UI] Creating GUI")
+    printdebug(LOG.INFO, LOG.UI," Play set module: " .. set.module .. " set Id:" .. set.id)
+	printdebug(LOG.INFO, LOG.UI," Play set title: " .. set.title)
+	printdebug(LOG.INFO, LOG.UI," Sounds set: " .. SOUNDS_SET)
+    printdebug(LOG.INFO, LOG.UI," Creating GUI")
     GUI = UINewPlayerExperience(set)
 
 	if (GUI) and (not GUI:IsShown()) then
-        printdebug("[NPE][UI] Showing GUI")
+        printdebug(LOG.INFO, LOG.UI," Showing GUI")
 		GUI:ShowDialog(true)
 		Register_UI("UINewPlayerExperience","npe_dialog")
 		GUI:DoStartActions()
@@ -422,7 +433,7 @@ local function open_codec_dialog_ui(set)
 		start_codec_signal_manager_loop()
 		npe_dialog.Enable_dof()
     else
-        printdebug("[NPE][UI] GUI already shown")
+        printdebug(LOG.INFO, LOG.UI," GUI already shown")
 		npe_manager.Resume_execution()
     end	
 end
@@ -431,9 +442,9 @@ local function open_codec_dialog(set, callback)
 
 	local f
     f = function() 
-	printdebug("[NPE][UI] open_codec_dialog callback: " .. callback)
+	printdebug(LOG.INFO, LOG.UI," open_codec_dialog callback: " .. callback)
 	if callback then
-		printdebug("![NPE][RGSTR] Unregistering callback [" ..callback .. "]")
+		printdebug(LOG.REMOVE, LOG.RGSTR," Unregistering callback [" ..callback .. "]")
 		UnregisterScriptCallback(callback, f)
 	end
 
@@ -444,7 +455,7 @@ local function open_codec_dialog(set, callback)
 end
 
 local function open_codec_dialog_te(set)
-	printlog("[NPE][UI] open_codec_dialog_te")
+	printlog(LOG.INFO, LOG.UI," open_codec_dialog_te")
 	open_codec_dialog_ui(set)
 	return true
 end
@@ -452,7 +463,7 @@ end
 -- detector equip functions
 
 local function equip_anomaly_radio(set)
-	printdebug("[NPE][UI] equip_anomaly_radio")
+	printdebug(LOG.INFO, LOG.UI," equip_anomaly_radio")
 
 	-- register callback to detector on equipping
 	local callback_name = "npe_dialog_codec_open_detector"
@@ -473,7 +484,7 @@ end
 
 
 local function equip_nerfs_radio(nerfs_radio_type,set)
-	printdebug("[NPE][UI] equip_nerfs_radio radio_type: " .. nerfs_radio_type)
+	printdebug(LOG.INFO, LOG.UI," equip_nerfs_radio radio_type: " .. nerfs_radio_type)
 	local open_time
 	local sound_time
 	-- configure radio ui and sounds 
@@ -488,7 +499,7 @@ local function equip_nerfs_radio(nerfs_radio_type,set)
 		open_time = 1.3
 		sound_time = 1.3
 	end
-	printdebug("[NPE][UI] Play open sound after delay %s", sound_time)
+	printdebug(LOG.INFO, LOG.UI," Play open sound after delay %s", sound_time)
 	CreateTimeEvent("npe_dialog_codec", "play_open_sound", sound_time, npe_dialog.Play_sound, Sounds[SOUNDS_SET].open)
 
 	-- prep timed event for open_codec_dialog ui
@@ -506,13 +517,12 @@ local codec_ring_count = 0
 local codec_ring_count_answer = 3
 
 local function codec_call_loop(set)
+	printdebug(LOG.RUN, LOG.POOL, LOG.UI_EXEC," run codec call loop")
     if not run_codec_call_loop then return true end
-
-    printdebug("//[NPE][EXEC] codec call loop")
+	printdebug(LOG.RUN, LOG.UI_EXEC," codec call loop")
 	npe_dialog.Play_sound(Sounds[SOUNDS_SET].call)
-
 	codec_ring_count = codec_ring_count + 1
-	printdebug("[NPE][EXEC] codec_ring_count: " .. codec_ring_count)
+	printdebug(LOG.INFO, LOG.UI_EXEC," codec_ring_count: " .. codec_ring_count)
 	if codec_ring_count < codec_ring_count_answer then
 		-- play another ring tune
     	ResetTimeEvent(codec_call_loop_name, codec_call_loop_name, 2)
@@ -520,13 +530,13 @@ local function codec_call_loop(set)
 	end
 
 	-- reset state
-	printdebug("![NPE][UI] codec call loop ended ")
+	printdebug(LOG.STOP, LOG.UI_EXEC," codec call loop ended ")
 	run_codec_call_loop = false
 	codec_ring_count = 0
 
 	-- handle radio type
 	local radio_type = npe_actions.Get_radio_type()
-	printdebug("[NPE][UI] Play open sound for radio_type: " .. radio_type)
+	printdebug(LOG.INFO, LOG.UI_EXEC," Play open sound for radio_type: " .. radio_type)
 	if radio_type == npe_actions.RADIO_TYPE.VANILLA then
 		equip_anomaly_radio(set)
 	else
@@ -538,19 +548,19 @@ local function codec_call_loop(set)
 end
 
 local function start_codec_call_loop(set)
+	printdebug(LOG.RUN, LOG.UI_EXEC," starting codec call loop")
     if run_codec_call_loop then return end
-
-    printdebug("-[NPE][EXEC] starting codec call loop")
     run_codec_call_loop = true
 	codec_ring_count = 0
     CreateTimeEvent(codec_call_loop_name, codec_call_loop_name, 1, codec_call_loop, set)
+	printdebug(LOG.START, LOG.UI_EXEC," started codec call loop")
 end
 
 -- api to start the codec dialog
 
 function Play(set)
 	if set == nil then
-		printdebug("[NPE][UI] Play set is nil")
+		printdebug(LOG.INFO, LOG.UI," Play set is nil")
 		npe_manager.Resume_execution()
 		return
 	end
@@ -563,9 +573,9 @@ end
 
 local xml = nil
 function LoadUIStatic(dialog)
-	printdebug("[NPE][UI] LoadUIStatic")
+	printdebug(LOG.INFO, LOG.UI," LoadUIStatic")
 	if not xml then
-		printdebug("[NPE][UI] Loading " .. dialog .. ".xml")
+		printdebug(LOG.INFO, LOG.UI," Loading " .. dialog .. ".xml")
 		xml = CScriptXmlInit()
 		xml:ParseFile(dialog .. ".xml")
 	end
@@ -583,18 +593,18 @@ function UINewPlayerExperience:__finalize()
 end
 
 function UINewPlayerExperience:InitControls(set)
-    printdebug("[NPE][UI] Init Codec UI")
+    printdebug(LOG.INFO, LOG.UI," Init Codec UI")
 	self:SetWndRect			(Frect():set(0,0,1024,768))
 	self:SetAutoDelete(true)
 	self.set = set
     LoadUIStatic(set.dialog)
     self.xml = xml
 	if not xml then
-		printdebug("[NPE][UI] Error loading " .. set.dialog .. ".xml")
+		printdebug(LOG.INFO, LOG.UI," Error loading " .. set.dialog .. ".xml")
 		return
 	end
 
-	printdebug("[NPE][UI] Creating Codec frame")
+	printdebug(LOG.INFO, LOG.UI," Creating Codec frame")
 	self.dialog	= xml:InitStatic(set.dialog, self)
 	self.frame	= xml:InitFrame(set.dialog .. ":frame", self.dialog)
 
@@ -623,7 +633,7 @@ function UINewPlayerExperience:InitControls(set)
 	-- card context
 	self.cardIndex = 1
 	if self.set.cards[self.cardIndex] then
-		printdebug("[NPE][UI] Creating Codec cards panel")
+		printdebug(LOG.INFO, LOG.UI," Creating Codec cards panel")
 
 		self.portrait_caller = xml:InitStatic(set.dialog .. ":portrait_caller",self.dialog)
 		self.portrait_caller:InitTexture(self.set.cards[self.cardIndex].portrait_caller)
@@ -643,7 +653,7 @@ function UINewPlayerExperience:InitControls(set)
 		self:PlayCard()
 	end
 
-	printdebug("[NPE][UI] Creating Codec controls")
+	printdebug(LOG.INFO, LOG.UI," Creating Codec controls")
 
 	-- btn_continue
     self.btn_continue = xml:Init3tButton(set.dialog .. ":btn_continue", self.dialog)
@@ -655,7 +665,7 @@ function UINewPlayerExperience:InitControls(set)
 	self:Register(self.btn_close, "btn_close")	
 	self:AddCallback("btn_close", ui_events.BUTTON_CLICKED, self.OnButtonClose, self)
 
-	printdebug("[NPE][UI] Rendering Codec UI")
+	printdebug(LOG.INFO, LOG.UI," Rendering Codec UI")
 	self:PositionWindow()
 	self:UpdateButtons()
 end
@@ -663,7 +673,7 @@ end
 local ratio = (device().height / device().width) / (768 / 1024) 
 function UINewPlayerExperience:PositionWindow()
 	ratio = (device().height / device().width) / (768 / 1024) 
-	printdebug("[NPE][UI] PositionWindow ratio: " .. ratio)
+	printdebug(LOG.INFO, LOG.UI," PositionWindow ratio: " .. ratio)
 	local x_translate = 200 * ratio
 	local y_translate =  100 * ratio
 
@@ -672,7 +682,7 @@ function UINewPlayerExperience:PositionWindow()
 end
 
 function UINewPlayerExperience:DoStartActions()
-	printdebug("[NPE][UI] DoStartActions")
+	printdebug(LOG.INFO, LOG.UI," DoStartActions")
 
 	if self.set.start_actions then
 		for i, action in pairs(self.set.start_actions) do
@@ -683,7 +693,7 @@ function UINewPlayerExperience:DoStartActions()
 end
 
 function UINewPlayerExperience:DoEndActions()
-	printdebug("[NPE][UI] DoEndActions")
+	printdebug(LOG.INFO, LOG.UI," DoEndActions")
 
 	if self.set.end_actions then
 		for i, action in pairs(self.set.end_actions) do
@@ -694,7 +704,7 @@ function UINewPlayerExperience:DoEndActions()
 end
 
 function UINewPlayerExperience:PlayCard()
-	printdebug("[NPE][UI] PlayCard")
+	printdebug(LOG.INFO, LOG.UI," PlayCard")
 	local text
 
 	-- update card context
@@ -737,7 +747,7 @@ function UINewPlayerExperience:PlayCard()
 end
 
 function UINewPlayerExperience:UpdateButtons()
-	printdebug("[NPE][UI] UpdateButtons")
+	printdebug(LOG.INFO, LOG.UI," UpdateButtons")
 
 	if self.cardIndex < #self.set.cards then
 		self.btn_continue:Show(true)
@@ -755,7 +765,7 @@ function UINewPlayerExperience:OnButtonClose()
 end
 
 function UINewPlayerExperience:OnButtonContinue()
-    printdebug("[NPE][UI] OnButtonContinue")
+    printdebug(LOG.INFO, LOG.UI," OnButtonContinue")
 	self.cardIndex = self.cardIndex + 1
 	if self.cardIndex <= #self.set.cards and self.set.cards[self.cardIndex] then
 
@@ -768,7 +778,7 @@ end
 
 local closing_dialog = false
 local function close_dialog(dialog)
-	printdebug("[NPE][UI] close_dialog_after_delay")
+	printdebug(LOG.STOP, LOG.UI," close_dialog_after_delay")
 	stop_portrait_scanlines_loop()
 	stop_portraits_scanlines_manager_loop()
 	stop_codec_signal_manager_loop()
@@ -785,7 +795,7 @@ local function close_dialog(dialog)
 end
 
 local function unequip_nerfs_radio(radio_type, dialog)
-	printdebug("[NPE][UI] unequip_nerfs_radio radio_type: " .. radio_type)
+	printdebug(LOG.INFO, LOG.UI," unequip_nerfs_radio radio_type: " .. radio_type)
 	npe_actions.Unequip_detector()
 	if radio_type == npe_actions.RADIO_TYPE.NERFS then
 		local close_time = 0
@@ -797,7 +807,7 @@ local function unequip_nerfs_radio(radio_type, dialog)
 		local close_time = 0.9
 		local close_snd_time = 0.8
 		local unmute_time = 2
-		printdebug("[NPE][UI] Play close sound after delay %s", close_time)
+		printdebug(LOG.INFO, LOG.UI," Play close sound after delay %s", close_time)
 		CreateTimeEvent("npe_dialog_codec", "play_close_sound", close_snd_time, npe_dialog.Play_sound, Sounds[SOUNDS_SET].close)
 		CreateTimeEvent("npe_dialog_codec", "unmute_anomaly_radio", unmute_time, npe_actions.Mute_radio, false)
 		CreateTimeEvent("npe_dialog_codec", "close_dialog", close_time, close_dialog, dialog)
@@ -805,7 +815,7 @@ local function unequip_nerfs_radio(radio_type, dialog)
 end
 
 local function unequip_anomaly_radio(dialog)
-	printdebug("[NPE][UI] unequip_anomaly_radio")
+	printdebug(LOG.INFO, LOG.UI," unequip_anomaly_radio")
 	npe_actions.Unequip_detector()
 	local close_time = 0
 	local unmute_time = 2
@@ -819,7 +829,7 @@ end
 local function unequip_radio(dialog)
 	-- handle radio type
 	local radio_type = npe_actions.Get_radio_type()
-	printdebug("[NPE][UI] Play open sound for radio_type: " .. radio_type)
+	printdebug(LOG.INFO, LOG.UI," Play open sound for radio_type: " .. radio_type)
 	if radio_type == npe_actions.RADIO_TYPE.VANILLA then
 		unequip_anomaly_radio(dialog)
 	else
@@ -831,7 +841,7 @@ end
 
 function UINewPlayerExperience:Save()
 	if self.set.save_context then
-		printdebug("[NPE][UI] Save context")
+		printdebug(LOG.INFO, LOG.UI," Save context")
 		local context = self.set.save_context
 		-- if context.set_completion then
 		-- 	local id = self.set.id .. "/set_completion"
@@ -877,4 +887,13 @@ function UINewPlayerExperience:OnKeyboard(dik, keyboard_action)
 		end
     end
     return res
+end
+
+function npe_on_log_update()
+    printf("NPE EVENT LOG UPDATE")
+    LOG = npe_manager.LOG
+end
+
+function on_game_start()
+    RegisterScriptCallback("npe_on_log_update", npe_on_log_update)
 end

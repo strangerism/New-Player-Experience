@@ -1,6 +1,6 @@
 local printlog = npe_manager.Printlog_npe
 local printdebug = npe_manager.Printdebug_npe
-
+LOG = npe_manager.LOG
 -- This file contains the events that can be used to trigger the NPE system
 -- The events are defined as constants
 
@@ -169,10 +169,12 @@ TASK = {
     wolf_mutant_threat_from_cordon = "esc_2_12_stalker_wolf_task_1_name",
     wolf_rescue_courier_from_cordon = "esc_2_12_stalker_wolf_task_2_name"
 }
-function npe_is_on_task(task_id)
+function npe_is_on_task(task)
+    printdebug(LOG.INFO, LOG.EVENT," looking for task " .. task)
     local has_task = false
     task_manager.task_ini:section_for_each(function(task_id)
-        if db.actor:get_task(task_id, true) then
+        if db.actor:get_task(task_id, true) and task_id == task then
+            printdebug(LOG.INFO, LOG.EVENT," found task " .. task_id)
             has_task = true
         end
       end)
@@ -196,7 +198,7 @@ function npe_on_near_smart_terrain(smart_name, near_distance)
     
     local smart = id and alife_object(id)
     if smart and smart:name() == smart_name then
-        printdebug("[NPE][EVENT] looking for smart " .. smart_name .. ", found " .. smart:name())
+        printdebug(LOG.INFO, LOG.EVENT," looking for smart " .. smart_name .. ", found " .. smart:name())
         local dist = smart and smart.position:distance_to(db.actor:position())
         if dist and dist < near_distance then
             return true
@@ -213,35 +215,41 @@ local who_is_npc_mp = dialogs.who_is_npc
 function dialogs.who_is_npc(first_speaker, second_speaker)
     local npc = who_is_npc_mp(first_speaker, second_speaker)
     npe.Last_npc_talked = npc:character_name()
-    printdebug("-[NPE][EVENT] Last_npc_talked = " .. tostring(npe.Last_npc_talked))
+    printdebug(LOG.INFO, LOG.EVENT, "Last_npc_talked = " .. tostring(npe.Last_npc_talked))
 	return npc
 end
 
 -- for debugging monkey patching
 local function actor_on_update()
-    -- printdebug("[NPE][EVENT] Last_npc_talked = " .. tostring(Last_npc_talked))
+    -- printdebug(LOG.INFO, LOG.EVENT," Last_npc_talked = " .. tostring(Last_npc_talked))
 
     -- if npe_on_near_smart_terrain(SMART_TERRAIN.cordon_loners_base) then
-    --     printdebug("![NPE][EVENT] Near cordon_loners_base ")
+    --     printdebug(LOG.INFO, LOG.EVENT," Near cordon_loners_base ")
     -- end
     -- if npe_on_near_smart_terrain(SMART_TERRAIN.cordon_military_base) then
-    --     printdebug("![NPE][EVENT] Near cordon_military_base ")
+    --     printdebug(LOG.INFO, LOG.EVENT," Near cordon_military_base ")
     -- end
     -- if smart_terrain.nearest_to_actor_smart.id then
     --     local id = smart_terrain.nearest_to_actor_smart.id
-    --     printdebug("[NPE][EVENT] Near smart terrain " .. smart_terrain.nearest_to_actor_smart.id)
+    --     printdebug(LOG.INFO, LOG.EVENT," Near smart terrain " .. smart_terrain.nearest_to_actor_smart.id)
     --     local smart = id and alife_object(id)
     --     if smart and smart:name() then
-    --         printdebug("[NPE][EVENT] Near smart terrain " .. smart:name())
+    --         printdebug(LOG.INFO, LOG.EVENT," Near smart terrain " .. smart:name())
     --     end
     -- end
 
     -- if npe_is_on_task(TASK.fanatic_training_day_boar_hunting) then
-    --     printdebug("[NPE][EVENT] On task Training Day: Boar Hunting")
+    --     printdebug(LOG.INFO, LOG.EVENT," On task Training Day: Boar Hunting")
     -- end
     
 end
 
+function npe_on_log_update()
+    printf("NPE EVENT LOG UPDATE")
+    LOG = npe_manager.LOG
+end
+
 function on_game_start()
     RegisterScriptCallback("actor_on_update", actor_on_update)
+    RegisterScriptCallback("npe_on_log_update", npe_on_log_update)
 end
