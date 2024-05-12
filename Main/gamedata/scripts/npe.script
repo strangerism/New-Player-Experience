@@ -165,7 +165,7 @@ function npe_on_sets_completed(module, set_id_table)
 end
 -- return true if the actor is on a task
 TASK = {
-    fanatic_training_day_boar_hunting = "task_fanat_training_1_1",
+    fanatic_training_day_boar_hunting = "task_fanat_training_1",
     wolf_mutant_threat_from_cordon = "esc_2_12_stalker_wolf_task_1_name",
     wolf_rescue_courier_from_cordon = "esc_2_12_stalker_wolf_task_2_name"
 }
@@ -198,8 +198,8 @@ function npe_on_near_smart_terrain(smart_name, near_distance)
     
     local smart = id and alife_object(id)
     if smart and smart:name() == smart_name then
-        printdebug(LOG.INFO, LOG.EVENT," looking for smart " .. smart_name .. ", found " .. smart:name())
         local dist = smart and smart.position:distance_to(db.actor:position())
+        printdebug(LOG.INFO, LOG.EVENT," looking for smart " .. smart_name .. ", found " .. smart:name() .. " at distance" .. dist .. ", limit " .. near_distance)
         if dist and dist < near_distance then
             return true
         end

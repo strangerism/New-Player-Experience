@@ -514,7 +514,7 @@ end
 local run_codec_call_loop = false
 local codec_call_loop_name = 'NPE_codec_call_Loop'
 local codec_ring_count = 0
-local codec_ring_count_answer = 3
+local codec_ring_count_answer = 2
 
 local function codec_call_loop(set)
 	printdebug(LOG.POOL, LOG.UI_EXEC," run codec call loop")

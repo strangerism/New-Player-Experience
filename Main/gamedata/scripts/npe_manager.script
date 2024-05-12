@@ -470,7 +470,7 @@ local function play_queued_set()
         if set ~= nil then
             set.deckId = deckId
             set.module = module
-            if not Dialog_in_use then
+            if not Dialog_in_use and not actor_menu.inventory_opened() then
                 if not set.dialog then
                     set.dialog = dialog
                 end
@@ -490,7 +490,7 @@ local function play_now_set()
         if set ~= nil then
             set.deckId = deckId
             set.module = module
-            if not Dialog_in_use then
+            if not Dialog_in_use and not actor_menu.inventory_opened() then
                 if not set.dialog then
                     set.dialog = dialog
                 end
