@@ -36,6 +36,7 @@ function Play(set)
 		GUI:ShowDialog(true)
 		npe_dialog.Enable_dof()
 		Register_UI("UINewPlayerExperience","npe_dialog")
+		GUI:DoStartActions()
     else
         printdebug("[NPE][UI] GUI already shown")
 		npe_manager.Resume_execution()
@@ -132,6 +133,28 @@ function UINewPlayerExperience:InitControls(set)
 	self:UpdateButtons()
 end
 
+function UINewPlayerExperience:DoStartActions()
+	printdebug("[NPE][UI] DoStartActions")
+
+	if self.set.start_actions then
+		for i, action in pairs(self.set.start_actions) do
+			npe_manager.Execute_npe_action(action, self.set.id)
+		end
+	
+	end
+end
+
+function UINewPlayerExperience:DoEndActions()
+	printdebug("[NPE][UI] DoEndActions")
+
+	if self.set.end_actions then
+		for i, action in pairs(self.set.end_actions) do
+			npe_manager.Execute_npe_action(action, self.set.id)
+		end
+	
+	end
+end
+
 function UINewPlayerExperience:UpdateButtons()
 	printdebug("[NPE][UI] UpdateButtons")
 	self.btn_prev:Show(true)
@@ -222,7 +245,22 @@ function UINewPlayerExperience:OnButtonGametime()
 	self:UpdateGametimeButtons()
 end
 
+function UINewPlayerExperience:Save()
+	if self.set.save_context then
+		printdebug("[NPE][UI] Save context")
+		local context = self.set.save_context
+		-- if context.set_completion then
+		-- 	local id = self.set.id .. "/set_completion"
+		-- 	npe_mcm.npe_module_set_setting(self.set.module, id, true)
+		-- end
+	end
+end
+
 function UINewPlayerExperience:Close()
+	if self.set.save_context then
+		self:Save()
+	end	
+	self:DoEndActions()
 	self:HideDialog()
 	self:Show(false)
 	Unregister_UI("UINewPlayerExperience")

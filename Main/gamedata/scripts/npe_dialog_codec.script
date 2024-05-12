@@ -416,6 +416,7 @@ local function open_codec_dialog_ui(set)
         printdebug("[NPE][UI] Showing GUI")
 		GUI:ShowDialog(true)
 		Register_UI("UINewPlayerExperience","npe_dialog")
+		GUI:DoStartActions()
 		start_portrait_scanlines_loop()
 		start_portraits_scanlines_manager_loop()
 		start_codec_signal_manager_loop()
@@ -670,6 +671,28 @@ function UINewPlayerExperience:PositionWindow()
 	self.dialog:SetWndPos( vector2():set(pos.x + x_translate, pos.y - 8 + y_translate))
 end
 
+function UINewPlayerExperience:DoStartActions()
+	printdebug("[NPE][UI] DoStartActions")
+
+	if self.set.start_actions then
+		for i, action in pairs(self.set.start_actions) do
+			npe_manager.Execute_npe_action(action, self.set.id)
+		end
+	
+	end
+end
+
+function UINewPlayerExperience:DoEndActions()
+	printdebug("[NPE][UI] DoEndActions")
+
+	if self.set.end_actions then
+		for i, action in pairs(self.set.end_actions) do
+			npe_manager.Execute_npe_action(action, self.set.id)
+		end
+	
+	end
+end
+
 function UINewPlayerExperience:PlayCard()
 	printdebug("[NPE][UI] PlayCard")
 	local text
@@ -750,6 +773,7 @@ local function close_dialog(dialog)
 	stop_portraits_scanlines_manager_loop()
 	stop_codec_signal_manager_loop()
 	npe_dialog.Disable_dof()
+	GUI:DoEndActions()
 	GUI:HideDialog()
 	GUI:Show(false)
 	Unregister_UI("UINewPlayerExperience")
@@ -805,9 +829,23 @@ local function unequip_radio(dialog)
 	return true
 end 
 
+function UINewPlayerExperience:Save()
+	if self.set.save_context then
+		printdebug("[NPE][UI] Save context")
+		local context = self.set.save_context
+		-- if context.set_completion then
+		-- 	local id = self.set.id .. "/set_completion"
+		-- 	npe_mcm.npe_module_set_setting(self.set.module, id, true)
+		-- end
+	end
+end
+
 function UINewPlayerExperience:Close()
 	if not closing_dialog then
 		closing_dialog = true
+		if self.set.save_context then
+			self:Save()
+		end
 		if self.set.completion_sound then 
 			-- we have the set's completion sound to play, un-equip radio with a delay equal to its duration
 			npe_dialog.Play_sound(self.set.completion_sound.sound)

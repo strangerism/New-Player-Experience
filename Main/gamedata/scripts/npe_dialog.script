@@ -9,6 +9,12 @@ GAMETIME_STATE = {
 	INMOTION = 0 
 }
 
+--This function finds the filename when given a complete path 
+function GetFilename(path)   
+    local start, finish = path:find('[%w%s!-={-|]+[_%.].+')   
+    return path:sub(start,#path) 
+end
+
 function Change_gametime_to(state)
     printdebug("[NPE][UI] Change game time to: " .. state)
 	exec_console_cmd("freeze_time " .. state)
@@ -72,7 +78,7 @@ Sounds = {
 	},	
 	[NPE_LOW] = {
 		open =  "interface\\npe\\open_panel-bb-alt",
-		next =  "interface\npe\next_page-bb",
+		next =  "interface\\npe\\next_page-bb",
 		prev =  "interface\\npe\\prev_page",
 		close = "interface\\npe\\close_panel"
 	},
@@ -138,7 +144,8 @@ end
 
 function Play_sound_with_delay(sound, delay)
 	printdebug("[NPE][UI] Play sound with delay: " .. sound .. " delay: " .. delay)
-	CreateTimeEvent("play_sound_with_delay", "play_sound_with_delay", delay, Play_delayed_sound, sound)
+	local sound_name = GetFilename(sound .. ".ogg")
+	CreateTimeEvent("play_sound_with_delay", "play_sound_with_delay" .. sound_name, delay, Play_delayed_sound, sound)
 end
 
 function Enable_dof(enable)

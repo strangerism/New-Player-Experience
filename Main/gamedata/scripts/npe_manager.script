@@ -23,10 +23,15 @@ local npeExecutionQueue = {
     handlers = {},
 }
 
+local npeActionsQueue = {
+    actions = {},
+}
+
 Settings = {
     debug_logs = true,
     enable = true,
     execution_loop = 3,
+    actions_execution_loop = 1,
     play_loop = 10,
     sounds_set = "NPE"
 }
@@ -196,6 +201,10 @@ local function apply_overrides_to_decks()
                         setToOverride.title = set.title
                         printdebug("[NPE][OVERR] Override set [%s] title with [%s]", setToOverride.id, set.title)
                     end
+                    if set.context.override.replay then
+                        setToOverride.played = false
+                        printdebug("[NPE][OVERR] Override set [%s] played flag with false", setToOverride.id)
+                    end
                     setToOverride = override_contexts(set.context, setToOverride)
                     -- set the overridden flag to this set is not added to the activation queue
                     set.overridden = true
@@ -296,6 +305,13 @@ local function add_to_execution_queue(handler)
     table.insert(npeExecutionQueue.handlers, handler)
 end
 
+local function add_to_actions_queue(action)
+    if action == nil then
+        return
+    end
+    table.insert(npeActionsQueue.actions, action)
+end
+
 local function update_activation_queue()
     printdebug("//[NPE][QUEUE] Update activation queue")
     npeSetsActivationQueue = {
@@ -344,11 +360,22 @@ function Activate_contexts_on(event)
     end
 end
 
+local function print_functor(functor)
+    for i, v in ipairs(functor) do
+        if type(v) == "table" then
+            printdebug("Table at index " .. i .. ":")
+            print_functor(v)
+        else
+            printdebug("Element at index " .. i .. ": " .. v)
+        end
+    end
+end
 local function run_execution_queue()
     printdebug("//[NPE][EXEC] Run execution queue")
     for i, handler in ipairs(npeExecutionQueue.handlers) do
         if not handler.executed then
             printdebug("[NPE][EXEC] Running handler [%s]", handler.name)
+            -- print_functor(handler.functor)
             local success = execute_func(unpack(handler.functor))   
             if success then
                 printdebug("[NPE][EXEC] Handler [%s] executed. Success: %s", handler.name, success)
@@ -473,6 +500,50 @@ end
 
 local function remove_execution_loop()
     RemoveTimeEvent(run_execution_loop_name, run_execution_loop_name)
+end
+
+-- Actions Execution loop
+local run_actions_execution_loop = false
+local run_actions_execution_loop_name = 'NPE_actions_execution_loop'
+
+local function pause_actions_execution_loop()
+    if not run_actions_execution_loop then return end
+    printdebug("![NPE][EXEC] pausing contexts activation loop")
+    run_actions_execution_loop = false
+end
+
+local function run_actions_execution_queue()
+    printdebug("//[NPE][EXEC] Run execution queue")
+    if #npeActionsQueue.actions == 0 then pause_actions_execution_loop() end
+    for i, action in ipairs(npeActionsQueue.actions) do
+            printdebug("[NPE][EXEC] Running action [%s]", action.name)
+            local success = execute_func(unpack(action.functor))
+            table.remove(npeActionsQueue.actions, i)
+            if success then
+                printdebug("[NPE][EXEC] action [%s] executed. Success: %s", action.name, success)
+            end
+    end
+end
+
+local function npe_actions_execution_loop()
+    if not run_actions_execution_loop then return true end
+    printdebug("//[NPE][EXEC] Execution loop")
+    ResetTimeEvent(run_actions_execution_loop_name, run_actions_execution_loop_name, Settings.actions_execution_loop)
+
+    run_actions_execution_queue()
+
+    return false
+end
+local function resume_actions_execution_loop()
+    if run_actions_execution_loop then return end
+    printdebug("-[NPE][EXEC] resuming contexts activation loop")
+    run_actions_execution_loop = true
+
+    CreateTimeEvent(run_actions_execution_loop_name, run_actions_execution_loop_name, Settings.actions_execution_loop, npe_actions_execution_loop) -- offset time actions_execution_loop
+end
+
+local function remove_actions_execution_loop()
+    RemoveTimeEvent(run_actions_execution_loop_name, run_actions_execution_loop_name)
 end
 
 -- Context Countdowns loop
@@ -615,6 +686,15 @@ local function remove_play_queues_manager_loop()
     RemoveTimeEvent(play_queues_manager_loop_name, play_queues_manager_loop_name)
 end
 
+-- NPE Actions
+-- needs a dedicated queue to manage the actions delays
+
+function Execute_npe_action(action, setId)
+    printdebug("//[NPE][ACTIV] Execute action [%s] on set [%s]", action.descr, setId)
+    add_to_actions_queue(action)
+    resume_actions_execution_loop()
+end
+
 -- Execution controls
 
 function Resume_execution() 
@@ -718,6 +798,7 @@ local function npe_actor_on_first_update()
 
     -- activate the contexts on EVENT.GAME_START
     Activate_contexts_on(npe.EVENT.GAME_START)
+    Activate_contexts_on(npe.EVENT.DLC_START)
 end
 
 local function mcm_on_option_change()
@@ -760,6 +841,7 @@ local function teardown_npe()
 	end
     remove_context_countdowns_loop()
     remove_execution_loop()
+    remove_actions_execution_loop()
     remove_play_queues_manager_loop()
 end
 

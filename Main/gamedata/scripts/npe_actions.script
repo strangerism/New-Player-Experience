@@ -268,7 +268,130 @@ end
 
 -- end of Haru's Detector Selector mod script detector_selector_mcm
 
+-- USABLE ACTIONS
+
+EFFECTOR = {
+    BLUR = {name ="blur.ppe", c_id = 5606},
+    BLACK_INFINITE = {name = "black_infinite.ppe", c_id = 5600},
+    AUDIO_SHOCK = {name = "snd_shock.ppe", c_id = 5607},
+    RADIATION = {name = "radiation.ppe", c_id = 5608},
+    ALCOHOL = {name = "alcohol.ppe", c_id = 5609},
+}
+
+function remove_all_psy_ppe_effects()
+    printdebug("[NPE][ACTIONS] remove_all_psy_ppe_effects")
+    level.remove_pp_effector(EFFECTOR.BLUR.c_id)
+    -- level.remove_pp_effector(EFFECTOR.BLACK_INFINITE.name)
+    level.remove_pp_effector(EFFECTOR.AUDIO_SHOCK.c_id)
+    level.remove_pp_effector(EFFECTOR.RADIATION.c_id)
+    level.remove_pp_effector(EFFECTOR.ALCOHOL.c_id)
+    return true
+end
+
+function set_all_psy_ppe_effects(duration, set_id)
+    printdebug("[NPE][ACTIONS] set_all_psy_ppe_effects with duration = " .. duration .. " for set_id = " .. set_id)
+    level.add_pp_effector(EFFECTOR.BLUR.name, EFFECTOR.BLUR.c_id, true)
+    -- level.add_pp_effector(EFFECTOR.BLACK_INFINITE.name, EFFECTOR.BLACK_INFINITE.c_id, true)
+    level.add_pp_effector(EFFECTOR.AUDIO_SHOCK.name, EFFECTOR.AUDIO_SHOCK.c_id, true)
+    level.add_pp_effector(EFFECTOR.RADIATION.name, EFFECTOR.RADIATION.c_id, true)
+    level.add_pp_effector(EFFECTOR.ALCOHOL.name, EFFECTOR.ALCOHOL.c_id, true)
+    CreateTimeEvent("npe_remove_all_psy_ppe_effects", "npe_remove_all_psy_ppe_effects" .. set_id, duration, remove_all_psy_ppe_effects)
+    return true
+end
+
+function npe_remove_effector(effector)
+    printdebug("[NPE][ACTIONS] npe_remove_effector("..effector.name..")")
+    level.remove_pp_effector(effector.c_id)
+    return true
+end
+
+function npe_remove_effectors(effectors_table)
+    printdebug("[NPE][ACTIONS] npe_remove_effectors")
+    for i, effector in ipairs(effectors_table) do
+        npe_remove_effector(effector)
+    end
+    return true
+end
+
+function npe_add_effector(effector, duration, set_id)
+    printdebug("[NPE][ACTIONS] npe_add_effector("..effector.name..", "..duration..", "..set_id..")")
+    level.add_pp_effector(effector.name. effector.c_id, true)
+    if duration then
+        CreateTimeEvent("npe_remove_effector", "npe_remove_effector" .. set_id, duration, npe_remove_effector, effector)
+    end
+    return true
+end
+
+function npe_add_effectors(effectors_table, duration, set_id)
+    printdebug("[NPE][ACTIONS] npe_add_effectors")
+    for i, effector in ipairs(effectors_table) do
+        npe_add_effector(effector, duration, set_id)
+    end
+    return true
+end
+
+function add_to_actor(money, items)
+    printdebug("[NPE][ACTIONS] add_to_actor("..money..", items)")
+    local reward = {
+        [1] = { reward_money = money, reward_item = items}
+    }
+    
+    xr_effects.give_reward(db.actor,nil,reward)
+    return true
+end
+
+function remove_from_actor(items)
+    printdebug("[NPE][ACTIONS] remove_from_actor(items)")
+    xr_effects.remove_item(db.actor, nil, items)
+    return true
+end
+
+function add_to_stash(items, stash_id)
+    printdebug("[NPE][ACTIONS] add_to_stash(items, "..stash_id..")")
+    local stash_obj = alife_object(stash_id) 
+    if not stash_obj then
+        printdebug("[NPE][ACTIONS] stash does not exists")
+        return true
+    end
+	for i=1,#items do
+		local section = items[i]
+        local se_itm = alife_create_item(section, stash_obj, nil)
+    end
+    return true
+end
+
+-- function spawn_lootbox(items, box)
+--     local id = box:id()
+
+--     local se_obj = alife_object(id) 
+--     if not se_obj then
+--         printdebug("[NPE][ACTIONS] stash does not exists")
+--         return
+--     end
+
+--     local lvl = alife():level_name(game_graph():vertex(se_obj.m_game_vertex_id):level_id())
+--     printdebug("[NPE][ACTIONS] spawn_lootbox() level = " .. lvl)
+-- 	for i=1,#spawned_item do
+-- 		local section = spawned_item[i]
+--         local se_itm = alife_create_item(section, box, nil)
+--     end
+
+--     -- local se_obj = alife_create(section,box:position(),box:level_vertex_id(),box:game_vertex_id(),box:id(),false)
+--     -- alife():register(se_obj)    
+
+
+
+-- end
+
+
+
+
+function actor_on_item_put_in_box(box, itm)
+	printdebug("[NPE][ACTIONS] box_id = " .. box:id())
+end
+
 function on_game_start()
     printlog("[NPE][ACTIONS] on_game_start()")
     configure_radio_sounds_for_restoration()
+    -- RegisterScriptCallback("actor_on_item_put_in_box",actor_on_item_put_in_box)
 end
