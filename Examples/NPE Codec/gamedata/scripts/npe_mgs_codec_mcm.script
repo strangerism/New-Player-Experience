@@ -1,85 +1,132 @@
--- NPE Module template
 
--- PREPARATION
 
--- FIRST STEP
---      you need to define the name of this module
---      use as module name the name of your mod main script preceded by npe_
---      for example (mymod.script --> npe_mymod_mcm.script). Therefore the modelname chosen in this example is "npe_mymod"
---      or something that you know will be unique in the hypotetical modlist's scripts' namespace, where this npe module will be added
--- SECOND STEP
---      replace in all filenames included in this template module, this script included, the string "modulename" with your chosen module name
---      replace in this script all the instances of modulename and setname as required
+local printlog = npe_manager.Printlog_npe
+local printdebug = npe_manager.Printdebug_npe
 
--- CREATION OF A NEW NPE MODULE
+-- custom functors
 
--- [OPTIONAL] Custom event handlers
---      Define here all your custom events handlers that are any of the custom events you defined below
-
--- for example
-
-function owns_item(item)
-    -- printf("Checking if actor owns item: %s", item)
-    local found = false
-
-	local function check_items(actor,itm)
-		local sec = itm:section()
-        if sec == item then
-            found = true
-        end
-	end
-	db.actor:iterate_inventory(check_items,db.actor)
-
-    return found
+function old_friend_eligible()
+    
+    local has_radio = npe.owns_item("detector_radio")
+    local nanomachines_completed = npe.npe_on_set_completed("mgs_codec", "nanomachines")
+    printf("[NPE] Old Friend Eligible: has_radio="..tostring(has_radio).." nanomachines_completed="..tostring(nanomachines_completed))
+    return has_radio and nanomachines_completed
 end
 
-function a_custom_handler_functor(obj)
-    printf("Custom handler functor called with parameter: %s", obj)
-end
+-- some constants use functors definitions which must support the <functor> interface
+-- { "<script_name>", "<function_name>", "any_params".. }
 
--- [OPTIONAL] Custom events
---      Define here all your custom events that use the custom event handlers defined above
-
-local EVENT = {
-    RF_RECEIVER_OWNED = { 
-        name = "RF Receiver Owned", 
-        handler = { 
-            name = "on_actor_owning_rf-receiver",
-            functor = {"npe_mgs_codec_mcm", "owns_item", "detector_radio" }
-        } 
+-- Actions must support the <npe_exacutable> interface, which is
+-- { name = <executable_id:string>, functor {functor_interface}, delay = <delay:int> }
+local ACTION = {
+    NOOSPHERE_BUFF = {
+        name = "noosphere_buff",
+        descr = "Noosphere Buff",
+        functor = {"npe_actions", "set_all_psy_ppe_effects", 5, "nanomachines" },
+        delay = 0, -- not used
     },
-    VODKA_OWNED = { 
-        name = "Vodka Owned", 
+    REMOVE_RADIO = {
+        name = "remove_radio",
+        descr = "Remove Radio",
+        functor = {"npe_actions", "remove_from_actor", {"detector_radio"} },
+        delay = 5, -- not used
+    }, 
+    ADD_RADIO_TO_STASH = {
+        name = "add_radio_to_stash",
+        descr = "Add Radio To Stash",
+        functor = {"npe_actions", "add_to_stash", {"detector_radio"}, 15340 }, -- sidorovich box
+        delay = 10, -- not used
+    },
+}
+
+-- Actions must define an handler that support the <npe_exacutable> interface, which is
+-- { name = <executable_id:string>, functor {functor_interface}, delay = <delay:int> }
+local EVENT = {
+    OLD_FRIEND = { 
+        name = "Old Friend", 
         handler = { 
-            name = "on_actor_owning_vodka",
-            functor = {"npe_mgs_codec_mcm", "owns_item", "vodka" }
+            name = "on_old_friend_eligible",
+            functor = {"npe_mgs_codec_mcm", "old_friend_eligible" }
+        } 
+    },  
+    WE_NEED_A_PLAN = { 
+        name = "We Need A Plan",
+        handler = { 
+            name = "on_we_need_a_plan_eligible",
+            functor = {"npe", "npe_on_sets_completed", "mgs_codec", {"old_friend"} }
+        } 
+    },   
+    LOOK_FOR_HELP = { 
+        name = "Look For Help",
+        handler = { 
+            name = "on_look_for_help_eligible",
+            functor = {"npe", "npe_on_sets_completed", "mgs_codec", {"old_friend", "we_need_a_plan"} }
+        } 
+    },   
+    FANATIC_BOARS = { 
+        name = "Fanatic Boars",
+        handler = { 
+            name = "on_fanatic_boars_task_received",
+            functor = {"npe", "npe_is_on_task", npe.TASK.fanatic_training_day_boar_hunting }
+        } 
+    },         
+    SAVE_THE_CURIER = { 
+        name = "Save The Curier",
+        handler = { 
+            name = "on_save_the_curier_task_received",
+            functor = {"npe", "npe_is_on_task", npe.TASK.wolf_rescue_courier_from_cordon }
+        } 
+    },   
+    WARN_TOWARDS_MILITARY = { 
+        name = "Towards Military Base", 
+        handler = { 
+            name = "warn_on_towards_military_base",
+            functor = {"npe", "npe_on_near_smart_terrain", npe.SMART_TERRAIN.cordon_loners_se_first_post }
+        } 
+    },      
+    DANGER_NEAR_MILITARY = { 
+        name = "Near Military Base", 
+        handler = { 
+            name = "warn_on_near_military_base",
+            functor = {"npe","npe_on_near_smart_terrain", npe.SMART_TERRAIN.cordon_military_base, 80 }
         } 
     },    
 }
 
--- local EVENT = {
---     MY_CUSTOM_EVENT = { 
---         name = "My Custom Event", -- this will be presented in the tutorial window as breadcrumb in the top left. It represent the context of the event  and it's not localized (use english preferably)
---         handler = { 
---             name = "a_custom_event_name",
---             functor = {"npe_modulename_mcm", "a_custom_handler_functor", "my_custom_parameter"}
---         } 
---     },
--- }
-
--- [MANDATORY] Define your deck
---      Define here your deck, with all the sets and cards
---      A deck represents a number of sets that contains cards that will be shown to the player in a specific order
---      A set representing a tutorial in practice that can become active when a specific event is triggered. Once active NPE will show it to the player
---      A card is a single tutorial step that will be shown to the player
---      A card can have an image, a title and a description
+ACTORS = {
+    SNAKE = "Snake",
+    OTACON = "Otacon",
+}
 
 local deck_npe_mgs_codec = { 
-    title = "MGS Codec", -- e.g. "My Mod Introduction" -- only used internally by the NPE Manager
-    module= "mgs_codec", -- must be unique thus the use of modulename whatever you have choosen above
-    id="mgs_codec", -- must be unique thus the use of modulename whatever you have choosen above
+    title = "MGS Codec", 
+    module= "mgs_codec", 
+    id="mgs_codec", 
     dialog= npe.DIALOG.UI_CODEC,
     sets = {
+        {
+            dialog= npe.DIALOG.UI_TUTORIAL,
+            id = "nanomachines",
+            title = "ui_mcm_npe_module_mgs_codec_nanomachines_set_title",
+            start_actions = {
+                ACTION.NOOSPHERE_BUFF, 
+                ACTION.REMOVE_RADIO, 
+                ACTION.ADD_RADIO_TO_STASH 
+            },
+            cards = {
+                [1] = {
+                    title = "ui_mgs_codec_nanomachines_card1_title",
+                    description = "ui_mgs_codec_nanomachines_card1_message",
+                    image = "ui_mgs_codec_nanomachines_card1_sidorovich",                               
+                },         
+            },
+            context = {
+                event = npe.EVENT.DLC_START,
+                delay = 1,
+                pause_game = false,
+            },
+            end_actions = nil
+        },         
         {
             id = "old_friend",
             title = "ui_mcm_npe_module_mgs_codec_old_friend_set_title",
@@ -90,28 +137,241 @@ local deck_npe_mgs_codec = {
                     message = "ui_mgs_codec_old_friend_card1_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
-                    sound = "npe\\mgs_codec\\voiceover\\otacon\\listentome",
+                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\listentome",
+                                    duration = 1 },
+                    -- tts_sounds = {
+                    --     [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon\\snake-snake-is-it-really-you",
+                    --             duration = 4 },
+                    -- },                                      
                 },
                 [2] = {
                     title = "ui_mgs_codec_old_friend_card2_title",
                     message = "ui_mgs_codec_old_friend_card2_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
-                    sound = "npe\\mgs_codec\\voiceover\\otacon\\becareful",
-                },                
+                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\becareful",
+                                    duration = 2 },
+                    -- tts_sounds = {
+                    --     [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon\\probably-that-burst-of-gamma-ray-emissions-in-the-reactor",
+                    --             duration = 7 },
+                    --     [2] = { sound = "npe\\mgs_codec\\voiceover\\otacon\\thats-it-there-is-no-other-explanation",
+                    --             duration = 7 },
+                    -- },              
+                },
+                [3] = {
+                    title = "ui_mgs_codec_old_friend_card3_title",
+                    message = "ui_mgs_codec_old_friend_card3_message",
+                    portrait_caller = "ui_npe_mgs_codec_otacon",
+                    portrait_actor = "ui_npe_mgs_codec_snake",
+                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\becareful",
+                                    duration = 2 },
+                    -- tts_sounds = {
+                    --     [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon\\probably-that-burst-of-gamma-ray-emissions-in-the-reactor",
+                    --             duration = 7 },
+                    --     [2] = { sound = "npe\\mgs_codec\\voiceover\\otacon\\thats-it-there-is-no-other-explanation",
+                    --             duration = 7 },
+                    -- },              
+                },                                
             },
             context = {
-                -- here you are using a custom event
-                event = EVENT.RF_RECEIVER_OWNED,
-                -- delay is optional and it's the time in seconds after the event is triggered before the set is shown 
-                -- this time can vary depending on the number of playable sets in the queued_context at the moment of the activation
-                -- the number set it's the minimum not guaranteed
-                delay = 0,
-                -- pause_game is optional and if true the game is paused when the set is shown
+                event = EVENT.OLD_FRIEND,
+                delay = 2,
+                pause_game = false,
+            },
+            save_context = {
+            },
+            completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\just-hold-on-ok", duration = 2 },
+        }, 
+        {
+            id = "we_need_a_plan",
+            title = "ui_mcm_npe_module_mgs_codec_we_need_a_plan_set_title",
+            codec_frequency = 140.85,
+            cards = {
+                [1] = {
+                    title = "ui_mgs_codec_we_need_a_plan_card1_title",
+                    message = "ui_mgs_codec_we_need_a_plan_card1_message",
+                    portrait_caller = "ui_npe_mgs_codec_otacon",
+                    portrait_actor = "ui_npe_mgs_codec_snake",
+                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\where-are-you-now",
+                                    duration = 1 },
+                    -- tts_sounds = {
+                    --     [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon\\snake-snake-is-it-really-you",
+                    --             duration = 4 },
+                    -- },                                      
+                },
+                [2] = {
+                    title = "ui_mgs_codec_we_need_a_plan_card2_title",
+                    message = "ui_mgs_codec_we_need_a_plan_card2_message",
+                    portrait_caller = "ui_npe_mgs_codec_otacon",
+                    portrait_actor = "ui_npe_mgs_codec_snake",
+                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\listentome",
+                                    duration = 2 },
+                    -- tts_sounds = {
+                    --     [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon\\probably-that-burst-of-gamma-ray-emissions-in-the-reactor",
+                    --             duration = 7 },
+                    --     [2] = { sound = "npe\\mgs_codec\\voiceover\\otacon\\thats-it-there-is-no-other-explanation",
+                    --             duration = 7 },
+                    -- },              
+                },    
+                [3] = {
+                    title = "ui_mgs_codec_we_need_a_plan_card3_title",
+                    message = "ui_mgs_codec_we_need_a_plan_card3_message",
+                    portrait_caller = "ui_npe_mgs_codec_otacon",
+                    portrait_actor = "ui_npe_mgs_codec_snake",
+                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\becareful",
+                                    duration = 2 },
+                    -- tts_sounds = {
+                    --     [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon\\probably-that-burst-of-gamma-ray-emissions-in-the-reactor",
+                    --             duration = 7 },
+                    --     [2] = { sound = "npe\\mgs_codec\\voiceover\\otacon\\thats-it-there-is-no-other-explanation",
+                    --             duration = 7 },
+                    -- },              
+                },                            
+            },
+            context = {
+                event = EVENT.WE_NEED_A_PLAN,
+                delay = 10,
+                pause_game = false,
+            },
+            save_context = {
+            },
+            completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\call-me-if-you-need-to", duration = 2 },
+        },          
+        {
+            id = "look_for_help",
+            title = "ui_mcm_npe_module_mgs_codec_look_for_help_set_title",
+            codec_frequency = 140.85,
+            cards = {
+                [1] = {
+                    title = "ui_mgs_codec_look_for_help_card1_title",
+                    message = "ui_mgs_codec_look_for_help_card1_message",
+                    portrait_caller = "ui_npe_mgs_codec_otacon",
+                    portrait_actor = "ui_npe_mgs_codec_snake",
+                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\listentome",
+                                    duration = 1 },
+                    -- tts_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\snake-snake-is-it-really-you",
+                    --                 duration = 4 },
+                    -- tts_sounds = {
+                    --     [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon\\snake-snake-is-it-really-you",
+                    --             duration = 4 },
+                    -- },                                      
+                },              
+            },
+            context = {
+                event = EVENT.LOOK_FOR_HELP,
+                delay = 3,
                 pause_game = false,
             },
             completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\just-hold-on-ok", duration = 2 },
-        },    
+        },
+        {
+            id = "fanatic_boars",
+            title = "ui_mcm_npe_module_mgs_codec_fanatic_boars_set_title",
+            codec_frequency = 140.85,
+            cards = {
+                [1] = {
+                    title = "ui_mgs_codec_fanatic_boars_card1_title",
+                    message = "ui_mgs_codec_fanatic_boars_card1_message",
+                    portrait_caller = "ui_npe_mgs_codec_otacon",
+                    portrait_actor = "ui_npe_mgs_codec_snake",
+                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\listentome",
+                                    duration = 1 },
+                    -- tts_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\snake-snake-is-it-really-you",
+                    --                 duration = 4 },
+                    -- tts_sounds = {
+                    --     [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon\\snake-snake-is-it-really-you",
+                    --             duration = 4 },
+                    -- },                                      
+                },              
+            },
+            context = {
+                event = EVENT.FANATIC_BOARS,
+                delay = 2,
+                pause_game = false,
+            },
+            completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\just-hold-on-ok", duration = 2 },
+        },          
+        {
+            id = "save_the_curier",
+            title = "ui_mcm_npe_module_mgs_codec_save_the_curier_set_title",
+            codec_frequency = 140.85,
+            cards = {
+                [1] = {
+                    title = "ui_mgs_codec_save_the_curier_card1_title",
+                    message = "ui_mgs_codec_save_the_curier_card1_message",
+                    portrait_caller = "ui_npe_mgs_codec_otacon",
+                    portrait_actor = "ui_npe_mgs_codec_snake",
+                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\listentome",
+                                    duration = 1 },
+                    -- tts_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\snake-snake-is-it-really-you",
+                    --                 duration = 4 },
+                    -- tts_sounds = {
+                    --     [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon\\snake-snake-is-it-really-you",
+                    --             duration = 4 },
+                    -- },                                      
+                },              
+            },
+            context = {
+                event = EVENT.SAVE_THE_CURIER,
+                delay = 2,
+                pause_game = false,
+            },
+            completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\just-hold-on-ok", duration = 2 },
+        },                 
+        {
+            id = "warn_military_base",
+            title = "ui_mcm_npe_module_mgs_codec_warn_military_base_set_title",
+            codec_frequency = 140.85,
+            cards = {
+                [1] = {
+                    title = "ui_mgs_codec_warn_military_base_card1_title",
+                    message = "ui_mgs_codec_warn_military_base_card1_message",
+                    portrait_caller = "ui_npe_mgs_codec_otacon",
+                    portrait_actor = "ui_npe_mgs_codec_snake",
+                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\listentome",
+                                    duration = 1 },
+                    -- tts_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\snake-snake-is-it-really-you",
+                    --                 duration = 4 },
+                    -- tts_sounds = {
+                    --     [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon\\snake-snake-is-it-really-you",
+                    --             duration = 4 },
+                    -- },                                      
+                },              
+            },
+            context = {
+                event = EVENT.WARN_TOWARDS_MILITARY,
+                delay = 0,
+                pause_game = false,
+            },
+            completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\just-hold-on-ok", duration = 2 },
+        }, 
+        {
+            id = "danger_military_base",
+            title = "ui_mcm_npe_module_mgs_codec_danger_military_base_set_title",
+            codec_frequency = 140.85,
+            cards = {
+                [1] = {
+                    title = "ui_mgs_codec_danger_military_base_card1_title",
+                    message = "ui_mgs_codec_danger_military_base_card1_message",
+                    portrait_caller = "ui_npe_mgs_codec_otacon",
+                    portrait_actor = "ui_npe_mgs_codec_snake",
+                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\listentome",
+                                    duration = 1 },
+                    -- tts_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\snake-snake-is-it-really-you",
+                    --                 duration = 4 },
+                    -- tts_sounds = {
+                    --     [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon\\snake-snake-is-it-really-you",
+                    --             duration = 4 },
+                    -- },                                      
+                },              
+            },
+            context = {
+                event = EVENT.DANGER_NEAR_MILITARY,
+                delay = 0,
+                pause_game = false,
+            },
+            completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\just-hold-on-ok", duration = 2 },
+        },                  
     },
 }
 
@@ -122,8 +382,15 @@ function on_mcm_load()
 				{id = "title",type= "slide",link= "ui_options_slider_player",text="ui_mcm_npe_module_mgs_codec_title",size= {512,50},spacing= 20 },
                 -- [MANDATORY] The sets' ids defined above need to be added here. 
                 --      This allow the user to check sets that have been shown (selected) and evenually replay them (unselect in mcm) if needed
+                {id = "nanomachines", type = "check", val = 1, def=false},
                 {id = "old_friend", type = "check", val = 1, def=false},
-			}
+                {id = "we_need_a_plan", type = "check", val = 1, def=false},  
+                {id = "look_for_help", type = "check", val = 1, def=false},      
+                {id = "fanatic_boars", type = "check", val = 1, def=false},      
+                {id = "save_the_curier", type = "check", val = 1, def=false},        
+                {id = "warn_military_base", type = "check", val = 1, def=false},
+                {id = "danger_military_base", type = "check", val = 1, def=false},
+            }
 		}
 
 	return op, "npe_module"  -- [IMPORTANT] do not change this line
