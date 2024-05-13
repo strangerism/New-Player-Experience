@@ -53,16 +53,28 @@
 		The last thing you remember was that %c[d_red]explosion%c[d_white] or something that look like one.
 		\n
 		\n
-		You were suppoded to be out of %c[d_blue]this%c[d_white], that was the %c[d_red]wish%c[d_white]...
+		You were suppoded to be out of %c[d_blue]it%c[d_white]
+		\n
+		\n
+		That was the %c[d_blue]wish%c[d_white]...	
+		</text>
+	</string>
+	<string id="ui_mgs_codec_nanomachines_card2_title">
+		<text>%c[d_blue]Once a rokie...</text>
+	</string>
+	<string id="ui_mgs_codec_nanomachines_card2_message">
+		<text>You ended to the Rokie Village. Again.
 		\n
 		\n
 		You need to contact your %c[d_blue]old friend%c[d_white], as soon as possible.
 		\n
 		\n
-		Somebody must have taken your %c[d_blue]codec%c[d_white], search this village and find it.		
+		Seems, somebody must have taken your %c[d_blue]codec%c[d_white]
+		\n
+		\n		
+		Search this village and find it.	
 		</text>
 	</string>
-
 <!-- old_friend chapter -->
 	<string id="ui_mcm_npe_module_mgs_codec_old_friend_set_title">
 		<text>An old friend</text>
