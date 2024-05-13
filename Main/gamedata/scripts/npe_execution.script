@@ -83,30 +83,30 @@ Runner = {}
 
 local function stop_runner(runner)
     if not Runner[runner.name].enabled then return end
-    printdebug(LOG.RUN, LOG.NPE_EXE," Runner: " .. runner.name .. " disabled")
+    printdebug(LOG.REMOVE, LOG.NPE_EXE," Runner: " .. runner.name .. " disabled")
     Runner[runner.name].enabled = false
 end
 
 local function start_runner(runner)
     if Runner[runner.name].enabled then return end
-    printdebug(LOG.RUN, LOG.NPE_EXE," Runner: " .. runner.name .. " enabled")
+    printdebug(LOG.ADD, LOG.NPE_EXE," Runner: " .. runner.name .. " enabled")
     Runner[runner.name].enabled = true
 end
 
 local function reset_state(runner)
-    printdebug(LOG.RUN, LOG.NPE_EXE," Runner: " .. runner.name .. " reset")
+    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner.name .. " reset")
     Runner[runner.name].loop_count = 0
 end
 
 local function set_running(runner)
     if Runner[runner.name].running then return end
-    printdebug(LOG.RUN, LOG.NPE_EXE," Runner: " .. runner.name .. " running")
+    printdebug(LOG.START, LOG.NPE_EXE," Runner: " .. runner.name .. " running")
     Runner[runner.name].running = true
 end
 
 local unset_running = function(runner)
     if not Runner[runner.name].running then return end
-    printdebug(LOG.RUN, LOG.NPE_EXE," Runner: " .. runner.name .. " stopped")
+    printdebug(LOG.STOP, LOG.NPE_EXE," Runner: " .. runner.name .. " stopped")
     Runner[runner.name].running = false
 end
 
@@ -118,26 +118,26 @@ end
 
 local function validate_functor(functor)
     if not functor then return false end
-    printdebug(LOG.ADD, LOG.NPE_EXE," Functor is not null")
+    printdebug(LOG.INFO, LOG.NPE_EXE," Functor is not null")
     -- checks is a table
     if type(functor) ~= "table" then return false end
-    printdebug(LOG.ADD, LOG.NPE_EXE," Functor is a table")
+    printdebug(LOG.INFO, LOG.NPE_EXE," Functor is a table")
     -- checks mandatory fields (script, function)
     if #functor < 2 then return false end
-    printdebug(LOG.ADD, LOG.NPE_EXE," Functor has at least 2 parameters")
+    printdebug(LOG.INFO, LOG.NPE_EXE," Functor has at least 2 main parameters")
     if type(functor[1]) ~= "string" then return false end
     if type(functor[2]) ~= "string" then return false end
-    printdebug(LOG.ADD, LOG.NPE_EXE," Functor script and function are strings")
+    printdebug(LOG.INFO, LOG.NPE_EXE," Functor script name and function name are strings")
     -- checks optional parameters
     if #functor < 3 then return true end
-    printdebug(LOG.ADD, LOG.NPE_EXE," Functor has optional parameters")
+    printdebug(LOG.INFO, LOG.NPE_EXE," Functor has optional parameters")
     if type(functor[3]) ~= "table" then return false end
-    printdebug(LOG.ADD, LOG.NPE_EXE," Functor parameters are a table")
+    printdebug(LOG.INFO, LOG.NPE_EXE," Functor optional parameters are a table")
     -- checks the number of parameters is correct
     -- the first parameter is the parameter count, will be ingored
     local param_count = #functor[3] - 1
     if functor[3][1] ~= param_count then return false end
-    printdebug(LOG.ADD, LOG.NPE_EXE," Functor has " .. param_count .. " parameters")
+    printdebug(LOG.INFO, LOG.NPE_EXE," Functor has " .. param_count .. " optional parameters")
     
     return true
 end
@@ -159,7 +159,7 @@ local execute_functor = function(params)
         printdebug(LOG.ERROR, LOG.NPE_EXE," Runner is null")
         return true 
     end
-    printdebug(LOG.ADD, LOG.NPE_EXE," Functor Execution: " .. runner.name)
+    printdebug(LOG.RUN, LOG.NPE_EXE," Functor Execution: " .. runner.name)
     if not is_enabled(runner) then 
         -- the runner is disabled, stop the execution state of timed event
         -- we should not get here normally, unless for fast execution loops
@@ -205,7 +205,7 @@ local function run(runner)
 
     -- runners start always from 0, update the loop count
     runner.loop_count = runner.loop_count + 1
-    printdebug(LOG.RUN, LOG.NPE_EXE," Runner: " .. runner.name .. " Loop: " .. runner.loop_count)
+    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner.name .. " Loop: " .. runner.loop_count)
 
     
     if not runner.running then
@@ -267,11 +267,11 @@ local function execution_watch()
 
     -- watch execution manager
     if run_execution_manager_loop then
-        printlog(LOG.RUN, LOG.NPE_EXE," Execution Manager running")
+        printlog(LOG.INFO, LOG.NPE_EXE," Execution Manager running")
     end
     -- watch runners
     for runner_name, runner in pairs(Runner) do
-        printdebug(LOG.RUN, LOG.NPE_EXE," Runner: " .. runner_name .. " enabled: " .. tostring(runner.enabled) .. " running: " .. tostring(runner.running))
+        printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " enabled: " .. tostring(runner.enabled) .. " running: " .. tostring(runner.running))
     end
 
     -- keep watching
@@ -293,7 +293,7 @@ end
 -- Execution Manager API
 
 function Start()
-    printlog(LOG.RUN, LOG.NPE_EXE," Execution Manager started")
+    printlog(LOG.START, LOG.NPE_EXE," Execution Manager started")
     if run_execution_manager_loop then return end
     run_execution_manager_loop = true
     CreateTimeEvent(execution_manager_group_name, run_execution_manager_loop_name, execution_manager_loop, execution_manager)
@@ -301,7 +301,7 @@ function Start()
 end
 
 function Destroy()
-    printlog(LOG.RUN, LOG.NPE_EXE," Execution Manager destroyed")
+    printlog(LOG.STOP, LOG.NPE_EXE," Execution Manager destroyed")
     if not run_execution_manager_loop then return end
     run_execution_manager_loop = false
     for runner_name, runner in pairs(Runner) do
@@ -324,9 +324,9 @@ function Add(runner_name, runner_config)
         new_runner_instance.config = runner_config
         -- add the new runner to Runner list using runner_name as key
         Runner[runner_name] = new_runner_instance
-        printdebug(LOG.ADD, LOG.NPE_EXE," Runner " .. runner_name .. " added")
+        printdebug(LOG.ADD, LOG.NPE_EXE," Runner: " .. runner_name .. " added")
     else
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner " .. runner_name .. " already exists")
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner: " .. runner_name .. " already exists")
     end
 end
 
@@ -401,7 +401,7 @@ function maximum_loops(runner_name, loop_count)
     printdebug(LOG.RUN, LOG.NPE_EXE," Stop Condition")
     -- Client can use directly the npe_execution API
     if npe_execution.Get_runner_count(runner_name) >= loop_count then
-        printdebug(LOG.RUN, LOG.NPE_EXE," Reached maximum loops")
+        printdebug(LOG.INFO, LOG.NPE_EXE," Reached maximum loops")
         return true
     end
     return false
@@ -412,7 +412,7 @@ end
 local CLIENT_RUNNER_CONFIG = {
     default_infinite = {
         execution = npe_execution.TYPE.INFINITE,
-        timer = 5,
+        timer = 0.5,
         loops = nil,
         condition = nil,        
         functor = { "npe_execution", "print_items", {2, "run", "remove and print_items"} }
@@ -439,23 +439,24 @@ local function client_on_update()
     if not started then
         started = true
         -- start the execution manager
-        printdebug(LOG.RUN, LOG.NPE_EXE," Start Execution Manager")
+        printdebug(LOG.INFO, LOG.NPE_EXE," Start Client Test")
         Start()
     end
 end
 
 local function end_test()
-    printlog(LOG.RUN, LOG.NPE_EXE," End Test")
+    printlog(LOG.INFO, LOG.NPE_EXE," End Client Test")
 
     npe_execution.Pause("default_infinite")
     -- print the table my_items_queue.items
     print_table(my_items_queue.items)    
     return true
 end
-local fill_count = 3
+local fill_count = 2
 local function fill_queue()
     printlog(LOG.RUN, LOG.NPE_EXE," Fill Queue")
     if fill_count <= 0 then return end
+    printdebug(LOG.INFO, LOG.NPE_EXE," Fill coount " .. fill_count)
     for i = 1, 10 do
         table.insert(my_items_queue.items, "item" .. tostring(i))
     end
@@ -475,7 +476,7 @@ function client_on_first_update()
     npe_execution.Resume("default_infinite")
 
     -- pause the runner after 180 seconds
-    printlog(LOG.RUN, LOG.NPE_EXE," Schedule end of Test in 180 seconds")
+    printlog(LOG.RGSTR, LOG.NPE_EXE," Schedule end of Test in 180 seconds")
     CreateTimeEvent("test_runner", "infinite_execution", 180, end_test)
 
 end
