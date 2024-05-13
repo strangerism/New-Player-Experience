@@ -495,7 +495,7 @@ local function equip_nerfs_radio(nerfs_radio_type,set)
 	if nerfs_radio_type == npe_actions.RADIO_TYPE.NERFS then 
 		open_time = 0.5
 		sound_time = 0.5
-	else
+	else -- DAR
 		open_time = 1.3
 		sound_time = 1.3
 	end

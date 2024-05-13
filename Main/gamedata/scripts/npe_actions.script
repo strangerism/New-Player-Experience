@@ -118,17 +118,10 @@ function set_radio_freq(new_frequency)
 
 	local oldf = math.floor(item_radio.get_freq())
     printdebug(LOG.INFO, LOG.ACTION," oldf = "..oldf)
-    local increment = 0
-    if oldf >= new_frequency then
-        increment = oldf - new_frequency
-    else
-        increment = new_frequency - oldf
-    end
-    printdebug(LOG.INFO, LOG.ACTION," increment = "..increment)
-    if increment == 0 then
-        return
-    end
-	item_radio.change_freq(increment)
+    local change = 0
+    change = new_frequency - oldf
+    printdebug(LOG.INFO, LOG.ACTION," change = ".. change)
+	item_radio.change_freq(change)
 end
 
 -- functions lifted from Haru's Detector Selector mod script detector_selector_mcm
