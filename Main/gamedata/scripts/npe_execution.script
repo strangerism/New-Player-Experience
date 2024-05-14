@@ -111,62 +111,100 @@ Runner = {}
 
 -- runner local api
 
-local function stop_runner(runner)
-    if not Runner[runner.name].enabled then return end
-    printdebug(LOG.REMOVE, LOG.NPE_EXE," Runner: " .. runner.name .. " disabled")
-    Runner[runner.name].enabled = false
+local function stop_runner(runner_name)
+    if not Runner[runner_name].enabled then return end
+    printdebug(LOG.REMOVE, LOG.NPE_EXE," Runner: " .. runner_name .. " disabled")
+    Runner[runner_name].enabled = false
 end
 
-local function start_runner(runner)
-    if Runner[runner.name].enabled then return end
-    printdebug(LOG.ADD, LOG.NPE_EXE," Runner: " .. runner.name .. " enabled")
-    Runner[runner.name].enabled = true
+local function start_runner(runner_name)
+    if Runner[runner_name].enabled then return end
+    printdebug(LOG.ADD, LOG.NPE_EXE," Runner: " .. runner_name .. " enabled")
+    Runner[runner_name].enabled = true
 end
 
-local function pause_runner(runner)
-    if Runner[runner.name].paused then return end
-    printdebug(LOG.ADD, LOG.NPE_EXE," Runner: " .. runner.name .. " paused")
-    Runner[runner.name].enabled = false
-    Runner[runner.name].paused = true
+local function pause_runner(runner_name)
+    if Runner[runner_name].paused then return end
+    printdebug(LOG.ADD, LOG.NPE_EXE," Runner: " .. runner_name .. " paused")
+    Runner[runner_name].enabled = false
+    Runner[runner_name].paused = true
 end
 
-local function reset_state(runner)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner.name .. " reset")
-    Runner[runner.name].loop_count = 0
-    Runner[runner.name].paused = false
-    Runner[runner.name].life = time_global()
-    Runner[runner.name].stop_condition_met = false
+local function reset_state(runner_name)
+    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " reset")
+    Runner[runner_name].loop_count = 0
+    Runner[runner_name].paused = false
+    Runner[runner_name].life = time_global()
+    Runner[runner_name].stop_condition_met = false
 end
 
-local function set_running(runner)
-    if Runner[runner.name].running then return end
-    printdebug(LOG.START, LOG.NPE_EXE," Runner: " .. runner.name .. " running")
-    Runner[runner.name].running = true
+local function set_running(runner_name)
+    if Runner[runner_name].running then return end
+    printdebug(LOG.START, LOG.NPE_EXE," Runner: " .. runner_name .. " running")
+    Runner[runner_name].running = true
 end
 
-local function unset_running(runner)
-    if not Runner[runner.name].running then return end
-    printdebug(LOG.STOP, LOG.NPE_EXE," Runner: " .. runner.name .. " stopped")
-    Runner[runner.name].running = false
+local function unset_running(runner_name)
+    if not Runner[runner_name].running then return end
+    printdebug(LOG.STOP, LOG.NPE_EXE," Runner: " .. runner_name .. " stopped")
+    Runner[runner_name].running = false
 end
 
-local function is_enabled(runner)
-    return Runner[runner.name].enabled
+local function set_paused(runner_name)
+    if Runner[runner_name].paused then return end
+    printdebug(LOG.ADD, LOG.NPE_EXE," Runner: " .. runner_name .. " paused")
+    Runner[runner_name].paused = true
 end
 
-local function get_life(runner)
-    return math.floor((time_global() - Runner[runner.name].life)/1000)
+local function unset_paused(runner_name)
+    if not Runner[runner_name].paused then return end
+    printdebug(LOG.REMOVE, LOG.NPE_EXE," Runner: " .. runner_name .. " unpaused")
+    Runner[runner_name].paused = false
+end
+
+local function set_stop_condition_met(runner_name)
+    if Runner[runner_name].stop_condition_met then return end
+    printdebug(LOG.ADD, LOG.NPE_EXE," Runner: " .. runner_name .. " stop_condition_met")
+    Runner[runner_name].stop_condition_met = true
+end
+
+local function is_enabled(runner_name)
+    return Runner[runner_name].enabled
+end
+
+local function get_life(runner_name)
+    return math.floor((time_global() - Runner[runner_name].life)/1000)
+end
+
+local function increase_loop_count(runner_name)
+    Runner[runner_name].loop_count = Runner[runner_name].loop_count + 1
+end
+
+local function activate_exclusive_execution(runner_name, group_name)
+    for name, runner in pairs(Runner) do
+        if runner.group == group_name and name ~= runner_name then
+            pause_runner(runner_name)
+        end
+    end
+end
+
+local function deactivate_exclusive_execution(runner_name, group_name)
+    for name, runner in pairs(Runner) do
+        if runner.group == group_name and name ~= runner_name then
+            start_runner(runner_name)
+        end
+    end
 end
 
 -- functor handler
 
-local execute_functor = function(params)
+local execute_functor = function(runner_name)
     -- the functor's handler or timed event
     -- these are perpetualy timed event which can only be stopped if runner is disabled
     -- usually the run function will stop the runner if certain conditions are met
     -- client scripts can stop the runner by calling the Pause/Remove functions
     -- print_table(params)
-    local runner = params[1]
+    local runner = Runner[runner_name]
     -- check if the functor's runner has been removed, if so stop the execution
     if not runner then 
         printdebug(LOG.ERROR, LOG.NPE_EXE," Runner is null")
@@ -174,11 +212,11 @@ local execute_functor = function(params)
     end
     printdebug(LOG.INFO, LOG.NPE_EXE," Evaluating Runner: " .. runner.name .. " Loop: " .. runner.loop_count)
     printdebug(LOG.RUN, LOG.NPE_EXE," Functor Execution: " .. runner.name)
-    if not is_enabled(runner) then 
+    if not is_enabled(runner_name) then 
         -- the runner is disabled, stop the execution state of timed event
         -- we should not get here normally, unless for fast execution loops
         printdebug(LOG.ERROR, LOG.NPE_EXE," Runner is disabled")
-        unset_running(runner)
+        unset_running(runner_name)
         return true 
     end
 
@@ -186,7 +224,7 @@ local execute_functor = function(params)
         -- check the stop condition
         if execute_func(unpack(runner.config.stop_condition)) then
             printdebug(LOG.INFO, LOG.NPE_EXE," Stop Condition met")
-            runner.stop_condition_met = true
+            set_stop_condition_met(runner_name)
             return true
         end
     end
@@ -195,7 +233,7 @@ local execute_functor = function(params)
     ResetTimeEvent(runner.group_name, runner.name, runner.config.loop_timer)
     
     -- update the loop count
-    runner.loop_count = runner.loop_count + 1
+    increase_loop_count(runner_name)
     printdebug(LOG.INFO, LOG.NPE_EXE," Executed Runner: " .. runner.name .. " Loop: " .. runner.loop_count)
 
     -- execute the functor
@@ -208,26 +246,22 @@ end
 
 -- runner handler
 -- called on every actor update when runner is enabled
-local function run(runner)
-    if not runner and not runner.config then return end
-    if runner.config.execution == nil then
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution type not defined")
-        return
-    end
-    -- the runner has been enabled
+local function run(runner_name)
+
+    local runner = Runner[runner_name]
     if not runner.running then
         -- instantiate if not running
         local create_timer = runner.config.start_timer
         if runner.paused then
             -- runner was paused, remove the pause state
-            runner.paused = false
+            set_paused(runner_name)
             create_timer = 0 -- start immediately from the paused state
         else
             -- reset the runner state
-            reset_state(runner)
+            reset_state(runner_name)
         end
-        set_running(runner)
-        CreateTimeEvent(runner.group_name, runner.name, create_timer, execute_functor, { runner })
+        set_running(runner_name)
+        CreateTimeEvent(runner.group_name, runner.name, create_timer, execute_functor, runner_name)
         printlog (LOG.INFO, LOG.NPE_EXE," Runner: " .. runner.name .. " started with timer " .. create_timer)
     else
         -- otherwise try to stop the runner
@@ -238,13 +272,13 @@ local function run(runner)
             if runner.loop_count >= runner.config.loops then
                 printdebug(LOG.INFO, LOG.NPE_EXE," Reached maximum loops")
                 -- terminate the runner
-                stop_runner(runner)
+                stop_runner(runner_name)
             end
         elseif runner.config.execution == TYPE.CONDITIONAL then
             -- check the stop_condition is met
             if runner.stop_condition_met then
                 -- terminate the runner
-                stop_runner(runner)
+                stop_runner(runner_name)
             end
         else
             printdebug(LOG.ERROR, LOG.NPE_EXE," Execution type " .. runner.config.execution .. " not supported")
@@ -259,7 +293,7 @@ local function execution_manager()
     for runner_name, runner in pairs(Runner) do
         if runner.enabled then
             -- printdebug(LOG.RUN, LOG.NPE_EXE," Run: " .. runner_name)
-            run(runner)
+            run(runner_name)
         end
     end
 end
@@ -280,10 +314,10 @@ local function execution_watch()
     for runner_name, runner in pairs(Runner) do
         printdebug(LOG.START, LOG.NPE_EXE," Runner: [" .. runner_name .. "] in group [" .. runner.group_name .. "], exclusive[" .. tostring(runner.exclusive) .. "]") 
         printdebug(LOG.INFO, LOG.NPE_EXE,"  -       enabled[" .. tostring(runner.enabled) .. "], running[" .. tostring(runner.running) .. "], paused[" .. tostring(runner.paused) .. "]")
-        printdebug(LOG.INFO, LOG.NPE_EXE,"  -       loop_count[" .. runner.loop_count .. "], life[" .. get_life(runner) .. "] seconds, max_life[" .. tostring(runner.config.max_life) .. "]")
-        if runner.config.max_life and get_life(runner) > runner.config.max_life then
+        printdebug(LOG.INFO, LOG.NPE_EXE,"  -       loop_count[" .. runner.loop_count .. "], life[" .. get_life(runner_name) .. "] seconds, max_life[" .. tostring(runner.config.max_life) .. "]")
+        if runner.config.max_life and get_life(runner_name) > runner.config.max_life then
             printdebug(LOG.STOP, LOG.NPE_EXE," Runner: " .. runner.name .. " reached max life")
-            stop_runner(runner)
+            stop_runner(runner_name)
             if runner.config.autoremove then
                 Remove(runner_name)
             end
@@ -360,17 +394,17 @@ local function validate_config(runner_config)
         return false 
     end
     if not runner_config.group_name then
-        runner_config.group_name = runners_default_group_name
+        runner_config.group_name = runners_default_group_name -- TODO check this
         printdebug(LOG.INFO, LOG.NPE_EXE," Runner group name is null, set to " .. runner_config.group_name)
         -- runners in the runners_default_group_name cannot use exclusive execution
-        runner_config.exclusive = false
+        runner_config.exclusive = false -- TODO check this
     end
     if not runner_config.start_timer then
-        runner_config.start_timer = 0
+        runner_config.start_timer = 0 -- TODO check this
         printdebug(LOG.INFO, LOG.NPE_EXE," Runner start timer is null, set to 0")
     end
     if not runner_config.loop_timer then
-        runner_config.loop_timer = 1
+        runner_config.loop_timer = 1 -- TODO check this
         printdebug(LOG.INFO, LOG.NPE_EXE," Runner loop timer is null, set to 1")
     end
     if not runner_config.execution then
@@ -459,8 +493,8 @@ function Add(runner_config)
         new_runner_instance.config.validated = true
 
         -- add the new runner to Runner list using runner_name as key
-        Runner[runner_config.name] = new_runner_instance
-        printdebug(LOG.ADD, LOG.NPE_EXE," Runner: " .. runner_config.name .. " added")
+        Runner[new_runner_instance.name] = new_runner_instance
+        printdebug(LOG.ADD, LOG.NPE_EXE," Runner: " .. new_runner_instance.name .. " added")
     else
         printdebug(LOG.ERROR, LOG.NPE_EXE," Runner: " .. runner_config.name .. " already exists")
     end
@@ -493,7 +527,7 @@ function Stop(runner_name)
     end
     if not runner_name then return end
     if Runner[runner_name] then
-        stop_runner(Runner[runner_name])
+        stop_runner(runner_name)
     end
 end
 
@@ -504,7 +538,7 @@ function Pause(runner_name)
     end
     if not runner_name then return end
     if Runner[runner_name] then
-        pause_runner(Runner[runner_name])
+        pause_runner(runner_name)
     end
 end
 
@@ -515,7 +549,7 @@ function Resume(runner_name)
     end
     if not runner_name then return end
     if Runner[runner_name] then
-        start_runner(Runner[runner_name])
+        start_runner(runner_name)
     end
 end
 
@@ -864,3 +898,8 @@ function on_game_start()
     RegisterScriptCallback("npe_on_log_update", npe_on_log_update)
     RegisterScriptCallback("actor_on_net_destroy", actor_on_net_destroy)
 end
+
+
+-- TODO 
+-- 1. Add a function to remove all runners
+-- 2. Add a function to disable all runnners in a group but the runner with name = runner_name, given the group name and runner name
