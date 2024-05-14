@@ -26,38 +26,65 @@ local execution_manager_group_name = 'NPE_Execution_Manager'
 local run_execution_manager_loop = false
 local run_execution_manager_loop_name = 'NPE_Execution_Manager_Loop'
 local execution_manager_loop = 0.5
+-- Execution Watch settings
+local execution_watch_name = 'NPE_Execution_Manager_Watch'
+local run_execution_watch = false
+local execution_watch_timer = 15
+-- runners settings
+local runners_default_group_name = 'NPE_Runners'
 
 -- Execition types
-
 TYPE = {
-    INFINITE = "INFINITE", -- never stops until disabled
-    FINITE = "FINITE",  -- stop after a number of loops
-    CONDITIONAL = "CONDITIONAL", -- stop when a condition is met
+    INFINITE = "INFINITE",              -- never stops until disabled
+    FINITE = "FINITE",                  -- stop after a number of loops
+    CONDITIONAL = "CONDITIONAL",        -- stop when a condition is met
 }   
 
--- runners instances
-
+-- runner configuration templates
 DEFAULT_RUNNER_CONFIG = {
     
     default_infinite = {
-        execution = npe_execution.TYPE.INFINITE,
-        timer = 1,
-        loops = nil,
-        stop_condition = nil,        
-        functor = nil
+        name = nil,                                 -- name of the runner, unique in the runners' group
+        group_name = nil,                           -- name of the runners' group, default is runners_default_group_name
+        execution = npe_execution.TYPE.INFINITE,    -- type of execution
+        start_timer = 0,                            -- delay before starting the runner once enabled. paused runners will start immediately when resumed
+        loop_timer = 1,                             -- delay between each loop
+        loops = nil,                                -- number of loops before stopping the runner
+        max_life = nil,                             -- maximum life time of the runner in seconds before the execution_watch stops it
+        autoremove = false,                         -- execution_watch removes the runner when it reaches its max life time
+        stop_condition = nil,                       -- a function to stop the runner conditionally
+        functor = nil                               -- the function to execute
+        -- functor and stop_condition interface 
+        -- functor[1]: script name
+        -- functor[2]: function name
+        -- functor[3]: parameters
+        -- functor[3][1]: parameters count (ignored)
+        -- the functor execution handler will inject the runner name as the first parameter 
+        -- for example 
+        -- functor = { "npe_execution", "print_items", {2, "run", "consume and print_items"} } 
     },
     default_finite = {
+        name = nil,
+        group_name = nil,        
         execution = npe_execution.TYPE.FINITE,
-        timer = 1,
-        loops = 1,
+        start_timer = 0,
+        loop_timer = 1,
+        loops = nil,
+        max_life = nil,
+        autoremove = false,
         stop_condition = nil,        
         functor = nil
     },
     default_conditional = {
+        name = nil,
+        group_name = nil,
         execution = npe_execution.TYPE.CONDITIONAL,
-        timer = 1,  -- make start_timer and add reset_timer
+        start_timer = 0,
+        loop_timer = 1,
         loops = nil,
-        stop_condition = nil,
+        max_life = nil,
+        autoremove = false,
+        stop_condition = nil,        
         functor = nil
     }        
 }
@@ -65,17 +92,17 @@ DEFAULT_RUNNER_CONFIG = {
 -- a template to create a new runner
 local RUNNER_TEMPLATE = {
     default = {
-        name = nil, -- set at creation
-        config = nil, -- set at creation
-        enabled = false,
-        paused = false,
-        running = false,
-        exclusive = false,
-        group_name = nil, 
-        loop_count = 0, -- internal counter
+        name = nil,                                 -- set at creation, using the runner configuration name
+        group_name = nil,                           -- set at creation, using the runner configuration group_name or default
+        config = nil,                               -- set at creation
+        enabled = false,                            -- manage execution
+        paused = false,                             -- manage state
+        running = false,                            -- execution state
+        exclusive = false,                          -- determine execution rights over runners of the same group
+        loop_count = 0,                             -- internal counter
+        life = 0,                                   -- internal timer
     },  
 }
-
 
 -- the runners list
 Runner = {}
@@ -105,6 +132,7 @@ local function reset_state(runner)
     printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner.name .. " reset")
     Runner[runner.name].loop_count = 0
     Runner[runner.name].paused = false
+    Runner[runner.name].life = time_global()
 end
 
 local function set_running(runner)
@@ -121,6 +149,10 @@ end
 
 local function is_enabled(runner)
     return Runner[runner.name].enabled
+end
+
+local function get_life(runner)
+    return math.floor((time_global() - Runner[runner.name].life)/1000)
 end
 
 -- functor handler
@@ -191,7 +223,7 @@ local execute_functor = function(params)
         inject_runner_name(runner.config.functor, runner.name)
     end
     -- reset this timed event timer for the next execution loop
-    ResetTimeEvent(runner.group_name or execution_manager_group_name, runner.name, runner.config.timer)
+    ResetTimeEvent(runner.group_name, runner.name, runner.config.loop_timer)
     
     -- update the loop count
     runner.loop_count = runner.loop_count + 1
@@ -216,15 +248,18 @@ local function run(runner)
     -- the runner has been enabled
     if not runner.running then
         -- instantiate if not running
+        local create_timer = runner.config.start_timer
         if runner.paused then
             -- runner was paused, remove the pause state
             runner.paused = false
+            create_timer = 0 -- start immediately from the paused state
         else
             -- reset the runner state
             reset_state(runner)
         end
         set_running(runner)
-        CreateTimeEvent(runner.group_name or execution_manager_group_name, runner.name, runner.config.timer, execute_functor, { runner })
+        CreateTimeEvent(runner.group_name, runner.name, create_timer, execute_functor, { runner })
+        printlog (LOG.INFO, LOG.NPE_EXE," Runner: " .. runner.name .. " started with timer " .. create_timer)
     else
         -- otherwise try to stop the runner
         if runner.config.execution == TYPE.INFINITE then
@@ -269,9 +304,6 @@ end
 
 -- Execution Manager Watch
 
-local execution_watch_name = 'NPE_Execution_Manager_Watch'
-local execution_watch_timer = 60
-local run_execution_watch = false
 local function execution_watch()
     printdebug(LOG.RUN, LOG.NPE_EXE," Execution Manager watch loop")
     if not run_execution_manager_loop then return true end -- stop the watch
@@ -284,9 +316,17 @@ local function execution_watch()
     end
     -- watch runners
     for runner_name, runner in pairs(Runner) do
-        printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " enabled: " .. tostring(runner.enabled) .. " running: " .. tostring(runner.running))
+        printdebug(LOG.START, LOG.NPE_EXE," Runner: [" .. runner_name .. "] in group [" .. runner.group_name .. "], exclusive[" .. tostring(runner.exclusive) .. "]") 
+        printdebug(LOG.INFO, LOG.NPE_EXE,"  -       enabled[" .. tostring(runner.enabled) .. "], running[" .. tostring(runner.running) .. "], paused[" .. tostring(runner.paused) .. "]")
+        printdebug(LOG.INFO, LOG.NPE_EXE,"  -       loop_count[" .. runner.loop_count .. "], life[" .. get_life(runner) .. "] seconds, max_life[" .. tostring(runner.config.max_life) .. "]")
+        if runner.config.max_life and get_life(runner) > runner.config.max_life then
+            printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner.name .. " reached max life")
+            stop_runner(runner)
+            if runner.config.autoremove then
+                Remove(runner_name)
+            end
+        end
     end
-
     -- keep watching
     return false
 end
@@ -345,26 +385,61 @@ local function get_instance(runner_template)
     return copy(runner_template)
 end
 
+local function validate_config(runner_config)
+    printdebug(LOG.RUN, LOG.NPE_EXE," Validate Runner Configuration")
+    if not runner_config then
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner configuration is null") 
+        return false 
+    end
+    if not runner_config.name then
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner name is null") 
+        return false 
+    end
+    if not runner_config.group_name then
+        runner_config.group_name = runners_default_group_name
+        printdebug(LOG.INFO, LOG.NPE_EXE," Runner group name is null, set to " .. runner_config.group_name)
+        -- runners in the runners_default_group_name cannot use exclusive execution
+        runner_config.exclusive = false
+    end
+    if not runner_config.start_timer then
+        runner_config.start_timer = 0
+        printdebug(LOG.INFO, LOG.NPE_EXE," Runner start timer is null, set to 0")
+    end
+    if not runner_config.loop_timer then
+        runner_config.loop_timer = 1
+        printdebug(LOG.INFO, LOG.NPE_EXE," Runner loop timer is null, set to 1")
+    end
+    if not runner_config.execution then
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner execution type is null") 
+        return false 
+    end
+    if not runner_config.functor then
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner functor is null") 
+        return false 
+    end
+    return true
+end
 
-
-function Add(runner_name, runner_config)
+function Add(runner_config)
     if not Is_running() then 
         printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
         return 
     end
-    -- I need to add a new runner to the list Runner
-    if not runner_name and not runner_config then return end
+    if not validate_config(runner_config) then return end
 
-    if not Runner[runner_name] then
+    -- add the new runner to the list Runner
+    if not Runner[runner_config.name] then
         -- create a new runner instance
         local new_runner_instance = get_instance(RUNNER_TEMPLATE.default)
-        new_runner_instance.name = runner_name
+        new_runner_instance.name = runner_config.name
+        new_runner_instance.group_name = runner_config.group_name
+        new_runner_instance.exclusive = runner_config.exclusive 
         new_runner_instance.config = runner_config
         -- add the new runner to Runner list using runner_name as key
-        Runner[runner_name] = new_runner_instance
-        printdebug(LOG.ADD, LOG.NPE_EXE," Runner: " .. runner_name .. " added")
+        Runner[runner_config.name] = new_runner_instance
+        printdebug(LOG.ADD, LOG.NPE_EXE," Runner: " .. runner_config.name .. " added")
     else
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner: " .. runner_name .. " already exists")
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner: " .. runner_config.name .. " already exists")
     end
 end
 
@@ -380,7 +455,7 @@ function Remove(runner_name)
     end
     local runner = Runner[runner_name]
     if runner then 
-        RemoveTimeEvent(runner.group_name or execution_manager_group_name, runner.name)
+        RemoveTimeEvent(runner.group_name, runner.name)
         Runner[runner_name] = nil
         printdebug(LOG.REMOVE, LOG.NPE_EXE," Runner: " .. runner_name .. " removed")
     else
@@ -524,7 +599,7 @@ function print_cards(params)
         printdebug(LOG.INFO, LOG.NPE_EXE," Card: " .. item)
     else 
         printdebug(LOG.INFO, LOG.NPE_EXE," Cards Queue is empty")
-        npe_execution.Stop(runner_name)
+        -- npe_execution.Stop(runner_name)
     end
     return true
 end
@@ -545,10 +620,14 @@ end
 
 local CLIENT_RUNNER_CONFIG = {
     default_infinite = {
+        name = "default_infinite",
         execution = npe_execution.TYPE.INFINITE,
-        timer = 30,
+        start_timer = 10,
+        loop_timer = 15,
         loops = nil,
-        condition = nil,        
+        max_life = 100,
+        autoremove = true,
+        stop_condition = nil,        
         -- functionr interface 
         -- functor[1]: script name
         -- functor[2]: function name
@@ -558,17 +637,21 @@ local CLIENT_RUNNER_CONFIG = {
         functor = { "npe_execution", "print_items", {2, "run", "consume and print_items"} } 
     },
     default_finite = {
+        name = "default_finite",
         execution = npe_execution.TYPE.FINITE,
-        timer = 2,
+        start_timer = 0,
+        loop_timer = 2,
         loops = 15,
-        condition = nil,        
+        stop_condition = nil,        
         functor = { "npe_execution", "print_cards", {2, "run", "consume and print_cards"} }
     },
     default_conditional = {
+        name = "default_conditional",
         execution = npe_execution.TYPE.CONDITIONAL,
-        timer = 10,
+        start_timer = 10,
+        loop_timer = 2,
         loops = nil,
-        condition = { "npe_execution", "maximum_loops", {"default_conditional", 5} },  
+        stop_condition = { "npe_execution", "maximum_loops", {"default_conditional", 5} },  
         functor = { "npe_execution", "print_items", {2, "run", "default_conditional"} }
     }        
 }
@@ -601,23 +684,26 @@ local function fill_test_queues()
 end
 
 local run_toggle_loop = false
-local resumed_once = false
+local do_stop = false
 function toggle_finite_runner()
     printdebug(LOG.RUN, LOG.NPE_EXE," Toggle Finite Runner")
     if not run_toggle_loop then return true end
     ResetTimeEvent("test_runner", "toggle_finite_runner_execution", 10)
     if npe_execution.Is_running() then
-        if not resumed_once then
-            if npe_execution.Is_runner_enabled("default_finite") then
+        if not do_stop then
+            if npe_execution.Is_runner_enabled(CLIENT_RUNNER_CONFIG.default_finite.name) then
+                printdebug(LOG.RUN, LOG.NPE_EXE,"toggle_finite_runner Pause Runner")
                 -- pause the runner without resetting its state (loop count)
-                npe_execution.Pause("default_finite")
+                npe_execution.Pause(CLIENT_RUNNER_CONFIG.default_finite.name)
             else
-                npe_execution.Resume("default_finite")
-                resumed_once = true
+                printdebug(LOG.ADD, LOG.NPE_EXE,"toggle_finite_runner Resume Runner")
+                npe_execution.Resume(CLIENT_RUNNER_CONFIG.default_finite.name)
+                do_stop = true
             end
         else
+            printdebug(LOG.STOP, LOG.NPE_EXE,"toggle_finite_runner STOP Runner")
             -- stop the runner and resets its state (loop count)
-            npe_execution.Stop("default_finite")
+            npe_execution.Stop(CLIENT_RUNNER_CONFIG.default_finite.name)
             run_toggle_loop = false
             RemoveTimeEvent("test_runner", "toggle_finite_runner_execution")
             return true
@@ -632,9 +718,9 @@ end
 local function end_test()
     printlog(LOG.INFO, LOG.NPE_EXE," End Client Test")
     run_toggle_loop = false
-    npe_execution.Remove("default_infinite")
-    npe_execution.Remove("default_finite")
-    npe_execution.Remove("default_conditional")
+    npe_execution.Remove(CLIENT_RUNNER_CONFIG.default_infinite.name)
+    npe_execution.Remove(CLIENT_RUNNER_CONFIG.default_finite.name)
+    npe_execution.Remove(CLIENT_RUNNER_CONFIG.default_conditional.name)
     -- print the table my_items_queue.items
     printdebug(LOG.INFO, LOG.NPE_EXE," Items Queue")
     print_table(my_items_queue.items)    
@@ -653,12 +739,12 @@ local function client_on_update()
         fill_test_queues()
 
         -- create an infinite runner wich will consume an item every 30 seconds
-        npe_execution.Add("default_infinite", CLIENT_RUNNER_CONFIG.default_infinite)
-        npe_execution.Resume("default_infinite")
+        -- npe_execution.Add(CLIENT_RUNNER_CONFIG.default_infinite)
+        -- npe_execution.Resume(CLIENT_RUNNER_CONFIG.default_infinite.name)
     
         -- create an finite runner wich will consume 10 cards from the queue
-        npe_execution.Add("default_finite", CLIENT_RUNNER_CONFIG.default_finite)
-        npe_execution.Resume("default_finite")
+        npe_execution.Add(CLIENT_RUNNER_CONFIG.default_finite)
+        npe_execution.Resume(CLIENT_RUNNER_CONFIG.default_finite.name)
         -- toggle the finite runner execution at 15 seconds in the run, to then pause it for 10 seconds
         -- this  to test that the loop count is persistent across pauses 
         -- the queue is supposed to empty after 40 seconds
