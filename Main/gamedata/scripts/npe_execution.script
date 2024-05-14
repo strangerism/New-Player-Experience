@@ -22,10 +22,8 @@ local function print_table(t, indent)
 end
 
 -- Execution Manager settings
-local execution_manager_group_name = 'NPE_Execution_Manager'
+local execution_manager_group_name = 'NPE_Execution_Manager' -- group name for the execution manager watch
 local run_execution_manager_loop = false
-local run_execution_manager_loop_name = 'NPE_Execution_Manager_Loop'
-local execution_manager_loop = 0.5
 -- Execution Watch settings
 local execution_watch_name = 'NPE_Execution_Manager_Watch'
 local run_execution_watch = false
@@ -96,12 +94,15 @@ local RUNNER_TEMPLATE = {
         name = nil,                                 -- set at creation, using the runner configuration name
         group_name = nil,                           -- set at creation, using the runner configuration group_name or default
         config = nil,                               -- set at creation
+        -- runner execution related fields 
         enabled = false,                            -- manage execution
-        paused = false,                             -- manage state
         running = false,                            -- execution state
         exclusive = false,                          -- determine execution rights over runners of the same group
+        -- runner state related fields
+        paused = false,                             -- manage state
         loop_count = 0,                             -- internal counter
         life = 0,                                   -- internal timer
+        stop_condition_met = false,                 -- internal state, only used to break conditional runners loops
     },  
 }
 
@@ -134,6 +135,7 @@ local function reset_state(runner)
     Runner[runner.name].loop_count = 0
     Runner[runner.name].paused = false
     Runner[runner.name].life = time_global()
+    Runner[runner.name].stop_condition_met = false
 end
 
 local function set_running(runner)
@@ -180,6 +182,15 @@ local execute_functor = function(params)
         return true 
     end
 
+    if runner.config.execution == TYPE.CONDITIONAL and runner.config.stop_condition then
+        -- check the stop condition
+        if execute_func(unpack(runner.config.stop_condition)) then
+            printdebug(LOG.INFO, LOG.NPE_EXE," Stop Condition met")
+            runner.stop_condition_met = true
+            return true
+        end
+    end
+
     -- reset this timed event timer for the next execution loop
     ResetTimeEvent(runner.group_name, runner.name, runner.config.loop_timer)
     
@@ -196,7 +207,7 @@ local execute_functor = function(params)
 end
 
 -- runner handler
-
+-- called on every actor update when runner is enabled
 local function run(runner)
     if not runner and not runner.config then return end
     if runner.config.execution == nil then
@@ -231,7 +242,7 @@ local function run(runner)
             end
         elseif runner.config.execution == TYPE.CONDITIONAL then
             -- check the stop_condition is met
-            if execute_func(unpack(runner.config.stop_condition)) then
+            if runner.stop_condition_met then
                 -- terminate the runner
                 stop_runner(runner)
             end
@@ -242,12 +253,8 @@ local function run(runner)
 end
 
 -- Execution Manager or runners manager
-
+-- called on every actor update when the callback is registered - @Manager_start()
 local function execution_manager()
-    if not run_execution_manager_loop then return true end -- stop the manager
-    -- reset the timer
-    ResetTimeEvent(execution_manager_group_name, run_execution_manager_loop_name, execution_manager_loop)
-
     -- for each Runner
     for runner_name, runner in pairs(Runner) do
         if runner.enabled then
@@ -255,9 +262,6 @@ local function execution_manager()
             run(runner)
         end
     end
-    
-    -- keep running
-    return false
 end
 
 -- Execution Manager Watch
@@ -303,22 +307,22 @@ end
 
 -- Execution Manager API
 
-function Start()
+function Manager_start()
+    RegisterScriptCallback("actor_on_update", execution_manager)
     printlog(LOG.START, LOG.NPE_EXE," Execution Manager started")
     if run_execution_manager_loop then return end
     run_execution_manager_loop = true
-    CreateTimeEvent(execution_manager_group_name, run_execution_manager_loop_name, execution_manager_loop, execution_manager)
     watch()
 end
 
-function Destroy()
-    printlog(LOG.STOP, LOG.NPE_EXE," Execution Manager destroyed")
+function Manager_stop()
+    UnregisterScriptCallback("actor_on_update", execution_manager)
+    printlog(LOG.STOP, LOG.NPE_EXE," Execution Manager stopped")
     if not run_execution_manager_loop then return end
     run_execution_manager_loop = false
     for runner_name, runner in pairs(Runner) do
         Remove(runner_name)
     end
-    RemoveTimeEvent(execution_manager_group_name, run_execution_manager_loop_name)
     unwatch()
 end
 
@@ -756,6 +760,11 @@ function toggle_finite_runner() -- timed event
             -- kill the timed event
             return true
         end
+    else
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
+        run_toggle_loop = false
+        -- kill the timed event
+        return true
     end
     -- keep running
     return false
@@ -780,6 +789,7 @@ local function end_test()  -- timed event
     printdebug(LOG.INFO, LOG.NPE_EXE," Decks Queue")
     print_table(my_decks_queue.decks)
     -- kill the timed event
+    npe_execution.Manager_stop()
     return true
 end
 
@@ -828,13 +838,13 @@ end
 local function actor_on_first_update()
     -- start the execution manager
     
-    npe_execution.Start()
+    npe_execution.Manager_start()
 end
 
 local function actor_on_net_destroy()
     -- 
     printlog(LOG.RUN, LOG.NPE_EXE," Actor Net Destroy")
-    Destroy()
+    
 end
 
 function npe_on_log_update()
