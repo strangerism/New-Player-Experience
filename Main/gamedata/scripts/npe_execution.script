@@ -25,7 +25,7 @@ end
 local execution_manager_group_name = 'NPE_Execution_Manager'
 local run_execution_manager_loop = false
 local run_execution_manager_loop_name = 'NPE_Execution_Manager_Loop'
-local execution_manager_loop = 1
+local execution_manager_loop = 0
 
 -- Execition types
 
@@ -117,6 +117,7 @@ end
 -- functor handler
 
 local function validate_functor(functor)
+    printdebug(LOG.RUN, LOG.NPE_EXE," Validate Functor")
     if not functor then return false end
     printdebug(LOG.INFO, LOG.NPE_EXE," Functor is not null")
     -- checks is a table
@@ -159,6 +160,7 @@ local execute_functor = function(params)
         printdebug(LOG.ERROR, LOG.NPE_EXE," Runner is null")
         return true 
     end
+    printdebug(LOG.INFO, LOG.NPE_EXE," Evaluating Runner: " .. runner.name .. " Loop: " .. runner.loop_count)
     printdebug(LOG.RUN, LOG.NPE_EXE," Functor Execution: " .. runner.name)
     if not is_enabled(runner) then 
         -- the runner is disabled, stop the execution state of timed event
@@ -184,7 +186,7 @@ local execute_functor = function(params)
     
     -- update the loop count
     runner.loop_count = runner.loop_count + 1
-    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner.name .. " Loop: " .. runner.loop_count)
+    printdebug(LOG.INFO, LOG.NPE_EXE," Executed Runner: " .. runner.name .. " Loop: " .. runner.loop_count)
 
     -- execute the functor
     -- print_table(runner.config.functor)
@@ -214,7 +216,8 @@ local function run(runner)
             -- do nothing, the runner is infinite
         elseif runner.config.execution == TYPE.FINITE then
             -- check the loop count
-            if runner.loop_count > runner.config.loops then
+            if runner.loop_count >= runner.config.loops then
+                printdebug(LOG.INFO, LOG.NPE_EXE," Reached maximum loops")
                 -- terminate the runner
                 stop_runner(runner)
             end
@@ -239,7 +242,7 @@ local function execution_manager()
 
     -- for each Runner
     for runner_name, runner in pairs(Runner) do
-        if not runner.running and runner.enabled then
+        if runner.enabled then
             printdebug(LOG.RUN, LOG.NPE_EXE," Run: " .. runner_name)
             run(runner)
         end
