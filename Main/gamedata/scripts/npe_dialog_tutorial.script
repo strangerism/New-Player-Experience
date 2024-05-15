@@ -13,7 +13,7 @@ local SOUNDS_SET
 function Play(set)
 	if set == nil then
 		printdebug(LOG.INFO, LOG.UI," Play set is nil")
-		npe_manager.Resume_execution()
+		npe_manager.Resume_execution_Deprecated()
 		return
 	end
 	npe_manager.Register_dialog(set.dialog)
@@ -40,7 +40,7 @@ function Play(set)
 		GUI:DoStartActions()
     else
         printdebug(LOG.INFO, LOG.UI," GUI already shown")
-		npe_manager.Resume_execution()
+		npe_manager.Resume_execution_Deprecated()
 		return
     end
 end
@@ -294,7 +294,7 @@ function UINewPlayerExperience:Close()
 	npe_dialog.Play_sound(Sounds[SOUNDS_SET].close)
 	npe_dialog.Change_gametime_to(GAMETIME_STATE.INMOTION)
 	npe_manager.Unregister_dialog(self.set.dialog)
-	npe_manager.Resume_execution()
+	npe_manager.Resume_execution_Deprecated()
 end
 
 ---@diagnostic disable-next-line: duplicate-set-field

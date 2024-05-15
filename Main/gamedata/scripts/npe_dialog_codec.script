@@ -434,7 +434,7 @@ local function open_codec_dialog_ui(set)
 		npe_dialog.Enable_dof()
     else
         printdebug(LOG.INFO, LOG.UI," GUI already shown")
-		npe_manager.Resume_execution()
+		npe_manager.Resume_execution_Deprecated()
     end	
 end
 
@@ -561,7 +561,7 @@ end
 function Play(set)
 	if set == nil then
 		printdebug(LOG.INFO, LOG.UI," Play set is nil")
-		npe_manager.Resume_execution()
+		npe_manager.Resume_execution_Deprecated()
 		return
 	end
 	npe_manager.Register_dialog(set.dialog)
@@ -801,7 +801,7 @@ local function close_dialog(dialog)
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
 	npe_manager.Unregister_dialog(dialog)
-	npe_manager.Resume_execution()
+	npe_manager.Resume_execution_Deprecated()
 	closing_dialog = false
 	return true
 end
