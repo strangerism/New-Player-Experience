@@ -1,9 +1,75 @@
 
-local printlog = npe_manager.Printlog_npe
-local printdebug = npe_manager.Printdebug_npe
-local print_table = npe_manager.Print_table_npe
-LOG = npe_manager.LOG
+-------------------------------------------------- 0. Logging ----------------------------------------------------------
 
+local Settings = {
+    debug_logs = true,
+    exec_logs = true,
+}
+
+local LOG = {
+    -- NPE tag
+    APP = { tag = "[NPE]"},
+    -- log types
+    INFO = { tag = ""},
+    START = { tag = "-"},
+    STOP = { tag = "!"},
+    ERROR = { tag = "!"},
+    WARN = { tag = "!"},
+    ADD = { tag = "-"},
+    REMOVE = { tag = "!"},
+    RUN = { tag = "//"},
+    -- categories
+    CONF = { tag = "[CONF]", enabled = true},
+    NPE_EXE = { tag = "[NPE_EXE]", enabled = true},
+}
+
+local function printlog(type,category,msg,...)
+	msg = msg or " "
+    if not category.enabled then return end
+    if type then
+        msg = type.tag .. LOG.APP.tag .. category.tag  .. msg
+    else
+        msg = LOG.APP.tag .. category.tag  .. msg
+    end
+	if select('#', ...) ~= 0 then printf(string.format(msg,...))
+	else printf(msg)
+	end
+end
+
+local function printdebug(type,category, msg,...) -- debug logging
+	if Settings.debug_logs then printlog(type,category, msg,...) end
+end
+
+local function print_table(t, indent)
+    if not t then
+        return
+    end
+    indent = indent or ''
+    for key, value in pairs(t) do
+        if type(value) == 'table' then
+            printlog(LOG.INFO, LOG.CONF, indent .. '' .. key .. ':')
+            print_table(value, indent .. '  ')
+        else
+            printlog(LOG.INFO, LOG.CONF, indent .. key .. ': ' .. tostring(value))
+        end
+    end
+end
+
+local function debug_table(t, indent)
+    if not t then
+        return
+    end
+    indent = indent or ''
+    for key, value in pairs(t) do
+        if type(value) == 'table' then
+            printdebug(LOG.INFO, LOG.CONF,indent .. '' .. key .. ':')
+            debug_table(value, indent .. '  ')
+        else
+            printdebug(LOG.INFO, LOG.CONF,indent .. key .. ': ' .. tostring(value))
+        end
+    end
+end
+Debug_table_npe = debug_table
 
 -- Execution Manager settings
 local execution_manager_group_name = 'NPE_Execution_Manager' -- group name for the execution manager watch
@@ -22,20 +88,23 @@ TYPE = {
     CONDITIONAL = "CONDITIONAL",        -- stop when a condition is met
 }   
 
-RUNNER_CONFIG_TEMPLATE_NAME = {
-    DEFAULT_INFINITE = "default_infinite",
-    DEFAULT_FINITE = "default_finite",
-    DEFAULT_CONDITIONAL = "default_conditional",
+RUNNER_CONFIG_TEMPLATE = {
+    INFINITE = "infinite",
+    FINITE = "finite",
+    CONDITIONAL = "conditional",
+    QUEUE_CONSUME = "queue_consume",
+    QUEUE_PRODUCE = "queue_produce",
+    QUEUE_UPDATE = "queue_update",
 }
 
 -- runner configuration templates
 local DEFAULT_RUNNER_CONFIG = {
     
-    default_infinite = {
+    infinite = {
         name = nil,                                 -- name of the runner, unique in the runners' group
         group_name = nil,                           -- name of the runners' group, default is runners_default_group_name
         exclusive = false,                          -- exclusive execution rights over runners of the same group
-        execution = npe_execution.TYPE.INFINITE,    -- type of execution
+        execution = TYPE.INFINITE,    -- type of execution
         start_timer = 0,                            -- delay before starting the runner once enabled. paused runners will start immediately when resumed
         loop_timer = 1,                             -- delay between each loop
         loops = nil,                                -- number of loops before stopping the runner
@@ -48,11 +117,11 @@ local DEFAULT_RUNNER_CONFIG = {
         -- functor[2]: function name
         -- functor[3-n]: parameters
     },
-    default_finite = {
+    finite = {
         name = nil,
         group_name = nil,  
         exclusive = false,      
-        execution = npe_execution.TYPE.FINITE,
+        execution = TYPE.FINITE,
         start_timer = 0,
         loop_timer = 1,
         loops = nil,
@@ -61,11 +130,11 @@ local DEFAULT_RUNNER_CONFIG = {
         stop_condition = nil,        
         functor = nil
     },
-    default_conditional = {
+    conditional = {
         name = nil,
         group_name = nil,
         exclusive = false,
-        execution = npe_execution.TYPE.CONDITIONAL,
+        execution = TYPE.CONDITIONAL,
         start_timer = 0,
         loop_timer = 1,
         loops = nil,
@@ -73,7 +142,49 @@ local DEFAULT_RUNNER_CONFIG = {
         autoremove = false,
         stop_condition = nil,        
         functor = nil
-    }        
+    },
+    queue_consumer = {
+        name = nil,
+        group_name = nil,
+        exclusive = false,
+        execution = TYPE.QUEUE_CONSUME,
+        queue = nil,
+        start_timer = 0,
+        loop_timer = 1,
+        loops = nil,
+        max_life = nil,
+        autoremove = false,
+        stop_condition = nil,        
+        functor = nil
+    },
+    queue_producer = {
+        name = nil,
+        group_name = nil,
+        exclusive = false,
+        execution = TYPE.QUEUE_PRODUCE,
+        queue = nil,
+        start_timer = 0,
+        loop_timer = 1,
+        loops = nil,
+        max_life = nil,
+        autoremove = false,
+        stop_condition = nil,        
+        functor = nil
+    },
+    queue_updater = {
+        name = nil,
+        group_name = nil,
+        exclusive = false,
+        execution = TYPE.QUEUE_UPDATE,
+        queue = nil,
+        start_timer = 0,
+        loop_timer = 1,
+        loops = nil,
+        max_life = nil,
+        autoremove = false,
+        stop_condition = nil,        
+        functor = nil
+    },      
 }
 
 -- a template to create a new runner
@@ -346,7 +457,7 @@ local execute_functor = function(runner_name)
     printdebug(LOG.INFO, LOG.NPE_EXE," Executed Runner: " .. runner.name .. " Loop: " .. runner.loop_count)
 
     -- execute the functor
-    -- print_table(runner.config.functor)
+    print_table(runner.config.functor)
     execute_func(unpack(runner.config.functor))
 
     -- keeps running as long as the runner is enabled
@@ -468,6 +579,7 @@ end
 
 function Manager_start()
     RegisterScriptCallback("actor_on_update", execution_manager)
+
     printlog(LOG.START, LOG.NPE_EXE," Execution Manager started")
     if run_execution_manager_loop then return end
     run_execution_manager_loop = true
@@ -682,17 +794,17 @@ end
 
 local function actor_on_first_update()
     -- start the execution manager
-    npe_execution.Manager_start()
+    Manager_start()
 end
 
 local function actor_on_net_destroy()
     printlog(LOG.RUN, LOG.NPE_EXE," Actor Net Destroy")
-    npe_execution.Manager_stop()
+    Manager_stop()
 end
 
-function npe_on_log_update()
+local function npe_on_log_update()
     printf("NPE EVENT LOG UPDATE")
-    LOG = npe_manager.LOG
+    -- LOG = npe_manager.LOG
 end
 
 function on_game_start()
