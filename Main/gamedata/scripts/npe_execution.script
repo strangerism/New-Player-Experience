@@ -1,25 +1,9 @@
 
 local printlog = npe_manager.Printlog_npe
 local printdebug = npe_manager.Printdebug_npe
--- local print_table = npe_manager.Print_table_npe
+local print_table = npe_manager.Print_table_npe
 LOG = npe_manager.LOG
 
-
-local function print_table(t, indent)
-    if not t then
-        printlog(LOG.INFO, LOG.CONF, 'nil table')
-        return
-    end
-    indent = indent or ''
-    for key, value in pairs(t) do
-        if type(value) == 'table' then
-            printlog(LOG.INFO, LOG.CONF, indent .. '' .. key .. ':')
-            print_table(value, indent .. '  ')
-        else
-            printlog(LOG.INFO, LOG.CONF, indent .. key .. ': ' .. tostring(value))
-        end
-    end
-end
 
 -- Execution Manager settings
 local execution_manager_group_name = 'NPE_Execution_Manager' -- group name for the execution manager watch
@@ -113,7 +97,7 @@ local RUNNER_TEMPLATE = {
 }
 
 
--- NPE Execution Manager Tables
+-------------------------------------------------- 1. NPE Execution Manager Tables --------------------------------------------------
 
 -- the runners list 
 local Runner = {}
@@ -121,7 +105,92 @@ local Runner = {}
 -- the execution group list
 local Execution_group = {}
 
--- runner local api
+-------------------------------------------------- 2. Runners' private API ----------------------------------------------------------
+
+-- creates runner instances
+
+local function copy(obj, seen)
+    if type(obj) ~= 'table' then return obj end
+    if seen and seen[obj] then return seen[obj] end
+    local s = seen or {}
+    local res = setmetatable({}, getmetatable(obj))
+    s[obj] = res
+    for k, v in pairs(obj) do res[copy(k, s)] = copy(v, s) end
+    return res
+end
+local function get_instance(runner_template)
+    return copy(runner_template)
+end
+
+-- runner config validation functions
+
+local function validate_config(runner_config)
+    if not runner_config then
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner configuration is null") 
+        return false 
+    end
+    if not runner_config.name then
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner name is null") 
+        return false 
+    end
+    printdebug(LOG.RUN, LOG.NPE_EXE," Validate Runner Configuration: " .. runner_config.name)
+    if not runner_config.group_name then
+        runner_config.group_name = runners_default_group_name -- TODO check this
+        printdebug(LOG.ADD, LOG.NPE_EXE," Runner group name is null, set to " .. runner_config.group_name)
+        -- runners in the runners_default_group_name cannot use exclusive execution
+        runner_config.exclusive = false -- TODO check this
+    end
+    if not runner_config.start_timer then
+        runner_config.start_timer = 0 -- TODO check this
+        printdebug(LOG.ADD, LOG.NPE_EXE," Runner start timer is null, set to 0")
+    end
+    if not runner_config.loop_timer then
+        runner_config.loop_timer = 1 -- TODO check this
+        printdebug(LOG.ADD, LOG.NPE_EXE," Runner loop timer is null, set to 1")
+    end
+    if not runner_config.execution then
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner execution type is null") 
+        return false 
+    end
+    if not runner_config.functor then
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner functor is null") 
+        return false 
+    end
+    printdebug(LOG.ADD, LOG.NPE_EXE," Runner configuration validated")
+    return true
+end
+
+-- functor and stop_condition validation
+
+local function validate_functor(functor)
+    printdebug(LOG.RUN, LOG.NPE_EXE," Validate Functor")
+    if not functor then 
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor is null")
+        return false 
+    end
+    -- checks is a table
+    if type(functor) ~= "table" then 
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor is not a table")
+        return false 
+    end
+    -- checks mandatory fields (script, function)
+    if #functor < 2 then 
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor has less than 2 parameters")
+        return false 
+    end
+    if type(functor[1]) ~= "string" then 
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor script name is not a string")
+        return false 
+    end
+    if type(functor[2]) ~= "string" then 
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor function name is not a string")
+        return false 
+    end
+
+    -- validated
+    printdebug(LOG.ADD, LOG.NPE_EXE," Functor validated")
+    return true
+end
 
 -- runner execution state management
 
@@ -231,6 +300,8 @@ local function increase_loop_count(runner_name)
     Runner[runner_name].loop_count = Runner[runner_name].loop_count + 1
 end
 
+-------------------------------------------------- 3. Runners' Execution private API ----------------------------------------------------------
+
 -- functor handler
 
 local execute_functor = function(runner_name)
@@ -335,7 +406,7 @@ local function run(runner_name)
     end
 end
 
--- Execution Manager or runners manager
+-------------------------------------------------- 4. Execution Manager ----------------------------------------------------------
 -- called on every actor update when the callback is registered - @Manager_start()
 local function execution_manager()
     -- for each Runner
@@ -348,7 +419,7 @@ local function execution_manager()
     end
 end
 
--- Execution Manager Watch
+-------------------------------------------------- 5. Execution Manager Watch ----------------------------------------------------------
 
 local function execution_watch()
     printdebug(LOG.RUN, LOG.NPE_EXE," Execution Manager watch loop")
@@ -393,7 +464,7 @@ local function unwatch()
     RemoveTimeEvent(execution_manager_group_name, execution_watch_name)
 end
 
--- Execution Manager API
+-------------------------------------------------- 6. Execution Manager Public API ----------------------------------------------------------
 
 function Manager_start()
     RegisterScriptCallback("actor_on_update", execution_manager)
@@ -418,94 +489,7 @@ function Is_running()
     return run_execution_manager_loop
 end
 
--- Runners' internal API
-
--- creates runner instances
-
-local function copy(obj, seen)
-    if type(obj) ~= 'table' then return obj end
-    if seen and seen[obj] then return seen[obj] end
-    local s = seen or {}
-    local res = setmetatable({}, getmetatable(obj))
-    s[obj] = res
-    for k, v in pairs(obj) do res[copy(k, s)] = copy(v, s) end
-    return res
-end
-local function get_instance(runner_template)
-    return copy(runner_template)
-end
-
--- runner config validation functions
-
-local function validate_config(runner_config)
-    if not runner_config then
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner configuration is null") 
-        return false 
-    end
-    if not runner_config.name then
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner name is null") 
-        return false 
-    end
-    printdebug(LOG.RUN, LOG.NPE_EXE," Validate Runner Configuration: " .. runner_config.name)
-    if not runner_config.group_name then
-        runner_config.group_name = runners_default_group_name -- TODO check this
-        printdebug(LOG.ADD, LOG.NPE_EXE," Runner group name is null, set to " .. runner_config.group_name)
-        -- runners in the runners_default_group_name cannot use exclusive execution
-        runner_config.exclusive = false -- TODO check this
-    end
-    if not runner_config.start_timer then
-        runner_config.start_timer = 0 -- TODO check this
-        printdebug(LOG.ADD, LOG.NPE_EXE," Runner start timer is null, set to 0")
-    end
-    if not runner_config.loop_timer then
-        runner_config.loop_timer = 1 -- TODO check this
-        printdebug(LOG.ADD, LOG.NPE_EXE," Runner loop timer is null, set to 1")
-    end
-    if not runner_config.execution then
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner execution type is null") 
-        return false 
-    end
-    if not runner_config.functor then
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner functor is null") 
-        return false 
-    end
-    printdebug(LOG.ADD, LOG.NPE_EXE," Runner configuration validated")
-    return true
-end
-
--- functor and stop_condition validation
-
-local function validate_functor(functor)
-    printdebug(LOG.RUN, LOG.NPE_EXE," Validate Functor")
-    if not functor then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor is null")
-        return false 
-    end
-    -- checks is a table
-    if type(functor) ~= "table" then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor is not a table")
-        return false 
-    end
-    -- checks mandatory fields (script, function)
-    if #functor < 2 then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor has less than 2 parameters")
-        return false 
-    end
-    if type(functor[1]) ~= "string" then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor script name is not a string")
-        return false 
-    end
-    if type(functor[2]) ~= "string" then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor function name is not a string")
-        return false 
-    end
-
-    -- validated
-    printdebug(LOG.ADD, LOG.NPE_EXE," Functor validated")
-    return true
-end
-
--- Runners' Execution API
+-------------------------------------------------- 7. Runner Registration Public API ----------------------------------------------------------
 
 function Add(runner_config)
     if not Is_running() then 
@@ -608,6 +592,8 @@ function Remove(runner_name)
     end
 end
 
+-------------------------------------------------- 8. Runner Execution Public API ----------------------------------------------------------
+
 function Stop(runner_name)
     if not Is_running() then 
         printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
@@ -641,7 +627,7 @@ function Resume(runner_name)
     end
 end
 
--- runners utility API
+-------------------------------------------------- 9. Runner State Public API ----------------------------------------------------------
 
 function Get_runner_count(runner_name)
     if not Is_running() then 
@@ -691,346 +677,17 @@ function Is_runner_paused(runner_name)
     end
 end
 
---- *********************************** CLIENT EXAMPLE SCRIPT *********************************** ---
+-------------------------------------------------- 10. Game Callbacks ----------------------------------------------------------
 
--- this part belongs to a client script
-
-local my_items_queue = {
-    items = {},
-}
-
--- a functor used to consume items from the queue and print them
--- operates in the client namespace context
-function print_items(runner_name, command, action)
-    printdebug(LOG.RUN, LOG.NPE_EXE," Functor print_items")
-    -- print_table(params)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Command: " .. command)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Action: " .. action)
-
-    if my_items_queue.items and #my_items_queue.items > 0 then
-        -- I need to remove the first item from the queue, and print it
-        local item = table.remove(my_items_queue.items, 1)
-        printdebug(LOG.INFO, LOG.NPE_EXE," Queue: " .. #my_items_queue.items)
-        printdebug(LOG.INFO, LOG.NPE_EXE," Item: " .. item)
-    else 
-        printdebug(LOG.INFO, LOG.NPE_EXE," Items Queue is empty")
-        npe_execution.Stop(runner_name)
-        SendScriptCallback("client_queue_empty")
-    end
-    return true
-end
-
-local my_cards_queue = {
-    cards = {},
-}
-
--- a functor used to consume cards from the queue and print them
-function print_cards(runner_name, command, action)
-    printdebug(LOG.RUN, LOG.NPE_EXE," Functor print_cards")
-    -- print_table(params)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Command: " .. command)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Action: " .. action)
-
-    if my_cards_queue.cards and #my_cards_queue.cards > 0 then
-        -- I need to remove the first item from the queue, and print it
-        local item = table.remove(my_cards_queue.cards, 1)
-        printdebug(LOG.INFO, LOG.NPE_EXE," Queue: " .. #my_cards_queue.cards)
-        printdebug(LOG.INFO, LOG.NPE_EXE," Card: " .. item)
-    else 
-        printdebug(LOG.INFO, LOG.NPE_EXE," Cards Queue is empty")
-        -- npe_execution.Stop(runner_name)
-    end
-end
-
-local my_decks_queue = {
-    decks = {},
-}
-
-function add_to_deck(item_to_add)
-    printdebug(LOG.RUN, LOG.NPE_EXE," Functor add_deck")
-    printdebug(LOG.INFO, LOG.NPE_EXE," item_to_add: " .. item_to_add)
-
-    if my_decks_queue.decks then
-        -- I need to add a deck to the queue
-        local item = item_to_add .. " " .. tostring(#my_decks_queue.decks + 1)
-        table.insert(my_decks_queue.decks, item)
-        printdebug(LOG.INFO, LOG.NPE_EXE," Queue: " .. #my_decks_queue.decks)
-    end
-end
-
--- a function used to stop the runner conditionally after a number of loops
--- returns true if runner loop_count >= max_loops, false otherwise
-function maximum_loops(runner_name, description, max_loops)
-    printdebug(LOG.RUN, LOG.NPE_EXE," Stop Condition")
-
-    printdebug(LOG.INFO, LOG.NPE_EXE, description .. " " .. max_loops)
-    local loop_count = npe_execution.Get_runner_count(runner_name)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " loop_count: " .. loop_count)
-    -- Client can use directly the npe_execution API
-    if loop_count >= max_loops then
-        printdebug(LOG.INFO, LOG.NPE_EXE," Reached maximum loops")
-        return true
-    end
-    return false
-end
-
--- default runner configuration created by the client script
-
-local CLIENT_RUNNER_CONFIG = {
-    default_infinite = {
-        name = "default_infinite",
-        execution = npe_execution.TYPE.INFINITE,
-        start_timer = 10,
-        loop_timer = 15,
-        loops = nil,
-        max_life = 100,
-        autoremove = true,
-        stop_condition = nil,        
-        functor = { "npe_execution", "print_items", "default_infinite", "run", "consume and print_items" }
-        -- functor and stop_condition interface 
-        -- functor[1]: script name
-        -- functor[2]: function name
-        -- functor[3-n]: parameters      
-    },
-    default_finite = {
-        name = "default_finite",
-        execution = npe_execution.TYPE.FINITE,
-        start_timer = 0,
-        loop_timer = 2,
-        loops = 15,
-        stop_condition = nil,        
-        functor = { "npe_execution", "print_cards", "default_finite", "run", "consume and print_cards" }
-    },
-    default_conditional = {
-        name = "default_conditional",
-        execution = npe_execution.TYPE.CONDITIONAL,
-        start_timer = 10,
-        loop_timer = 2,
-        loops = nil,
-        stop_condition = { "npe_execution", "maximum_loops", "default_conditional", " stop when loop count is ", 5 },
-        functor = { "npe_execution", "add_to_deck", "run", "default_conditional" }
-    },
-    non_exclusive_1 = {
-        name = "non_exclusive_1",
-        group_name = "test_exclusive",  
-        exclusive = false,
-        execution = npe_execution.TYPE.FINITE,
-        start_timer = 0,
-        loop_timer = 2,
-        loops = 10,
-        -- max_life = 100,
-        -- autoremove = true,
-        -- stop_condition = nil,        
-        functor = { "npe_execution", "add_to_deck", "non_exclusive_1_item" }
-    },
-    non_exclusive_2 = {
-        name = "non_exclusive_2",
-        group_name = "test_exclusive",  
-        exclusive = false,
-        execution = npe_execution.TYPE.FINITE,
-        start_timer = 0,
-        loop_timer = 2,
-        loops = 10,
-        -- max_life = 100,
-        -- autoremove = true,
-        -- stop_condition = nil,        
-        functor = { "npe_execution", "add_to_deck", "non_exclusive_2_item" }
-    },    
-    exclusive_1 = {
-        name = "EXCLUSIVE_1",
-        group_name = "test_exclusive",
-        exclusive = true, 
-        execution = npe_execution.TYPE.FINITE,
-        start_timer = 5,
-        loop_timer = 2,
-        loops = 10,
-        -- max_life = 100,
-        -- autoremove = true,
-        -- stop_condition = nil,        
-        functor = { "npe_execution", "add_to_deck", "exclusive_1" }
-    },                
-}
-
-
--- fill queue callback, shows how to resume the runner
-
-local fill_count = 2
-local function fill_queue()
-    printlog(LOG.RUN, LOG.NPE_EXE," Fill Queue")
-    if fill_count <= 0 then return end
-    printdebug(LOG.INFO, LOG.NPE_EXE," Fill coount " .. fill_count)
-    for i = 1, 10 do
-        table.insert(my_items_queue.items, "item" .. tostring(i))
-    end
-    fill_count = fill_count - 1
-    npe_execution.Resume("default_infinite")
-end
-
--- client on actor update, shows how to add a runner and start it 
-
-local function fill_items_queues()
-    for i = 1, 20 do
-        table.insert(my_items_queue.items, "item" .. tostring(i))
-    end
-end
-local function fill_cards_queues()
-    for i = 1, 20 do
-        table.insert(my_cards_queue.cards, "card" .. tostring(i))
-    end
-end
-
-local run_toggle_loop = false
-local can_stop = false
-function toggle_finite_runner() -- timed event
-    printdebug(LOG.RUN, LOG.NPE_EXE," Toggle Finite Runner")
-    if not run_toggle_loop then return true end
-    if npe_execution.Is_running() then
-        if not can_stop then
-            if npe_execution.Is_runner_enabled(CLIENT_RUNNER_CONFIG.default_finite.name) then
-                printdebug(LOG.RUN, LOG.NPE_EXE," toggle_finite_runner Pause Runner")
-                -- pause the runner without resetting its state (loop count)
-                npe_execution.Pause(CLIENT_RUNNER_CONFIG.default_finite.name)
-                ResetTimeEvent("test_runner", "toggle_finite_runner_execution", 10)
-            else
-                printdebug(LOG.ADD, LOG.NPE_EXE,"toggle_finite_runner Resume Runner")
-                npe_execution.Resume(CLIENT_RUNNER_CONFIG.default_finite.name)
-                ResetTimeEvent("test_runner", "toggle_finite_runner_execution", 60)
-                can_stop = true
-            end
-        else
-            printdebug(LOG.STOP, LOG.NPE_EXE," toggle_finite_runner STOP Runner")
-            -- stop the runner and resets its state (loop count)
-            npe_execution.Stop(CLIENT_RUNNER_CONFIG.default_finite.name)
-            run_toggle_loop = false
-            -- kill the timed event
-            return true
-        end
-    else
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
-        run_toggle_loop = false
-        -- kill the timed event
-        return true
-    end
-    -- keep running
-    return false
-end
-
-
-function resume_exclusive_runner() -- timed event
-    printdebug(LOG.RUN, LOG.NPE_EXE," Resume Exclusive Runner")
-    if npe_execution.Is_running() then
-        npe_execution.Resume(CLIENT_RUNNER_CONFIG.exclusive_1.name)
-    else
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
-    end
-    -- one shot event
-    return true
-end
-
--- end test callback, shows how to remove the runner
-
-local function end_test()  -- timed event
-    printlog(LOG.STOP, LOG.NPE_EXE," End Client Test")
-    run_toggle_loop = false
-    RemoveTimeEvent("test_runner", "toggle_finite_runner_execution")
-    npe_execution.Remove(CLIENT_RUNNER_CONFIG.default_infinite.name)
-    npe_execution.Remove(CLIENT_RUNNER_CONFIG.default_finite.name)
-    npe_execution.Remove(CLIENT_RUNNER_CONFIG.default_conditional.name)
-    npe_execution.Remove(CLIENT_RUNNER_CONFIG.non_exclusive_1.name)
-    npe_execution.Remove(CLIENT_RUNNER_CONFIG.non_exclusive_2.name)
-    npe_execution.Remove(CLIENT_RUNNER_CONFIG.exclusive_1.name)
-    -- print the table my_items_queue.items
-    printdebug(LOG.INFO, LOG.NPE_EXE," Items Queue")
-    print_table(my_items_queue.items)    
-    -- print the table my_cards_queue.cards
-    printdebug(LOG.INFO, LOG.NPE_EXE," Cards Queue")
-    print_table(my_cards_queue.cards)
-    -- print the table my_decks_queue.decks
-    printdebug(LOG.INFO, LOG.NPE_EXE," Decks Queue")
-    print_table(my_decks_queue.decks)
-    -- kill the timed event
-    npe_execution.Manager_stop()
-    return true
-end
-
-local function start_test_infinite()
-    fill_items_queues()
-    -- -- create an infinite runner wich will consume an item every 30 seconds
-    npe_execution.Add(CLIENT_RUNNER_CONFIG.default_infinite)
-    npe_execution.Resume(CLIENT_RUNNER_CONFIG.default_infinite.name)
-end
-
-local function start_test_finite()
-    fill_cards_queues()
-    -- create an finite runner wich will consume 10 cards from the queue
-    npe_execution.Add(CLIENT_RUNNER_CONFIG.default_finite)
-    npe_execution.Resume(CLIENT_RUNNER_CONFIG.default_finite.name)
-    -- toggle the finite runner execution at 15 seconds in the run, to then pause it for 10 seconds
-    -- this  to test that the loop count is persistent across pauses 
-    -- the queue is supposed to empty after 40 seconds
-    run_toggle_loop = true
-    CreateTimeEvent("test_runner", "toggle_finite_runner_execution", 15, toggle_finite_runner)    
-end
-
-local function start_test_conditional()
-    -- -- create a conditional runner wich will add a deck to the queue every 2 seconds
-    npe_execution.Add(CLIENT_RUNNER_CONFIG.default_conditional)
-    npe_execution.Resume(CLIENT_RUNNER_CONFIG.default_conditional.name)
-end
-
-local function start_test_exclusive()
-    -- create an exclusive runner wich will add a deck to the queue every 2 seconds
-    -- the exclusive runner will pause the non exclusive runner
-    npe_execution.Add(CLIENT_RUNNER_CONFIG.non_exclusive_1)
-    npe_execution.Add(CLIENT_RUNNER_CONFIG.non_exclusive_2)
-    npe_execution.Add(CLIENT_RUNNER_CONFIG.exclusive_1)
-    npe_execution.Resume(CLIENT_RUNNER_CONFIG.non_exclusive_1.name)
-    npe_execution.Resume(CLIENT_RUNNER_CONFIG.non_exclusive_2.name)
-    npe_execution.Resume(CLIENT_RUNNER_CONFIG.exclusive_1.name)
-    CreateTimeEvent("test_runner", "toggle_exclusive_runner", 60, resume_exclusive_runner)
-end
-
-local test_started = false
-local function client_on_update()
-    if not test_started then -- only once
-        printdebug(LOG.START, LOG.NPE_EXE," Start Client Test")
-        test_started = true
-
-        start_test_infinite()
-
-        start_test_finite()
-
-        start_test_conditional()
-
-        start_test_exclusive()
-
-        -- pause the runner after 180 seconds
-        printlog(LOG.RGSTR, LOG.NPE_EXE," Schedule end of Test in 180 seconds")
-        CreateTimeEvent("test_runner", "end_test", 100, end_test)
-    end
-end
-
-
-function client_on_first_update()
-    printlog(LOG.RUN, LOG.NPE_EXE," Client First Update")
-end
-
-if AddScriptCallback then
-    AddScriptCallback("client_queue_empty")
-end
-
--- end of client script
 
 local function actor_on_first_update()
     -- start the execution manager
-    
     npe_execution.Manager_start()
 end
 
 local function actor_on_net_destroy()
-    -- 
     printlog(LOG.RUN, LOG.NPE_EXE," Actor Net Destroy")
-    
+    npe_execution.Manager_stop()
 end
 
 function npe_on_log_update()
@@ -1039,19 +696,9 @@ function npe_on_log_update()
 end
 
 function on_game_start()
-    -- test client registration
-    RegisterScriptCallback("actor_on_first_update", client_on_first_update)
-    RegisterScriptCallback("actor_on_update", client_on_update)
-    RegisterScriptCallback("client_queue_empty", fill_queue)
 
     --- Execution Manager callbacks registration
     RegisterScriptCallback("actor_on_first_update", actor_on_first_update)
-    -- RegisterScriptCallback("actor_on_update", actor_on_update)
     RegisterScriptCallback("npe_on_log_update", npe_on_log_update)
     RegisterScriptCallback("actor_on_net_destroy", actor_on_net_destroy)
 end
-
-
--- TODO 
--- 1. Add a function to remove all runners
--- 2. Add a function to disable all runnners in a group but the runner with name = runner_name, given the group name and runner name

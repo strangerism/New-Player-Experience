@@ -585,13 +585,16 @@ end
 -------------------------------------------------------------------
 class "UINewPlayerExperience" (CUIScriptWnd)
 
+---@diagnostic disable-next-line: duplicate-set-field
 function UINewPlayerExperience:__init(set) super()
 	self:InitControls(set)
 end
 
+---@diagnostic disable-next-line: duplicate-set-field
 function UINewPlayerExperience:__finalize()
 end
 
+---@diagnostic disable-next-line: duplicate-set-field
 function UINewPlayerExperience:InitControls(set)
     printdebug(LOG.INFO, LOG.UI," Init Codec UI")
 	self:SetWndRect			(Frect():set(0,0,1024,768))
@@ -670,8 +673,10 @@ function UINewPlayerExperience:InitControls(set)
 	self:UpdateButtons()
 end
 
+---@diagnostic disable-next-line: undefined-field
 local ratio = (device().height / device().width) / (768 / 1024) 
 function UINewPlayerExperience:PositionWindow()
+---@diagnostic disable-next-line: undefined-field
 	ratio = (device().height / device().width) / (768 / 1024) 
 	printdebug(LOG.INFO, LOG.UI," PositionWindow ratio: " .. ratio)
 	local x_translate = 200 * ratio
@@ -681,6 +686,7 @@ function UINewPlayerExperience:PositionWindow()
 	self.dialog:SetWndPos( vector2():set(pos.x + x_translate, pos.y - 8 + y_translate))
 end
 
+---@diagnostic disable-next-line: duplicate-set-field
 function UINewPlayerExperience:DoStartActions()
 	printdebug(LOG.INFO, LOG.UI," DoStartActions")
 
@@ -692,6 +698,7 @@ function UINewPlayerExperience:DoStartActions()
 	end
 end
 
+---@diagnostic disable-next-line: duplicate-set-field
 function UINewPlayerExperience:DoEndActions()
 	printdebug(LOG.INFO, LOG.UI," DoEndActions")
 
@@ -746,6 +753,7 @@ function UINewPlayerExperience:PlayCard()
 	local tts_starting_delay = 0
 end
 
+---@diagnostic disable-next-line: duplicate-set-field
 function UINewPlayerExperience:UpdateButtons()
 	printdebug(LOG.INFO, LOG.UI," UpdateButtons")
 
@@ -760,6 +768,7 @@ function UINewPlayerExperience:UpdateButtons()
 	end
 end
 
+---@diagnostic disable-next-line: duplicate-set-field
 function UINewPlayerExperience:OnButtonClose()
     self:Close()
 end
@@ -783,8 +792,11 @@ local function close_dialog(dialog)
 	stop_portraits_scanlines_manager_loop()
 	stop_codec_signal_manager_loop()
 	npe_dialog.Disable_dof()
+---@diagnostic disable-next-line: undefined-field
 	GUI:DoEndActions()
+---@diagnostic disable-next-line: undefined-field
 	GUI:HideDialog()
+---@diagnostic disable-next-line: undefined-field
 	GUI:Show(false)
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
@@ -839,6 +851,7 @@ local function unequip_radio(dialog)
 	return true
 end 
 
+---@diagnostic disable-next-line: duplicate-set-field
 function UINewPlayerExperience:Save()
 	if self.set.save_context then
 		printdebug(LOG.INFO, LOG.UI," Save context")
@@ -850,6 +863,7 @@ function UINewPlayerExperience:Save()
 	end
 end
 
+---@diagnostic disable-next-line: duplicate-set-field
 function UINewPlayerExperience:Close()
 	if not closing_dialog then
 		closing_dialog = true
@@ -867,12 +881,14 @@ function UINewPlayerExperience:Close()
 	end
 end
 
+---@diagnostic disable-next-line: duplicate-set-field
 function UINewPlayerExperience:TearDown()
 	self:HideDialog()
 	self:Show(false)
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
 end
+---@diagnostic disable-next-line: duplicate-set-field
 function UINewPlayerExperience:OnKeyboard(dik, keyboard_action)
 	local res = CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
 	if (res == false) then
