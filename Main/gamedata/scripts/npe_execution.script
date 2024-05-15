@@ -62,12 +62,7 @@ local DEFAULT_RUNNER_CONFIG = {
         -- functor and stop_condition interface 
         -- functor[1]: script name
         -- functor[2]: function name
-        -- functor[3]: parameters
-        -- functor[3][1]: parameters count (ignored in the count)
-        -- the functor execution handler will inject the runner name as the first parameter 
-        -- for example 
-        -- functor = { "npe_execution", "print_items", {2, "run", "consume and print_items"} }
-        -- stop_condition = { "npe_execution", "maximum_loops", {2, "less then", 5} } 
+        -- functor[3-n]: parameters
     },
     default_finite = {
         name = nil,
@@ -127,41 +122,6 @@ local Runner = {}
 local Execution_group = {}
 
 -- runner local api
-
-local function update_execution_groups(runner_name)
-    printdebug(LOG.RUN, LOG.NPE_EXE," Update Execution Groups by Runner: " .. runner_name)
-    -- Runner[runner_name].unscheduled = false
-
-    for group_name, group in pairs(Execution_group) do
-        local exclusive_running = false
-        -- search if any runner with exclusive execution rights is executing
-        for _, runner_name in pairs(group) do
-            if Runner[runner_name].exclusive and Runner[runner_name].enabled then
-                exclusive_running = true
-                printdebug(LOG.WARN, LOG.NPE_EXE," Exclusive Runner: " .. runner_name .. " is running")
-                break
-            end
-        end
-        -- update the runners' execution rights
-        for _, runner_name in pairs(group) do
-            if exclusive_running then
-                -- a runner with exclusive execution rights is executing, unschedule non exclusive runners
-                if not Runner[runner_name].exclusive and (not Runner[runner_name].paused or not Runner[runner_name].disabled) then
-                    Runner[runner_name].enabled = false
-                    Runner[runner_name].unscheduled = true
-                    printdebug(LOG.REMOVE, LOG.NPE_EXE," Runner: " .. runner_name .. " unschedule")
-                end
-            else
-                -- no runner with exclusive execution rights is executing, resume all non exclusive unscheduled runners
-                if not Runner[runner_name].exclusive and not Runner[runner_name].paused and not Runner[runner_name].disabled and Runner[runner_name].unscheduled then
-                    Runner[runner_name].enabled = true
-                    Runner[runner_name].unscheduled = false
-                    printdebug(LOG.ADD, LOG.NPE_EXE," Runner: " .. runner_name .. " reschedule")
-                end
-            end
-        end
-    end
-end
 
 -- runner execution state management
 
@@ -539,31 +499,10 @@ local function validate_functor(functor)
         printdebug(LOG.ERROR, LOG.NPE_EXE," Functor function name is not a string")
         return false 
     end
-    -- checks optional parameters
-    if #functor < 3 then 
-        printdebug(LOG.INFO, LOG.NPE_EXE," Functor has less than 3 parameters")
-        printdebug(LOG.ADD, LOG.NPE_EXE," Functor validated")
-        return true 
-    end
 
-    if type(functor[3]) ~= "table" then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor optional parameters are not a table")
-        return false 
-    end
-    -- checks the number of parameters is correct
-    -- the first parameter is the parameter count, will be ingored
-    local param_count = #functor[3] - 1
-    if functor[3][1] ~= param_count then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor parameter count is invalid")
-        return false 
-    end
     -- validated
     printdebug(LOG.ADD, LOG.NPE_EXE," Functor validated")
     return true
-end
-
-local function inject_runner_name(functor, runner_name)
-    functor[3][1] = runner_name
 end
 
 -- Runners' Execution API
@@ -592,7 +531,6 @@ function Add(runner_config)
             printdebug(LOG.ERROR, LOG.NPE_EXE," Runner is rejected")
             return false
         end
-        inject_runner_name(new_runner_instance.config.functor, new_runner_instance.name)
         
         -- stop_condition is optional
         if new_runner_instance.config.stop_condition then
@@ -602,7 +540,7 @@ function Add(runner_config)
                 printdebug(LOG.ERROR, LOG.NPE_EXE," Runner is rejected")
                 return false
             end
-            inject_runner_name(new_runner_instance.config.stop_condition, new_runner_instance.name)
+            -- inject_runner_name(new_runner_instance.config.stop_condition, new_runner_instance.name)
         end
 
         -- passed validation
@@ -763,14 +701,11 @@ local my_items_queue = {
 
 -- a functor used to consume items from the queue and print them
 -- operates in the client namespace context
-function print_items(params)
+function print_items(runner_name, command, action)
     printdebug(LOG.RUN, LOG.NPE_EXE," Functor print_items")
     -- print_table(params)
-    local runner_name = params[1]
-    local param1 = params[2]
-    local param2 = params[3]
-    printdebug(LOG.INFO, LOG.NPE_EXE," Command: " .. param1)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Action: " .. param2)
+    printdebug(LOG.INFO, LOG.NPE_EXE," Command: " .. command)
+    printdebug(LOG.INFO, LOG.NPE_EXE," Action: " .. action)
 
     if my_items_queue.items and #my_items_queue.items > 0 then
         -- I need to remove the first item from the queue, and print it
@@ -790,14 +725,11 @@ local my_cards_queue = {
 }
 
 -- a functor used to consume cards from the queue and print them
-function print_cards(params)
+function print_cards(runner_name, command, action)
     printdebug(LOG.RUN, LOG.NPE_EXE," Functor print_cards")
     -- print_table(params)
-    local runner_name = params[1]
-    local param1 = params[2]
-    local param2 = params[3]
-    printdebug(LOG.INFO, LOG.NPE_EXE," Command: " .. param1)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Action: " .. param2)
+    printdebug(LOG.INFO, LOG.NPE_EXE," Command: " .. command)
+    printdebug(LOG.INFO, LOG.NPE_EXE," Action: " .. action)
 
     if my_cards_queue.cards and #my_cards_queue.cards > 0 then
         -- I need to remove the first item from the queue, and print it
@@ -814,14 +746,9 @@ local my_decks_queue = {
     decks = {},
 }
 
-function add_to_deck(params)
+function add_to_deck(item_to_add)
     printdebug(LOG.RUN, LOG.NPE_EXE," Functor add_deck")
-    -- print_table(params)
-    local runner_name = params[1]
-    local command = params[2]
-    local item_to_add = params[3]
-    printdebug(LOG.INFO, LOG.NPE_EXE," Command: " .. command)
-    printdebug(LOG.INFO, LOG.NPE_EXE," deck: " .. item_to_add)
+    printdebug(LOG.INFO, LOG.NPE_EXE," item_to_add: " .. item_to_add)
 
     if my_decks_queue.decks then
         -- I need to add a deck to the queue
@@ -832,16 +759,15 @@ function add_to_deck(params)
 end
 
 -- a function used to stop the runner conditionally after a number of loops
-function maximum_loops(params)
+-- returns true if runner loop_count >= max_loops, false otherwise
+function maximum_loops(runner_name, description, max_loops)
     printdebug(LOG.RUN, LOG.NPE_EXE," Stop Condition")
-    local runner_name = params[1]
-    local param1 = params[2]
-    local param2 = params[3]
-    printdebug(LOG.INFO, LOG.NPE_EXE,param1 .. " " .. param2)
+
+    printdebug(LOG.INFO, LOG.NPE_EXE, description .. " " .. max_loops)
     local loop_count = npe_execution.Get_runner_count(runner_name)
     printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " loop_count: " .. loop_count)
     -- Client can use directly the npe_execution API
-    if loop_count >= param2 then
+    if loop_count >= max_loops then
         printdebug(LOG.INFO, LOG.NPE_EXE," Reached maximum loops")
         return true
     end
@@ -860,16 +786,11 @@ local CLIENT_RUNNER_CONFIG = {
         max_life = 100,
         autoremove = true,
         stop_condition = nil,        
-        functor = { "npe_execution", "print_items", {2, "run", "consume and print_items"} } 
+        functor = { "npe_execution", "print_items", "default_infinite", "run", "consume and print_items" }
         -- functor and stop_condition interface 
         -- functor[1]: script name
         -- functor[2]: function name
-        -- functor[3]: parameters
-        -- functor[3][1]: parameters count (ignored)
-        -- the functor execution handler will inject the runner name as the first parameter 
-        -- for example
-        -- functor = { "npe_execution", "print_items", {2, "run", "consume and print_items"} }
-        -- stop_condition = { "npe_execution", "maximum_loops", {2, " stop when loop count is ", 5} }         
+        -- functor[3-n]: parameters      
     },
     default_finite = {
         name = "default_finite",
@@ -878,7 +799,7 @@ local CLIENT_RUNNER_CONFIG = {
         loop_timer = 2,
         loops = 15,
         stop_condition = nil,        
-        functor = { "npe_execution", "print_cards", {2, "run", "consume and print_cards"} }
+        functor = { "npe_execution", "print_cards", "default_finite", "run", "consume and print_cards" }
     },
     default_conditional = {
         name = "default_conditional",
@@ -886,8 +807,8 @@ local CLIENT_RUNNER_CONFIG = {
         start_timer = 10,
         loop_timer = 2,
         loops = nil,
-        stop_condition = { "npe_execution", "maximum_loops", {2, " stop when loop count is ", 5} },  
-        functor = { "npe_execution", "add_to_deck", {2, "run", "default_conditional"} }
+        stop_condition = { "npe_execution", "maximum_loops", "default_conditional", " stop when loop count is ", 5 },
+        functor = { "npe_execution", "add_to_deck", "run", "default_conditional" }
     },
     non_exclusive_1 = {
         name = "non_exclusive_1",
@@ -900,7 +821,7 @@ local CLIENT_RUNNER_CONFIG = {
         -- max_life = 100,
         -- autoremove = true,
         -- stop_condition = nil,        
-        functor = { "npe_execution", "add_to_deck", {2, "run", "non_exclusive_1"} }      
+        functor = { "npe_execution", "add_to_deck", "non_exclusive_1_item" }
     },
     non_exclusive_2 = {
         name = "non_exclusive_2",
@@ -913,7 +834,7 @@ local CLIENT_RUNNER_CONFIG = {
         -- max_life = 100,
         -- autoremove = true,
         -- stop_condition = nil,        
-        functor = { "npe_execution", "add_to_deck", {2, "run", "non_exclusive_2"} }      
+        functor = { "npe_execution", "add_to_deck", "non_exclusive_2_item" }
     },    
     exclusive_1 = {
         name = "EXCLUSIVE_1",
@@ -926,7 +847,7 @@ local CLIENT_RUNNER_CONFIG = {
         -- max_life = 100,
         -- autoremove = true,
         -- stop_condition = nil,        
-        functor = { "npe_execution", "add_to_deck", {2, "run", "exclusive_1"} }
+        functor = { "npe_execution", "add_to_deck", "exclusive_1" }
     },                
 }
 
