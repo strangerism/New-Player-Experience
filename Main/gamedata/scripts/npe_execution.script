@@ -105,9 +105,10 @@ TYPE = {
     INFINITE = "INFINITE",              -- never stops until disabled
     FINITE = "FINITE",                  -- stop after a number of loops
     CONDITIONAL = "CONDITIONAL",        -- stop when a condition is met
-    QUEUE_CONSUME = "QUEUE_CONSUME",    -- consume from a queue
-    QUEUE_PRODUCE = "QUEUE_PRODUCE",    -- produce to a queue
-    QUEUE_UPDATE = "QUEUE_UPDATE",      -- update a queue
+    QUEUE = "QUEUE",                    -- run a functor when the queue is not empty
+    QUEUE_CONSUME = "QUEUE_CONSUME",    -- consume from a queue using a functor
+    QUEUE_PRODUCE = "QUEUE_PRODUCE",    -- produce to a queue using a functor
+    QUEUE_UPDATE = "QUEUE_UPDATE",      -- run a functor to a update all elements in the queue (not consuming)
     CALLBACK = "CALLBACK",              -- send a callback
     RUN = "RUN",                        -- run a functor
 }   
@@ -127,6 +128,7 @@ RUNNER_CONFIG_TEMPLATE = {
     INFINITE = "infinite",
     FINITE = "finite",
     CONDITIONAL = "conditional",
+    QUEUE = "QUEUE",
     QUEUE_CONSUME = "queue_consume",
     QUEUE_PRODUCE = "queue_produce",
     QUEUE_UPDATE = "queue_update",
@@ -178,6 +180,20 @@ local DEFAULT_RUNNER_CONFIG = {
         stop_condition = nil,        
         functor = nil
     },
+    queue = {
+        name = nil,
+        group_name = nil,
+        exclusive = false,
+        execution = TYPE.QUEUE,
+        queue = nil,
+        start_timer = 0,
+        loop_timer = 1, -- optional for queued executions
+        loops = nil,
+        max_life = nil,
+        autoremove = false,
+        stop_condition = nil,        
+        functor = nil
+    },    
     queue_consume = {
         name = nil,
         group_name = nil,
@@ -254,6 +270,52 @@ local Execution_group = {}
 
 -------------------------------------------------- 2. Runners' private API ----------------------------------------------------------
 
+-- runner helpers
+
+local function is_execution_type_queue(execution)
+    return execution == TYPE.QUEUE or TYPE.QUEUE_CONSUME or execution == TYPE.QUEUE_PRODUCE or execution == TYPE.QUEUE_UPDATE
+end
+
+-- used to access the queue of runners of execution type queue
+local function get_queue(runner_queue)
+    return execute_func(unpack(runner_queue)) 
+end
+
+local function is_queue_empty(runner_queue)
+    local queue = get_queue(runner_queue)
+    return queue and #queue == 0
+end
+
+local function is_queue_not_empty(runner_queue)
+    local queue = get_queue(runner_queue)
+    return queue and #queue > 0
+end
+
+local function queue_size(runner_queue)
+    local queue = get_queue(runner_queue)
+    return queue and #queue
+end
+
+local function is_enabled(runner_name)
+    return Runner[runner_name].enabled
+end
+
+local function get_life(runner_name)
+    return math.floor((time_global() - Runner[runner_name].life)/1000)
+end
+
+local function increase_loop_count(runner_name)
+    Runner[runner_name].loop_count = Runner[runner_name].loop_count + 1
+end
+
+function generate_runner_name(module_name, runner_name)
+    return module_name .. "_" .. runner_name
+end
+
+function generate_group_name(module_name, group_name)
+    return module_name .. "_" .. group_name
+end
+
 -- creates runner instances
 
 local function copy(obj, seen)
@@ -281,6 +343,10 @@ local function validate_config(runner_config)
         return false 
     end
     printdebug(LOG.RUN, LOG.NPE_EXE," Validate Runner Configuration: " .. runner_config.name)
+    if not runner_config.module then
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner module is null") 
+        return false 
+    end    
     print_table(runner_config)
     if not runner_config.group_name then
         runner_config.group_name = runners_default_group_name -- TODO check this
@@ -288,8 +354,7 @@ local function validate_config(runner_config)
         -- runners in the runners_default_group_name cannot use exclusive execution
         runner_config.exclusive = false -- TODO check this
     end
-    local execution_type = runner_config.execution
-    if execution_type == TYPE.QUEUE_CONSUME or execution_type == TYPE.QUEUE_PRODUCE or execution_type == TYPE.QUEUE_UPDATE then
+    if is_execution_type_queue(runner_config.execution) then
         if not runner_config.queue then
             printdebug(LOG.ERROR, LOG.NPE_EXE," Runner queue is null") 
             return false 
@@ -345,44 +410,6 @@ local function validate_functor(functor)
     -- validated
     printdebug(LOG.ADD, LOG.NPE_EXE," Functor validated")
     return true
-end
-
--- runner helpers
-
-local function is_execution_type_queue(execution)
-    return execution == TYPE.QUEUE_CONSUME or execution == TYPE.QUEUE_PRODUCE or execution == TYPE.QUEUE_UPDATE
-end
-
--- used to access the queue of runners of execution type queue
-local function get_queue(runner_queue)
-    return execute_func(unpack(runner_queue)) 
-end
-
-local function is_queue_empty(runner_queue)
-    local queue = get_queue(runner_queue)
-    return queue and #queue == 0
-end
-
-local function is_queue_not_empty(runner_queue)
-    local queue = get_queue(runner_queue)
-    return queue and #queue > 0
-end
-
-local function queue_size(runner_queue)
-    local queue = get_queue(runner_queue)
-    return queue and #queue
-end
-
-local function is_enabled(runner_name)
-    return Runner[runner_name].enabled
-end
-
-local function get_life(runner_name)
-    return math.floor((time_global() - Runner[runner_name].life)/1000)
-end
-
-local function increase_loop_count(runner_name)
-    Runner[runner_name].loop_count = Runner[runner_name].loop_count + 1
 end
 
 -- runner execution state management
@@ -696,13 +723,13 @@ end
 -------------------------------------------------- 7. Runner Registration Public API ----------------------------------------------------------
 
 -- add runner config get instance from template name and module_name (client script)
--- to check in config validation if the module exists or reject the config if not -- TODO
-function GetRunnerConfig(template_name, module_name)
+function GetRunnerConfig(template_name, module_name, runner_name)
     if not DEFAULT_RUNNER_CONFIG[template_name] then 
         printdebug(LOG.ERROR, LOG.NPE_EXE," Runner template: " .. template_name .. " does not exist")
         return 
     end
     local runner_config = copy(DEFAULT_RUNNER_CONFIG[template_name])
+    runner_config.name = runner_name
     runner_config.module = module_name -- TODO add module as prefix to all callbacks names and timed event names
     return runner_config
 end
@@ -717,7 +744,7 @@ function Add(runner_config)
 
     -- add the new runner to the list Runner
     if not Runner[runner_config.name] then
-        -- create a new runner instance
+        -- create a new runner instance -- TODO Remove instancing, so the Runner Config can be changed in real time from the client script
         local new_runner_instance = get_instance(RUNNER_TEMPLATE.default)
         new_runner_instance.name = runner_config.name
         new_runner_instance.group_name = runner_config.group_name
@@ -792,6 +819,15 @@ function Remove(runner_name)
 end
 
 function RemoveAll(module_name)
+    if not Is_running() then 
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
+        return 
+    end
+    for runner_name, runner in pairs(Runner) do
+        if runner.module == module_name then
+            Remove(runner_name)
+        end
+    end
 end
 
 -------------------------------------------------- 8. Runner Execution Public API ----------------------------------------------------------
