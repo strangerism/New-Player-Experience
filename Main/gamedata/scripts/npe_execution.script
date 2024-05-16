@@ -185,7 +185,7 @@ local DEFAULT_RUNNER_CONFIG = {
         execution = TYPE.QUEUE_CONSUME,
         queue = nil,
         start_timer = 0,
-        loop_timer = 1,
+        loop_timer = 1, -- optional for queued executions
         loops = nil,
         max_life = nil,
         autoremove = false,
@@ -225,9 +225,10 @@ local DEFAULT_RUNNER_CONFIG = {
 -- a template to create a new runner
 local RUNNER_TEMPLATE = {
     default = {
-        name = nil,                                 -- set at creation, using the runner configuration name
-        group_name = nil,                           -- set at creation, using the runner configuration group_name or default
-        config = nil,                               -- set at creation
+        module = nil,                               -- [mandatory] set at creation, provided by clients in the GetRunnerConfig api -- TODO
+        name = nil,                                 -- [mandatory] set at creation, using the runner configuration name, prefixed with the module name -- TODO
+        group_name = nil,                           -- [optional] set at creation, using the runner configuration group_name or set to default, both prefixed with the module name -- TODO
+        config = nil,                               -- set at creation in the Add api
         -- runner execution control related fields 
         enabled = false,                            -- manage execution
         exclusive = false,                          -- determine execution rights over runners of the same group
@@ -299,8 +300,8 @@ local function validate_config(runner_config)
         printdebug(LOG.ADD, LOG.NPE_EXE," Runner start timer is null, set to 0")
     end
     if not runner_config.loop_timer then
-        runner_config.loop_timer = 1 -- TODO check this
-        printdebug(LOG.ADD, LOG.NPE_EXE," Runner loop timer is null, set to 1")
+        runner_config.loop_timer = runner_config.start_timer > 0 and runner_config.start_timer or 1
+        printdebug(LOG.ADD, LOG.NPE_EXE," Runner loop timer is null, set to: " .. runner_config.loop_timer)
     end
     if not runner_config.execution then
         printdebug(LOG.ERROR, LOG.NPE_EXE," Runner execution type is null") 
@@ -314,7 +315,7 @@ local function validate_config(runner_config)
     return true
 end
 
--- functor and stop_condition validation
+-- functor, queue and stop_condition validation
 
 local function validate_functor(functor)
     printdebug(LOG.RUN, LOG.NPE_EXE," Validate Functor")
@@ -524,11 +525,11 @@ local function run(runner_name)
         if runner.paused then -- the runner was enabled while paused 
             -- runner was paused, remove the pause state)
             set_runner_state(runner_name, RUNNER_STATE.paused, false)
-            create_timer = 0 -- start immediately from the paused/unscheduled state
+            -- create_timer = 0 -- start immediately from the paused/unscheduled state
         elseif runner.unscheduled then -- the runner was enabled while unscheduled
             -- runner was unscheduled, remove the unscheduled state
             set_runner_state(runner_name, RUNNER_STATE.unscheduled, false)
-            create_timer = 0 -- start immediately from the paused/unscheduled state
+            -- create_timer = 0 -- start immediately from the paused/unscheduled state
         else
             -- reset the runner state
             reset_state(runner_name)
@@ -650,6 +651,8 @@ local function execution_watch()
     return false
 end
 
+-- refactor to use a runner instead
+
 local function watch()
     if run_execution_watch then return end
     run_execution_watch = true
@@ -691,6 +694,18 @@ function Is_running()
 end
 
 -------------------------------------------------- 7. Runner Registration Public API ----------------------------------------------------------
+
+-- add runner config get instance from template name and module_name (client script)
+-- to check in config validation if the module exists or reject the config if not -- TODO
+function GetRunnerConfig(template_name, module_name)
+    if not DEFAULT_RUNNER_CONFIG[template_name] then 
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner template: " .. template_name .. " does not exist")
+        return 
+    end
+    local runner_config = copy(DEFAULT_RUNNER_CONFIG[template_name])
+    runner_config.module = module_name -- TODO add module as prefix to all callbacks names and timed event names
+    return runner_config
+end
 
 function Add(runner_config)
     if not Is_running() then 
@@ -756,29 +771,6 @@ function Add(runner_config)
     end
 end
 
-function Add_from_template(runner_name, runner_template)
-    if not Is_running() then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
-        return 
-    end
-    printdebug(LOG.RUN, LOG.NPE_EXE," Add Runner from template")
-    if not runner_name then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner name is null")
-        return 
-    end
-    if not runner_template then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner template is null")
-        return 
-    end
-    if not DEFAULT_RUNNER_CONFIG[runner_template] then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner template: " .. runner_template .. " does not exist")
-        return 
-    end
-    local runner_config = copy(DEFAULT_RUNNER_CONFIG[runner_template])
-    runner_config.name = runner_name
-    Add(runner_config)
-end
-
 function Remove(runner_name)
     if not Is_running() then 
         printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
@@ -797,6 +789,9 @@ function Remove(runner_name)
     else
         printdebug(LOG.ERROR, LOG.NPE_EXE," Removing Runner: " .. runner_name .. " does not exist")
     end
+end
+
+function RemoveAll(module_name)
 end
 
 -------------------------------------------------- 8. Runner Execution Public API ----------------------------------------------------------
@@ -836,7 +831,7 @@ end
 
 -------------------------------------------------- 9. Runner State Public API ----------------------------------------------------------
 
-function Get_runner_count(runner_name)
+function GetRunnerCount(runner_name)
     if not Is_running() then 
         printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
         return 
@@ -848,7 +843,7 @@ function Get_runner_count(runner_name)
     end
 end
 
-function Is_runner_running(runner_name)
+function IsRunnerRunning(runner_name)
     if not Is_running() then 
         printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
         return 
@@ -860,7 +855,7 @@ function Is_runner_running(runner_name)
     end
 end
 
-function Is_runner_enabled(runner_name)
+function IsRunnerEnabled(runner_name)
     if not Is_running() then 
         printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
         return 
@@ -872,7 +867,7 @@ function Is_runner_enabled(runner_name)
     end
 end
 
-function Is_runner_paused(runner_name)
+function IsRunnerPaused(runner_name)
     if not Is_running() then 
         printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
         return 
