@@ -417,7 +417,7 @@ local function update_runners_configs()
             group_name = "npe_namager_play",
             execution = npe_execution.TYPE.QUEUE_CONSUME,
             queue = { "npe_manager", "get_playableQueue"},
-            start_timer = 0,
+            start_timer = 10,
             loop_timer = Settings.play_loop,
             functor = { "npe_manager", "play_queued_set" }
         },
@@ -427,8 +427,8 @@ local function update_runners_configs()
             exclusive = true,
             execution = npe_execution.TYPE.QUEUE_CONSUME,
             queue = { "npe_manager", "get_playableHighPrioQueue"},
-            start_timer = 0,
-            loop_timer = 1,     
+            start_timer = 3,
+            loop_timer = 3,     
             functor = { "npe_manager", "play_now_set" }
         },                     
     }    
@@ -480,6 +480,8 @@ local function remove_runners()
 end
 
 
+-- 
+
 function update_queued_contexts_countdowns()
     printdebug(LOG.RUN, LOG.QUEUE," Update queued contexts countdowns")
     if playableOnCountdownQueue.setsKeys and #playableOnCountdownQueue.setsKeys > 0 then
@@ -495,7 +497,12 @@ function update_queued_contexts_countdowns()
                 elseif set.context.countdown == 0 then
                     printdebug(LOG.INFO, LOG.QUEUE," Context [%s] countdown is over", set.context.event.name)
                     table.remove(playableOnCountdownQueue.setsKeys, i)
-                    table.insert(playableHighPrioQueue.setsKeys, setKey)
+                    -- if delay countdown is strict, add it to the high prio queue
+                    if set.context.strict then
+                        table.insert(playableHighPrioQueue.setsKeys, setKey)
+                    else
+                        table.insert(playableQueue.setsKeys, setKey)
+                    end
                 end
             end
         end
@@ -813,16 +820,16 @@ local function first_time_initialization()
 
 end
 
+local function init_npe_execution()
+    printlog(LOG.RUN, LOG.EXEC," Init NPE Execution")
+    add_runners()
+    start_runners()
+end
 
 
 local function start_npe() -- timed event
     printlog(LOG.RUN, LOG.EXEC," Start NPE")
  
-    -- Setup Runners with NPE Execution Manager
-    update_runners_configs()
-    add_runners()
-    start_runners()
-
     -- activate the contexts on EVENT.GAME_START
     Activate_contexts_on(npe.EVENT.GAME_START)
     Activate_contexts_on(npe.EVENT.DLC_START)
@@ -837,7 +844,8 @@ local function npe_actor_on_first_update()
     -- initialize npe configuration
     first_time_initialization()
 
-    CreateTimeEvent("NPE_Start", "NPE_Start", 2, start_npe)
+    -- delay the start of the NPE
+    CreateTimeEvent("NPE_App", "Start", 3, start_npe)    
 end
 
 local function mcm_on_option_change()
@@ -893,4 +901,5 @@ function on_game_start()
     RegisterScriptCallback("actor_on_first_update", npe_actor_on_first_update)
     RegisterScriptCallback("actor_on_net_destroy", teardown_npe)
     RegisterScriptCallback("actor_on_before_death",teardown_npe)
+    RegisterScriptCallback("npe_execution_manager_started",init_npe_execution)
 end
