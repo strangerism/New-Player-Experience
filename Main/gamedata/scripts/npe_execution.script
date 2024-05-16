@@ -4,6 +4,7 @@
 local Settings = {
     debug_logs = true,
     exec_logs = true,
+    trace_logs = false,
 }
 
 local LOG = {
@@ -40,6 +41,10 @@ local function printdebug(type,category, msg,...) -- debug logging
 	if Settings.debug_logs then printlog(type,category, msg,...) end
 end
 
+local function printtrace(type,category, msg,...) -- debug logging
+	if Settings.trace_logs then printlog(type,category, msg,...) end
+end
+
 local function print_table(t, indent)
     if not t then
         return
@@ -69,7 +74,21 @@ local function debug_table(t, indent)
         end
     end
 end
-Debug_table_npe = debug_table
+
+local function trace_table(t, indent)
+    if not t then
+        return
+    end
+    indent = indent or ''
+    for key, value in pairs(t) do
+        if type(value) == 'table' then
+            printtrace(LOG.INFO, LOG.CONF,indent .. '' .. key .. ':')
+            trace_table(value, indent .. '  ')
+        else
+            printtrace(LOG.INFO, LOG.CONF,indent .. key .. ': ' .. tostring(value))
+        end
+    end
+end
 
 -- Execution Manager settings
 local execution_manager_group_name = 'NPE_Execution_Manager' -- group name for the execution manager watch
@@ -89,7 +108,20 @@ TYPE = {
     QUEUE_CONSUME = "QUEUE_CONSUME",    -- consume from a queue
     QUEUE_PRODUCE = "QUEUE_PRODUCE",    -- produce to a queue
     QUEUE_UPDATE = "QUEUE_UPDATE",      -- update a queue
+    CALLBACK = "CALLBACK",              -- send a callback
+    RUN = "RUN",                        -- run a functor
 }   
+
+-- runner internal states managed by the execution manager and run functions
+
+RUNNER_STATE = {
+    executing = "executing",
+    running = "running",
+    paused = "paused",
+    paused_on_queue = "paused_on_queue",
+    stop_condition_met = "stop_condition_met",
+    unscheduled = "unscheduled",
+}
 
 RUNNER_CONFIG_TEMPLATE = {
     INFINITE = "infinite",
@@ -314,6 +346,44 @@ local function validate_functor(functor)
     return true
 end
 
+-- runner helpers
+
+local function is_execution_type_queue(execution)
+    return execution == TYPE.QUEUE_CONSUME or execution == TYPE.QUEUE_PRODUCE or execution == TYPE.QUEUE_UPDATE
+end
+
+-- used to access the queue of runners of execution type queue
+local function get_queue(runner_queue)
+    return execute_func(unpack(runner_queue)) 
+end
+
+local function is_queue_empty(runner_queue)
+    local queue = get_queue(runner_queue)
+    return queue and #queue == 0
+end
+
+local function is_queue_not_empty(runner_queue)
+    local queue = get_queue(runner_queue)
+    return queue and #queue > 0
+end
+
+local function queue_size(runner_queue)
+    local queue = get_queue(runner_queue)
+    return queue and #queue
+end
+
+local function is_enabled(runner_name)
+    return Runner[runner_name].enabled
+end
+
+local function get_life(runner_name)
+    return math.floor((time_global() - Runner[runner_name].life)/1000)
+end
+
+local function increase_loop_count(runner_name)
+    Runner[runner_name].loop_count = Runner[runner_name].loop_count + 1
+end
+
 -- runner execution state management
 
 local function stop_runner(runner_name)
@@ -330,6 +400,9 @@ local function unschedule_runner(runner_name)
     printdebug(LOG.STOP, LOG.NPE_EXE," Runner: " .. runner_name .. " unscheduled")
     Runner[runner_name].enabled = false
     Runner[runner_name].unscheduled = true
+    if is_execution_type_queue(Runner[runner_name].config.execution) then
+        Runner[runner_name].paused_on_queue = true
+    end
 end
 
 local function start_runner(runner_name)
@@ -357,6 +430,16 @@ local function pause_runner(runner_name)
     end
 end
 
+local function pause_on_queue_runner(runner_name)
+    if Runner[runner_name].paused_on_queue then return end  -- runner is already paused
+    printdebug(LOG.STOP, LOG.NPE_EXE," Runner: " .. runner_name .. " paused on queue")
+    Runner[runner_name].enabled = false
+    Runner[runner_name].paused_on_queue = true
+    if Runner[runner_name].exclusive then
+        Execution_group[Runner[runner_name].group_name].exclusive_run = false
+    end
+end    
+
 local function reset_state(runner_name)
     printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " reset")
     Runner[runner_name].loop_count = 0
@@ -365,61 +448,8 @@ end
 
 -- runner state management
 
-local function set_running(runner_name)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " running")
-    Runner[runner_name].running = true
-end
-
-local function unset_running(runner_name)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " stopped")
-    Runner[runner_name].running = false
-end
-
-local function set_executing(runner_name)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " executing")
-    Runner[runner_name].executing = true
-end
-
-local function unset_executing(runner_name)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " not executing")
-    Runner[runner_name].executing = false
-end
-
-local function set_unscheduled(runner_name)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " unscheduled")
-    Runner[runner_name].unscheduled = true
-end
-
-local function unset_unscheduled(runner_name)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " rescheduled")
-    Runner[runner_name].unscheduled = false
-end
-
-local function set_paused(runner_name)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " paused")
-    Runner[runner_name].paused = true
-end
-
-local function unset_paused(runner_name)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " unpaused")
-    Runner[runner_name].paused = false
-end
-
-local function set_stop_condition_met(runner_name)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " stop_condition_met")
-    Runner[runner_name].stop_condition_met = true
-end
-
-local function is_enabled(runner_name)
-    return Runner[runner_name].enabled
-end
-
-local function get_life(runner_name)
-    return math.floor((time_global() - Runner[runner_name].life)/1000)
-end
-
-local function increase_loop_count(runner_name)
-    Runner[runner_name].loop_count = Runner[runner_name].loop_count + 1
+local function set_runner_state(runner_name, runner_state, value)
+    Runner[runner_name][runner_state] = value
 end
 
 -------------------------------------------------- 3. Runners' Execution private API ----------------------------------------------------------
@@ -441,18 +471,18 @@ local execute_functor = function(runner_name)
     printdebug(LOG.RUN, LOG.NPE_EXE," Functor Execution: " .. runner.name)
     if not is_enabled(runner_name) then 
         -- the runner is disabled, stop the execution state of timed event
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner is disabled at loop: " .. runner.loop_count)
-        -- stop the timed event
-        unset_running(runner_name)
-        unset_executing(runner_name)
+        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner: " .. runner.name .. " is disabled at loop: " .. runner.loop_count)
+        -- update the runner state
+        set_runner_state(runner_name, RUNNER_STATE.running, false)
+        set_runner_state(runner_name, RUNNER_STATE.executing, false) -- not used
         return true 
     end
 
     if runner.config.execution == TYPE.CONDITIONAL and runner.config.stop_condition then
         -- check the stop condition
         if execute_func(unpack(runner.config.stop_condition)) then
-            printdebug(LOG.INFO, LOG.NPE_EXE," Stop Condition met")
-            set_stop_condition_met(runner_name)
+            printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner.name .. " stop condition met")
+            set_runner_state(runner_name, RUNNER_STATE.stop_condition_met, true)
             return true
         end
     end
@@ -461,25 +491,28 @@ local execute_functor = function(runner_name)
     ResetTimeEvent(runner.group_name, runner.name, runner.config.loop_timer)
     
     -- runner is executing
-    set_executing(runner_name)
+    set_runner_state(runner_name, RUNNER_STATE.executing, true)
 
     -- update the loop count
     increase_loop_count(runner_name)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Executed Runner: " .. runner.name .. " Loop: " .. runner.loop_count)
+    printtrace(LOG.INFO, LOG.NPE_EXE," Executed Runner: " .. runner.name .. " Loop: " .. runner.loop_count)
 
     -- execute the functor
-    print_table(runner.config.functor)
+    trace_table(runner.config.functor)
     execute_func(unpack(runner.config.functor))
     -- keeps running as long as the runner is enabled
     return false
 end
 
--- used to access the queue of runners of execution type queue
-local function get_queue(queue)
-    return execute_func(unpack(queue)) 
-end
-
 -- runner handler
+
+-- TODO call this manage_run
+-- it manage the run state of the runners
+-- it can:
+--      - start a runner if it is not running
+--      - reschedule a runner if it is unscheduled
+--      - stop a runner if it is running and the stop condition is met
+--      - pause a runner if it is running and the queue is empty
 
 -- called on every actor update when runner is enabled
 local function run(runner_name)
@@ -489,18 +522,18 @@ local function run(runner_name)
         -- instantiate if not running
         local create_timer = runner.config.start_timer
         if runner.paused then -- the runner was enabled while paused 
-            -- runner was paused, remove the pause state
-            unset_paused(runner_name)
+            -- runner was paused, remove the pause state)
+            set_runner_state(runner_name, RUNNER_STATE.paused, false)
             create_timer = 0 -- start immediately from the paused/unscheduled state
         elseif runner.unscheduled then -- the runner was enabled while unscheduled
             -- runner was unscheduled, remove the unscheduled state
-            unset_unscheduled(runner_name)
+            set_runner_state(runner_name, RUNNER_STATE.unscheduled, false)
             create_timer = 0 -- start immediately from the paused/unscheduled state
         else
             -- reset the runner state
             reset_state(runner_name)
         end
-        set_running(runner_name)
+        set_runner_state(runner_name, RUNNER_STATE.running, true)
         CreateTimeEvent(runner.group_name, runner.name, create_timer, execute_functor, runner_name)
         printlog (LOG.INFO, LOG.NPE_EXE," Runner: " .. runner.name .. " started with timer " .. create_timer)
     else
@@ -517,7 +550,7 @@ local function run(runner_name)
         elseif runner.config.execution == TYPE.FINITE then
             -- check the loop count
             if runner.loop_count >= runner.config.loops then
-                printdebug(LOG.STOP, LOG.NPE_EXE," Reached maximum loops")
+                printdebug(LOG.STOP, LOG.NPE_EXE," Runner: " .. runner_name .. " reached max loops")
                 -- terminate the runner
                 stop_runner(runner_name)
             end
@@ -527,52 +560,57 @@ local function run(runner_name)
                 -- terminate the runner
                 stop_runner(runner_name)
             end
-        elseif runner.config.execution == TYPE.QUEUE_CONSUME or runner.config.execution == TYPE.QUEUE_PRODUCE or runner.config.execution == TYPE.QUEUE_UPDATE then
-            -- check the queue is empty
-            local queue = get_queue(runner.config.queue)
-            if queue and #queue == 0 then
-                printdebug(LOG.STOP, LOG.NPE_EXE," Queue is empty")
-                stop_runner(runner_name)
+        elseif is_execution_type_queue(runner.config.execution) then
+            -- execution_type_queue runners are paused when the queue is empty
+            if is_queue_empty(runner.config.queue) then
+                printdebug(LOG.STOP, LOG.NPE_EXE," Runner: " .. runner_name .. " queue is empty")
+                -- pause the runner on queue state
+                pause_on_queue_runner(runner_name)
             end
         else
-            printdebug(LOG.ERROR, LOG.NPE_EXE," Execution type " .. runner.config.execution .. " not supported")
+            printdebug(LOG.ERROR, LOG.NPE_EXE," Runner: " .. runner_name .. " execution type " .. runner.config.execution .. " not supported")
         end
     end
 end
 
 -------------------------------------------------- 4. Execution Manager ----------------------------------------------------------
+-- TODO call this execution_scheduler
+-- it should only start/reshedule/run the runners
+
 -- called on every actor update when the callback is registered - @Manager_start()
 local function execution_manager()
     -- for each Runner
     for runner_name, runner in pairs(Runner) do
-        local execution_type_queue = runner.config.execution == TYPE.QUEUE_CONSUME or runner.config.execution == TYPE.QUEUE_PRODUCE or runner.config.execution == TYPE.QUEUE_UPDATE
+        
         if runner.enabled then
-            if execution_type_queue then 
-                local queue = get_queue(runner.config.queue)
-                if queue and #queue > 0 then
+            if is_execution_type_queue(runner.config.execution) then 
+                if queue_size(runner.config.queue) > 0 then
                     -- run the runner
                     run(runner_name)
                 else
-                    -- stop the runner
-                    stop_runner(runner_name)
+                    -- paused the runner on the queue
+                    pause_on_queue_runner(runner_name)
                 end
             else
                 -- run the runner
                 run(runner_name)
             end
-        elseif execution_type_queue then
-                -- see if the queue is not empty
-                local queue = get_queue(runner.config.queue)
-                if queue and #queue > 0 then
-                    printdebug(LOG.RUN, LOG.NPE_EXE," Queue for runner: " .. runner_name .. " size " .. #queue)
-                    if runner.unscheduled and not Execution_group[runner.group_name].exclusive_run then
-                        -- reshedule the runner
-                        reschedule_runner(runner_name)
-                    else
-                        -- start the runner
-                        start_runner(runner_name)
-                    end
+        elseif is_execution_type_queue(runner.config.execution) and runner.paused_on_queue then
+            -- check if the queue is not empty
+            local size = queue_size(runner.config.queue)
+            if size > 0 then
+                printdebug(LOG.RUN, LOG.NPE_EXE," Queue for runner: " .. runner_name .. " size " .. size)
+                -- remove the paused state
+                set_runner_state(runner_name, RUNNER_STATE.paused_on_queue, false)
+                -- reshedule the runner if execution group allows it
+                if runner.unscheduled and not Execution_group[runner.group_name].exclusive_run then
+                    -- reshedule the runner
+                    reschedule_runner(runner_name)
+                else
+                    -- start the runner
+                    start_runner(runner_name)
                 end
+            end
         elseif runner.unscheduled and not Execution_group[runner.group_name].exclusive_run then
             reschedule_runner(runner_name)
         end
@@ -633,6 +671,7 @@ function Manager_start()
     if run_execution_manager_loop then return end
     run_execution_manager_loop = true
     watch()
+    SendScriptCallback("npe_execution_manager_started")
 end
 
 function Manager_stop()
@@ -644,6 +683,7 @@ function Manager_stop()
         Remove(runner_name)
     end
     unwatch()
+    SendScriptCallback("npe_execution_manager_stopped")
 end
 
 function Is_running()
@@ -670,22 +710,28 @@ function Add(runner_config)
         new_runner_instance.config = runner_config
 
         -- functor is mandatory, must validate the functor's parameters
-        local validation = validate_functor(new_runner_instance.config.functor)
-        if not validation then
-            printdebug(LOG.ERROR, LOG.NPE_EXE," Execution functor parameters are invalid")
-            printdebug(LOG.ERROR, LOG.NPE_EXE," Runner is rejected")
+        if not validate_functor(new_runner_instance.config.functor) then
+            printdebug(LOG.ERROR, LOG.NPE_EXE," Runner config's field \"functor\" is not a functor")
+            printdebug(LOG.ERROR, LOG.NPE_EXE," Runner config is rejected")
             return false
         end
         
         -- stop_condition is optional
         if new_runner_instance.config.stop_condition then
-            validation = validate_functor(new_runner_instance.config.stop_condition)
-            if not validation then
-                printdebug(LOG.ERROR, LOG.NPE_EXE," Stop condition functor parameters are invalid")
-                printdebug(LOG.ERROR, LOG.NPE_EXE," Runner is rejected")
+            if not validate_functor(new_runner_instance.config.stop_condition) then
+                printdebug(LOG.ERROR, LOG.NPE_EXE," Runner config's field \"stop_condition\" is not a functor")
+                printdebug(LOG.ERROR, LOG.NPE_EXE," Runner config is rejected")
                 return false
             end
-            -- inject_runner_name(new_runner_instance.config.stop_condition, new_runner_instance.name)
+        end
+
+        -- stop_condition is optional
+        if is_execution_type_queue(new_runner_instance.config.execution) then
+            if not validate_functor(new_runner_instance.config.queue) then
+                printdebug(LOG.ERROR, LOG.NPE_EXE," Runner config's field \"queue\" is not a functor")
+                printdebug(LOG.ERROR, LOG.NPE_EXE," Runner config is rejected")
+                return false
+            end
         end
 
         -- passed validation
@@ -839,7 +885,10 @@ function Is_runner_paused(runner_name)
 end
 
 -------------------------------------------------- 10. Game Callbacks ----------------------------------------------------------
-
+if AddScriptCallback then
+    AddScriptCallback("npe_execution_manager_started")
+    AddScriptCallback("npe_execution_manager_stopped")
+end
 
 local function actor_on_first_update()
     -- start the execution manager
