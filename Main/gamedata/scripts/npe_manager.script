@@ -1,4 +1,4 @@
--- NPE Data Structures
+-------------------------------------------------- NPE Data Structures --------------------------------------------------
 
 -- this queue is populated at startup from other npe modules when available otherwise it will only have the npe tutorial module
 local npeConfig = {
@@ -109,7 +109,7 @@ RegisteredCustomCallbacks = {}
 Dialog_in_use = false
 Dialog_name = nil
 
--- NPE Utils
+-------------------------------------------------- NPE Utils --------------------------------------------------
 
 local function printlog(type,category,msg,...)
 	msg = msg or " "
@@ -174,7 +174,7 @@ local function print_functor(functor)
 end
 Print_functor_npe = print_functor
 
--- NPE hashing functions
+-------------------------------------------------- NPE hashing functions --------------------------------------------------
 
 local function map_to_set_key(deckId, setId)
     return deckId .. "/" .. setId
@@ -196,7 +196,7 @@ local function get_set_from_key(key)
     return nil
 end
 
--- NPE Modules registration
+-------------------------------------------------- NPE Modules registration -------------------------------------------------- 
 
 local function add_deck(npeDeck)
     if npeDeck ~= nil then
@@ -221,7 +221,7 @@ function Register_npe_module(deck)
     add_deck(deck)
 end
 
--- NPE decks update from MCM
+-------------------------------------------------- NPE decks update from MCM --------------------------------------------------
 
 local function update_decks_from_mcm()
     printlog(LOG.ADD, LOG.CONF," Update decks from MCM")
@@ -303,7 +303,7 @@ local function apply_overrides_to_decks()
     end
 end
 
--- NPE Queues
+-------------------------------------------------- NPE Queues -------------------------------------------------- 
 
 local function compare_events(event1, event2)
     if event1.name ~= event2.name then
@@ -411,47 +411,88 @@ local function update_activation_queue()
     end
 end
 
+-------------------------------------------------- NPE Dialogs and UI --------------------------------------------------
+
+local function start_dialog(set)
+    -- if dialog is null, use the default dialog
+    if not set.dialog then
+        set.dialog = npe.DIALOG.UI_TUTORIAL
+    end
+    printlog(LOG.INFO, LOG.PLAY," Starting dialog [%s]",set.dialog )
+    local dialog_functor = {set.dialog, "Play", set}
+    execute_func(unpack(dialog_functor))
+end
+
+local function tear_down_dialog()
+    local dialog_functor = {Dialog_name .. "_dialog", "TearDown"}
+    execute_func(unpack(dialog_functor))
+end
+
+-- used by the dialog to register back to the NPE
+function Register_dialog(dialog)
+    Dialog_name = dialog
+    Dialog_in_use = true
+end
+function Unregister_dialog()
+    Dialog_name = nil
+    Dialog_in_use = false
+end
+
+local function play_set_dialog(set)
+    printdebug(LOG.INFO, LOG.PLAY," Playing set [%s] from module [%s]", set.id, set.module)
+    printdebug(LOG.INFO, LOG.PLAY," Set Title: [%s]", set.title)
+
+    set.played = true
+    npe_mcm.npe_module_set_setting(set.module, set.id, true)
+    
+    Pause_Execution_Deprecated() 
+
+    start_dialog(set)
+end
+
 ------------------------------------------ NPE Execution ------------------------------------------
+
+-- npe runners configuration
 
 local function update_runners_configs()
     Runner ={
-        npe_contexts_execution_queue = {
-            name = "npe_contexts_execution_queue",
-            group_name = "npe_namager_default",
-            execution = npe_execution.TYPE.QUEUE_CONSUME,
+        contexts_execution_queue = {
+            name = "contexts_execution_queue",
+            group_name = "default",
+            execution = npe_execution.TYPE.QUEUE,
             queue = { "npe_manager", "get_npeExecutionQueue"},
             start_timer = Settings.execution_loop, 
             functor = { "npe_manager", "run_npe_context_execution" }
         },        
-        npe_context_cooldown_queue = {
-            name = "npe_context_cooldown_queue",
-            group_name = "npe_namager_default",
-            execution = npe_execution.TYPE.QUEUE_CONSUME,
+        context_cooldown_queue = {
+            name = "context_cooldown_queue",
+            group_name = "default",
+            execution = npe_execution.TYPE.QUEUE,
             queue = { "npe_manager", "get_playableOnCountdownQueue"},
             start_timer = 1,  
             functor = { "npe_manager", "update_all_npe_contexts_countdowns" }
         },
-        npe_actions_execution_queue = {
-            name = "npe_actions_execution_queue",
-            group_name = "npe_namager_default",
-            execution = npe_execution.TYPE.QUEUE_CONSUME,
+        actions_execution_queue = {
+            name = "actions_execution_queue",
+            group_name = "default",
+            execution = npe_execution.TYPE.QUEUE,
             queue = { "npe_manager", "get_npeActionsQueue"},
             start_timer = Settings.actions_execution_loop,   
             functor = { "npe_manager", "run_npe_action" }
         },
-        npe_play_set_queue = {
-            name = "npe_play_set_queue",
-            group_name = "npe_namager_play",
-            execution = npe_execution.TYPE.QUEUE_CONSUME,
+        play_set_queue = {
+            name = "play_set_queue",
+            group_name = "play",
+            execution = npe_execution.TYPE.QUEUE,
             queue = { "npe_manager", "get_playableQueue"},
             start_timer = Settings.play_loop,
             functor = { "npe_manager", "play_set" }
         },
-        npe_play_now_set_queue = {
-            name = "npe_play_now_set_queue",
-            group_name = "npe_namager_play",
+        play_now_set_queue = {
+            name = "play_now_set_queue",
+            group_name = "play",
             exclusive = true,
-            execution = npe_execution.TYPE.QUEUE_CONSUME,
+            execution = npe_execution.TYPE.QUEUE,
             queue = { "npe_manager", "get_playableHighPrioQueue"},
             start_timer = 3,   
             functor = { "npe_manager", "play_now_set" }
@@ -469,10 +510,13 @@ local function update_runners_configs()
     }    
 end
 
+-- runners management
+
 local function add_runners()
     printlog(LOG.RUN, LOG.EXEC," Register runners")
     update_runners_configs()
     for _, runner in pairs(Runner) do
+        runner.module = "npe_manager"
         npe_execution.Add(runner)
     end
 end
@@ -515,9 +559,13 @@ local function remove_runners()
 end
 
 
--- 
+-------------------------------------------------- NPE Execution Functors --------------------------------------------------
+-- runners execution functors (functor, queue, stop_condition)
 
-function update_all_npe_contexts_countdowns()
+-- contexts countdowns queue consumer
+-- update all contexts countdowns in the queue
+-- activated contexts (run_npe_context_execution successful) are added to playableOnCountdownQueue if they have a delay
+function update_all_npe_contexts_countdowns() -- TODO refactor to a queue with key, value
     printdebug(LOG.RUN, LOG.QUEUE," Update all queued contexts countdowns")
     if playableOnCountdownQueue.setsKeys and #playableOnCountdownQueue.setsKeys > 0 then
         for i, setKey in ipairs(playableOnCountdownQueue.setsKeys) do
@@ -544,10 +592,13 @@ function update_all_npe_contexts_countdowns()
     end
 end
 
--- NPE Activation and Execution
+-- contexts execution queue functor
+-- executes the contexts handler functor to see if any context can be activated
+-- the functor execution must return true or false
+-- sucessful contexts are removed from the queue
+-- contexts that fail execution are put back in the queue
 
-
-function run_npe_context_execution()
+function run_npe_context_execution()  -- TODO refactor to a queue with key, value
     printdebug(LOG.RUN, LOG.EXEC," Run Set Context activation functor")
     -- for i, handler in ipairs(npeExecutionQueue.handlers) do
         local handler = table.remove(npeExecutionQueue.handlers, 1)
@@ -561,6 +612,7 @@ function run_npe_context_execution()
                 if AddScriptCallback then
                     printdebug(LOG.ADD, LOG.RGSTR," SendScriptCallback [%s]", handler.callback_name)
                     SendScriptCallback(handler.callback_name)
+                    -- table.remove(npeExecutionQueue.handlers, i)
                 end
             else
                 printdebug(LOG.ERROR, LOG.EXEC," Handler [%s] failed", handler.name)
@@ -573,46 +625,9 @@ function run_npe_context_execution()
     -- end
 end
 
--- NPE Play sets
-
-local function start_dialog(set)
-    -- if dialog is null, use the default dialog
-    if not set.dialog then
-        set.dialog = npe.DIALOG.UI_TUTORIAL
-    end
-    printlog(LOG.INFO, LOG.PLAY," Starting dialog [%s]",set.dialog )
-    local dialog_functor = {set.dialog, "Play", set}
-    execute_func(unpack(dialog_functor))
-end
-
-local function tear_down_dialog()
-    local dialog_functor = {Dialog_name .. "_dialog", "TearDown"}
-    execute_func(unpack(dialog_functor))
-end
-
--- used by the dialog to register back to the NPE
-function Register_dialog(dialog)
-    Dialog_name = dialog
-    Dialog_in_use = true
-end
-function Unregister_dialog()
-    Dialog_name = nil
-    Dialog_in_use = false
-end
-
-local function play_set_dialog(set)
-    printdebug(LOG.INFO, LOG.PLAY," Playing set [%s] from module [%s]", set.id, set.module)
-    printdebug(LOG.INFO, LOG.PLAY," Set Title: [%s]", set.title)
-
-    set.played = true
-    npe_mcm.npe_module_set_setting(set.module, set.id, true)
-    
-    Pause_Execution()
-
-    start_dialog(set)
-end
-
 -- play queue consumer
+-- the first set in the queue is played
+-- if cannot be played because of UI busy, it is put back in the queue
 function play_set()
     printdebug(LOG.RUN, LOG.EXEC," Run Play Queued Set")
     if playableQueue.setsKeys and #playableQueue.setsKeys > 0 then
@@ -633,7 +648,10 @@ function play_set()
         end
     end
 end
+
 -- play now queue consumer
+-- the first set in the queue is played
+-- if cannot be played because of UI busy, it is put back in the queue
 function play_now_set()
     printdebug(LOG.RUN, LOG.EXEC," Run Play Now Set")
     if playableHighPrioQueue.setsKeys and #playableHighPrioQueue.setsKeys > 0 then
@@ -654,30 +672,28 @@ function play_now_set()
         end
     end
 end
+
 -- action queue consumer
+-- actions are defined in the sets as list of functors from npe_actions
+-- if action fails, it is lost undefinitely
+-- TODO think about if a retry mechanism is needed
 function run_npe_action()
     printdebug(LOG.RUN, LOG.EXEC," Run action")
-    -- try stop execution if there are no actions
-    -- if #npeActionsQueue.actions == 0 then stop_execution(Runner.npe_actions_execution_queue.name) end
-    
-    -- execute the actions
-    -- for i, action in ipairs(npeActionsQueue.actions) do
-            local action = table.remove(npeActionsQueue.actions, 1)
-            if action then
-                printdebug(LOG.INFO, LOG.EXEC," Running action [%s]", action.name)
-                local success = execute_func(unpack(action.functor))
-                if success then
-                    printdebug(LOG.INFO, LOG.EXEC," action [%s] executed. Success: %s", action.name, success)
-                else
-                    printdebug(LOG.ERROR, LOG.EXEC," action [%s] failed. Success: %s", action.name, success)
-                    -- TODO implement retry mechanism?
-                    -- table.insert(npeActionsQueue.actions, action)
-                end
+        local action = table.remove(npeActionsQueue.actions, 1)
+        if action then
+            printdebug(LOG.INFO, LOG.EXEC," Running action [%s]", action.name)
+            local success = execute_func(unpack(action.functor))
+            if success then
+                printdebug(LOG.INFO, LOG.EXEC," action [%s] executed. Success: %s", action.name, success)
+            else
+                printdebug(LOG.ERROR, LOG.EXEC," action [%s] failed. Success: %s", action.name, success)
+                -- TODO implement retry mechanism?
+                -- table.insert(npeActionsQueue.actions, action)
             end
-    -- end
+        end
 end
 
--- NPE Activation
+-- NPE Activation callbacks  --TODO move this on a runner
 
 function Activate_contexts_on(event)
     printdebug(LOG.RUN, LOG.ACTIV," Activate contexts on [%s]", event.name)
@@ -690,13 +706,13 @@ function Activate_contexts_on(event)
     end
 end
 
--- NPE Actions
--- needs a dedicated queue to manage the actions delays
+-- NPE Actions  -- TODO move this to a runner
+-- TODO needs a dedicated queue to manage the actions delays
 
 function Execute_npe_action(action, setId)
     printdebug(LOG.RUN, LOG.ACTIV," Execute action [%s] on set [%s]", action.descr, setId)
     add_to_actions_queue(action)
-    resume_execution(Runner.npe_actions_execution_queue.name)
+    -- resume_execution(Runner.actions_execution_queue.name)
 end
 
 -- Execution controls
@@ -704,27 +720,23 @@ end
 function Resume_execution_Deprecated() 
     printdebug(LOG.RUN, LOG.EXEC," Resume execution")
     -- npeExecutionQueue.handlers -- this is the queue of the Event handlers
-    resume_execution(Runner.npe_contexts_execution_queue.name)
+    resume_execution(Runner.contexts_execution_queue.name)
     -- playableQueue.setsKeys -- this is the play set queue
-    resume_execution(Runner.npe_play_set_queue.name)
+    resume_execution(Runner.play_set_queue.name)
     -- playableHighPrioQueue.setsKeys -- this is play now the queue
-    resume_execution(Runner.npe_play_now_set_queue.name)
+    resume_execution(Runner.play_now_set_queue.name)
     
-    -- resume_play_queues_manager_loop()
-    -- resume_execution_loop()
 end
 
-function Pause_Execution()
+function Pause_Execution_Deprecated() 
     printdebug(LOG.STOP, LOG.EXEC," Pause execution")
     -- npeExecutionQueue.handlers -- this is the queue of the Event handlers
-    stop_execution(Runner.npe_contexts_execution_queue.name)
+    stop_execution(Runner.contexts_execution_queue.name)
     -- playableQueue.setsKeys -- this is the play set queue
-    stop_execution(Runner.npe_play_set_queue.name)
+    stop_execution(Runner.play_set_queue.name)
     -- playableHighPrioQueue.setsKeys -- this is play now the queue
-    stop_execution(Runner.npe_play_now_set_queue.name)
+    stop_execution(Runner.play_now_set_queue.name)
 
-    -- pause_play_queues_manager_loop()
-    -- pause_execution_loop()
 end
 
 
@@ -892,7 +904,7 @@ end
 local function mcm_on_option_change()
     printdebug(LOG.RUN, LOG.EXEC," On option change")
     -- pausing all loops
-    Pause_Execution()
+    Pause_Execution_Deprecated() 
 
     -- update npe configuration
     update_settings()
