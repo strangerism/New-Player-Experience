@@ -1,6 +1,7 @@
 
 local printlog = npe_manager.Printlog_npe
 local printdebug = npe_manager.Printdebug_npe
+local printtrace = npe_manager.Printtrace_npe
 local LOG = npe_manager.LOG
 
 GUI = nil -- instance, don't touch
@@ -9,6 +10,109 @@ GAMETIME_STATE = npe_dialog.GAMETIME_STATE
 Sounds = npe_dialog.Sounds
 local SOUNDS_SET = npe_dialog.MGS_CODEC -- codec dialog force use MGS_CODEC sounds
 
+-------------------------------------------------------------------  Execution -------------------------------------------------------------------
+
+Runner ={
+	codec_change_signal_level = {
+		name = "codec_change_signal_level",
+		module = "npe_dialog_codec",
+		group_name = "codec_ui",
+		execution = npe_execution.TYPE.CONDITIONAL,
+		pause_condition = { "npe_dialog_codec", "pause_condition_change_level_loop" },
+		start_timer = 0.15,
+		loop_timer = 0.15,
+		functor = { "npe_dialog_codec", "npe_run_change_level_loop" },
+		start = { "npe_dialog_codec", "start_change_level_loop" },
+	},
+	codec_signal_manager = {
+		name = "codec_signal_manager",
+		module = "npe_dialog_codec",
+		group_name = "codec_ui",
+		execution = npe_execution.TYPE.INFINITE,
+		start_timer = 0.5,
+		loop_timer = 0.5,
+		functor = { "npe_dialog_codec", "npe_codec_signal_manager_loop" },
+		start = { "npe_dialog_codec", "start_codec_signal_manager_loop" },
+		stop = { "npe_dialog_codec", "stop_codec_signal_manager_loop" },
+	},
+    caller_portrait_flickering = {
+        name = "caller_portrait_flickering",
+        module = "npe_dialog_codec",
+		group_name = "codec_ui",
+		execution = npe_execution.TYPE.CONDITIONAL,
+		stop_condition = { "npe_dialog_codec", "stop_condition_caller_flickering_loop" },
+        start_timer = 0.015,
+        loop_timer = 0.015,      
+        functor = { "npe_dialog_codec", "npe_caller_flickering_loop" },
+		start = { "npe_dialog_codec", "start_caller_flickering_loop" },
+		stop = { "npe_dialog_codec", "stop_caller_flickering_loop" },
+    },
+    actor_portrait_flickering = {
+        name = "actor_portrait_flickering",
+		module = "npe_dialog_codec",
+		group_name = "codec_ui",
+		execution = npe_execution.TYPE.CONDITIONAL,
+		stop_condition = { "npe_dialog_codec", "stop_condition_actor_flickering_loop" },
+        start_timer = 0.015,
+        loop_timer = 0.015,      
+        functor = { "npe_dialog_codec", "npe_actor_flickering_loop" },
+		start = { "npe_dialog_codec", "start_actor_flickering_loop" },
+		stop = { "npe_dialog_codec", "stop_actor_flickering_loop" },
+    },
+    portraits_flickering_manager = {
+        name = "portraits_flickering_manager",
+		module = "npe_dialog_codec",
+		group_name = "codec_ui",
+		execution = npe_execution.TYPE.INFINITE,
+        start_timer = 1,
+        loop_timer = 1,      
+        functor = { "npe_dialog_codec", "npe_portraits_flickering_manager_loop" },
+		start = { "npe_dialog_codec", "start_portraits_flickering_manager_loop" },
+		stop = { "npe_dialog_codec", "stop_portraits_flickering_manager_loop" },
+    },
+	portrait_scanlines = {
+		name = "portrait_scanlines",
+		module = "npe_dialog_codec",
+		group_name = "codec_ui",
+		execution = npe_execution.TYPE.INFINITE,
+		start_timer = 0.015,
+		loop_timer = 0.015,
+		functor = { "npe_dialog_codec", "npe_portrait_scanlines_loop" },
+		start = { "npe_dialog_codec", "start_portrait_scanlines_loop" },
+		stop = { "npe_dialog_codec", "stop_portrait_scanlines_loop" },
+	},
+	-- portrait_wide_scanlines = {
+	-- 	name = "portrait_wide_scanlines",
+	-- 	module = "npe_dialog_codec",
+	-- 	group_name = "codec_ui",
+	-- 	execution = npe_execution.TYPE.INFINITE,
+	-- 	start_timer = 0.5,
+	-- 	loop_timer = 0.5,
+	-- 	functor = { "npe_dialog_codec", "npe_codec_signal_manager_loop" },
+	-- 	start = { "npe_dialog_codec", "start_codec_signal_manager_loop" },
+	-- 	stop = { "npe_dialog_codec", "stop_codec_signal_manager_loop" },
+	-- },						  	   
+}
+
+local function add_runners()
+    printlog(LOG.RUN, LOG.EXEC," Register runners")
+    for _, runner in pairs(Runner) do
+        npe_execution.Add(runner)
+    end
+end
+
+local function remove_runners()
+    printlog(LOG.RUN, LOG.EXEC," Remove runners")
+    for _, runner in pairs(Runner) do
+        npe_execution.Remove(runner.name)
+    end
+end
+
+local function stop_codec_signal_manager()
+	printlog(LOG.RUN, LOG.EXEC," Stop signal manager")
+	npe_execution.Stop(Runner.codec_signal_manager.name)
+	npe_execution.Stop(Runner.codec_change_signal_level.name)
+end
 -- codec signal bands loop
 
 DIRECTION_UP = 1
@@ -52,70 +156,59 @@ local MAX_LEVEL = 9
 local MIN_LEVEL = 5
 local BOOTSTRAP_LEVEL = 7
 local MAX_LEVEL_CHANGE = 4
-local function npe_run_change_level_loop()
-	printdebug(LOG.POOL, LOG.UI_EXEC," run change level loop")
-	if not run_change_level_loop then return true end
-	if not GUI then return false end
-	printdebug(LOG.RUN, LOG.UI_EXEC," change_level_loop current_level: " .. current_level .. " direction: " .. get_direction_str(direction) .. " target_level: " .. target_level)
-	if (direction == DIRECTION_UP and current_level > target_level) or (direction == DIRECTION_DOWN and current_level < target_level) then 
-		-- ends the loop
-		printdebug(LOG.STOP, LOG.UI_EXEC," change_level loop ended ")
-		if bootstrapping then
-			bootstrapping = false
-		end
-		current_level = target_level
-		run_change_level_loop = false
-		codec_signal_manager_cooldown = time_global() + math.random(2, 6) * 250
-		printdebug(LOG.INFO, LOG.UI_EXEC," codec_signal_manager_cooldown: " .. codec_signal_manager_cooldown)
-		return true 
-	end
-    printdebug(LOG.INFO, LOG.UI_EXEC," change level loop - going " .. get_direction_str(direction))	
-
+function npe_run_change_level_loop()
+	printtrace(LOG.RUN, LOG.UI_EXEC,"[npe_run_change_level_loop]: " .. current_level .. " going: " .. get_direction_str(direction) .. " target_level: " .. target_level)
 	local loop = change_level_loop
 	if bootstrapping then
 		loop = bootstrap_loop
 	end
-    ResetTimeEvent(run_change_level_loop_name, run_change_level_loop_name, loop)
 	-- update current level
 	set_codec_signal_band_to(current_level, direction)
-	printdebug(LOG.INFO, LOG.UI_EXEC," current_level: " .. current_level .. " --> target_level: " .. target_level)
 	if direction == DIRECTION_UP then
 		current_level = current_level + 1
 	else
 		current_level = current_level - 1
 	end
-	-- continue loop
-    return false
 end
 
-local function start_change_level_loop()
-	printdebug(LOG.RUN, LOG.UI_EXEC," starting change level loop")
-	if run_change_level_loop then return end
-	run_change_level_loop = true
+function start_change_level_loop()
+	printtrace(LOG.RUN, LOG.UI_EXEC," starting change level loop")
 	local loop = change_level_loop
 	if bootstrapping then
-		printdebug(LOG.INFO, LOG.UI_EXEC," bootstrapping")
+		printtrace(LOG.INFO, LOG.UI_EXEC,"[start_change_level_loop] bootstrapping")
 		direction = DIRECTION_UP
 		target_level = BOOTSTRAP_LEVEL		
 		loop = bootstrap_loop
 	end	
-	CreateTimeEvent(run_change_level_loop_name, run_change_level_loop_name, loop, npe_run_change_level_loop)
-	printdebug(LOG.START, LOG.UI_EXEC," started change level loop")
+	-- signal successful execution of start functor
+	return true
 end
 
-local run_codec_signal_manager_loop = false
-local run_codec_signal_manager_loop_name = 'NPE_codec_signal_manager_Loop'
-local codec_signal_manager_loop = 0.5
+function pause_condition_change_level_loop()
+	-- printdebug(LOG.RUN, LOG.UI_EXEC,"[pause_condition_change_level_loop]: " .. current_level .. " going: " .. get_direction_str(direction) .. " target_level: " .. target_level)
+	if (direction == DIRECTION_UP and current_level > target_level) or (direction == DIRECTION_DOWN and current_level < target_level) then 
+		-- ends the loop
+		printtrace(LOG.STOP, LOG.UI_EXEC," change_level loop ended ")
+		if bootstrapping then
+			bootstrapping = false
+		end
+		current_level = target_level
+		-- run_change_level_loop = false
+		codec_signal_manager_cooldown = time_global() + math.random(2, 6) * 250
+		printtrace(LOG.INFO, LOG.UI_EXEC," time_global: " .. time_global() .. " codec_signal_manager_cooldown: " .. codec_signal_manager_cooldown)
+		-- signal that the pause condition is met
+		return true
+	else
+		-- signal that the pause condition is NOT met
+		return false
+	end
+end
 
-local function npe_codec_signal_manager_loop()
-	printdebug(LOG.POOL, LOG.UI_EXEC," run codec_signal_manager loop")
-    if not run_codec_signal_manager_loop then return true end
-	if not GUI then return false end
-    ResetTimeEvent(run_codec_signal_manager_loop_name, run_codec_signal_manager_loop_name, codec_signal_manager_loop)
-	printdebug(LOG.RUN, LOG.UI_EXEC," codec_signal_manager loop")
-	-- codec signal band management
-	if codec_signal_manager_cooldown == 0 and not run_change_level_loop then
-		printdebug(LOG.INFO, LOG.UI_EXEC," current_level: " .. current_level)
+function npe_codec_signal_manager_loop()
+	printtrace(LOG.POOL, LOG.UI_EXEC," run codec_signal_manager loop")
+	if codec_signal_manager_cooldown == 0 and not npe_execution.IsRunnerRunning(Runner.codec_change_signal_level.name) then
+		printtrace(LOG.INFO, LOG.UI_EXEC," codec_signal_manager_cooldown finished")
+		printtrace(LOG.INFO, LOG.UI_EXEC," current_level: " .. current_level)
 		-- we need to decide if we go up or down
 		direction = math.random(0, 9)
 		if direction > 6 then
@@ -124,55 +217,53 @@ local function npe_codec_signal_manager_loop()
 			direction = DIRECTION_DOWN
 		else 
 			-- 40% change for no change level
-			return false
+			return
 		end
-		printdebug(LOG.INFO, LOG.UI_EXEC," random direction : " .. get_direction_str(direction))
+		printtrace(LOG.INFO, LOG.UI_EXEC," random direction : " .. get_direction_str(direction))
 		if direction == DIRECTION_UP and current_level == MAX_LEVEL then
 			direction = DIRECTION_DOWN
-			printdebug(LOG.INFO, LOG.UI_EXEC," overriding direction to: " .. get_direction_str(direction))
+			printtrace(LOG.INFO, LOG.UI_EXEC," overriding direction to: " .. get_direction_str(direction))
 		elseif direction == DIRECTION_DOWN and current_level == MIN_LEVEL then
 			direction = DIRECTION_UP
-			printdebug(LOG.INFO, LOG.UI_EXEC," overriding direction to: " .. get_direction_str(direction))
+			printtrace(LOG.INFO, LOG.UI_EXEC," overriding direction to: " .. get_direction_str(direction))
 		end
 		-- how much to change the level
 		local change_target_to = math.random(1, MAX_LEVEL_CHANGE) 
-		printdebug(LOG.INFO, LOG.UI_EXEC," change_target_to: " .. change_target_to)
+		printtrace(LOG.INFO, LOG.UI_EXEC," change_target_to: " .. change_target_to)
 		if direction == DIRECTION_UP then
 			target_level = math.min(current_level + change_target_to, MAX_LEVEL)
 		else
 			target_level = math.max(current_level - change_target_to, MIN_LEVEL)
 		end
 		-- start change level loop
-		printdebug(LOG.INFO, LOG.UI_EXEC," start_change_level_loop current_level: " .. current_level .. " direction: " .. get_direction_str(direction) .. " target_level: " .. target_level)
-		start_change_level_loop()
+		printtrace(LOG.INFO, LOG.UI_EXEC," start_change_level_loop current_level: " .. current_level .. " direction: " .. get_direction_str(direction) .. " target_level: " .. target_level)
+		
+		---------------------------------------------------------- start runner codec_change_signal_level ------------------------------
+		npe_execution.Resume(Runner.codec_change_signal_level.name)
 	else
 		if time_global() > codec_signal_manager_cooldown then
 			codec_signal_manager_cooldown = 0
 		end
-	end 
-
-	-- continue loop
-    return false
+	end
 end
 
-local function start_codec_signal_manager_loop()
+function start_codec_signal_manager_loop()
 	printdebug(LOG.RUN, LOG.UI_EXEC," starting codec_signal_manager loop")
-    if run_codec_signal_manager_loop then return end
-    run_codec_signal_manager_loop = true
 	set_codec_signal_band_to(0,0)
 	current_level = 0
 	bootstrapping = true
-    CreateTimeEvent(run_codec_signal_manager_loop_name, run_codec_signal_manager_loop_name, codec_signal_manager_loop, npe_codec_signal_manager_loop)
-	printdebug(LOG.START, LOG.UI_EXEC," started change_level loop")
+    printdebug(LOG.START, LOG.UI_EXEC," started change_level loop")
+	-- signal successful execution of start functor
+	return true
 end
 
-local function stop_codec_signal_manager_loop()
+function stop_codec_signal_manager_loop()
 	printdebug(LOG.RUN, LOG.UI_EXEC," stopping codec_signal_manager loop")
-	if not run_codec_signal_manager_loop then return end
-	run_codec_signal_manager_loop = false
 	codec_signal_manager_cooldown = 0
-	run_change_level_loop = false
+	npe_execution.Stop(Runner.codec_change_signal_level.name)
 	printdebug(LOG.START, LOG.UI_EXEC," stopped codec_signal_manager loops")
+	-- signal successful execution of stop functor
+	return true
 end
 
 -- Portraits flickering loops
@@ -213,104 +304,92 @@ function get_flicker_chance()
 	return chance
 end
 -- caller portrait flickering loop
-
-local run_caller_flickering_loop = false
-local run_caller_flickering_loop_name = 'NPE_caller_flickering_Loop'
-local caller_flickering_loop = 0.015
 local caller_flickering_duration = 0
-local function npe_caller_flickering_loop()
-	printdebug(LOG.POOL, LOG.UI_EXEC," run caller_flickering loop")
-    if not run_caller_flickering_loop then return true end
-	if not GUI then return false end
-	printdebug(LOG.RUN, LOG.UI_EXEC," caller_flickering loop")
-	if time_global() > caller_flickering_duration then 
-		-- ends the loop
-		change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_DEFAULT_ALPHA)
-		-- show portrait
-		GUI.portrait_caller:Show(true)
-		-- reset state
-		run_caller_flickering_loop = false
-		caller_flickering_duration = 0
-		return true 
-	end
-
-    ResetTimeEvent(run_caller_flickering_loop_name, run_caller_flickering_loop_name, caller_flickering_loop)
+function npe_caller_flickering_loop()
+	-- printdebug(LOG.POOL, LOG.UI_EXEC," run caller_flickering loop")
+	if not GUI then return end
 	if GUI.portrait_caller:IsShown() then
 		GUI.portrait_caller:Show(false)
 	else
 		GUI.portrait_caller:Show(true)
 	end
-	-- continue loop
-    return false
 end
 
-local function start_caller_flickering_loop()
+function start_caller_flickering_loop()
 	printdebug(LOG.RUN, LOG.UI_EXEC," resuming caller_flickering loop")
-    if run_caller_flickering_loop then return end
-    run_caller_flickering_loop = true
 	if not GUI then return false end
 	change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_FLICKERING_ALPHA)
-    CreateTimeEvent(run_caller_flickering_loop_name, run_caller_flickering_loop_name, caller_flickering_loop, npe_caller_flickering_loop) -- offset time caller_flickering_loop
-	printdebug(LOG.START, LOG.UI_EXEC," resumed caller_flickering loop")
+	-- signal successful execution of start functor
+	return true
+end
+
+function stop_caller_flickering_loop()
+	if not GUI then return false end
+	change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_DEFAULT_ALPHA)
+	GUI.portrait_caller:Show(true)
+	caller_flickering_duration = 0
+	return true
+end
+
+function stop_condition_caller_flickering_loop()
+	if time_global() > caller_flickering_duration then 
+		return true
+	else
+		return false
+	end
 end
 
 -- actor portrait flickering loop
-
-local run_actor_flickering_loop = false
-local run_actor_flickering_loop_name = 'NPE_actor_flickering_Loop'
-local actor_flickering_loop = 0.015
 local actor_flickering_duration = 0
-local function npe_actor_flickering_loop()
-	printdebug(LOG.POOL, LOG.UI_EXEC," run actor_flickering loop")
-    if not run_actor_flickering_loop then return true end
+function npe_actor_flickering_loop()
+	-- printdebug(LOG.POOL, LOG.UI_EXEC," run actor_flickering loop")
 	if not GUI then return false end
-	if time_global() > actor_flickering_duration then 
-		-- ends the loop
-		change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_DEFAULT_ALPHA)
-		GUI.portrait_actor:Show(true)
-		run_actor_flickering_loop = false
-		actor_flickering_duration = 0
-		return true 
-	end
-    printdebug(LOG.RUN, LOG.UI_EXEC," actor_flickering loop")
-    ResetTimeEvent(run_actor_flickering_loop_name, run_actor_flickering_loop_name, actor_flickering_loop)
 	if GUI.portrait_actor:IsShown() then
 		GUI.portrait_actor:Show(false)
 	else
 		GUI.portrait_actor:Show(true)
 	end
-	-- continue loop
-    return false
 end
 
-local function start_actor_flickering_loop()
+function start_actor_flickering_loop()
 	printdebug(LOG.RUN, LOG.UI_EXEC," resuming actor_flickering loop")
-    if run_actor_flickering_loop then return end
 	if not GUI then return false end
 	change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_FLICKERING_ALPHA)
-    run_actor_flickering_loop = true
-    CreateTimeEvent(run_actor_flickering_loop_name, run_actor_flickering_loop_name, actor_flickering_loop, npe_actor_flickering_loop) -- offset time actor_flickering_loop
-	printdebug(LOG.START, LOG.UI_EXEC," resumed actor_flickering loop")
+	-- signal successful execution of start functor
+	return true	
+end
+
+function stop_actor_flickering_loop()
+	if not GUI then return false end
+	change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_DEFAULT_ALPHA)
+	GUI.portrait_actor:Show(true)
+	actor_flickering_duration = 0
+	return true
+end
+
+function stop_condition_actor_flickering_loop()
+	if time_global() > actor_flickering_duration then 
+		return true
+	else
+		return false
+	end
 end
 
 -- Portraits transparency manager loop
-
-local run_portraits_scanlines_manager_loop = false
-local run_portraits_scanlines_manager_loop_name = 'NPE_portraits_scanlines_manager_loop'
-local portraits_scanlines_manager_loop = 1
 local caller_flickering_cooldown = 0
 local actor_flickering_cooldown = 0
-local function npe_portraits_scanlines_manager_loop()
-	printdebug(LOG.POOL, LOG.UI_EXEC," run portraits_scanlines_manager loop")
-    if not run_portraits_scanlines_manager_loop then return true end
-    ResetTimeEvent(run_portraits_scanlines_manager_loop_name, run_portraits_scanlines_manager_loop_name, portraits_scanlines_manager_loop)
-	printdebug(LOG.RUN, LOG.UI_EXEC," portraits_scanlines_manager loop")
+function npe_portraits_flickering_manager_loop()
+	printdebug(LOG.POOL, LOG.UI_EXEC," run portraits_flickering_manager loop: caller_flickering_cooldown: " .. caller_flickering_cooldown .. " actor_flickering_cooldown: " .. actor_flickering_cooldown)
 	-- caller scanlines loop management - cannot run if any scanline loop is active and it has a cooldown
-	if caller_flickering_cooldown == 0 and not run_caller_flickering_loop and not run_actor_flickering_loop then
+	local no_flickering_loop_running = not npe_execution.IsRunnerRunning(Runner.caller_portrait_flickering.name) and not npe_execution.IsRunnerRunning(Runner.actor_portrait_flickering.name)
+	printdebug(LOG.INFO, LOG.UI_EXEC," no_flickering_loop_running: " .. tostring(no_flickering_loop_running))
+	if caller_flickering_cooldown == 0 and no_flickering_loop_running then
 		-- start caller scanlines loop by chance			
-		if get_flicker_chance() > 70 then
+		local flicker_chance = get_flicker_chance()
+		printdebug(LOG.INFO, LOG.UI_EXEC," caller flicker_chance: " .. flicker_chance)
+		if flicker_chance > 70 then
 			caller_flickering_duration = time_global() + math.random(10, 50) * 5
-			start_caller_flickering_loop()
+			npe_execution.Resume(Runner.caller_portrait_flickering.name)
 			caller_flickering_cooldown = time_global() + math.random(1, 10) * 500
 		end
 	else 
@@ -319,11 +398,13 @@ local function npe_portraits_scanlines_manager_loop()
 		end
 	end
 	-- actor scanlines loop management - cannot run if any scanline loop is active and it has a cooldown
-	if actor_flickering_cooldown == 0 and not run_actor_flickering_loop and not run_caller_flickering_loop then
+	if actor_flickering_cooldown == 0 and no_flickering_loop_running then
 		-- start actor scanlines loop by chance
-		if get_flicker_chance() > 70 then
+		local flicker_chance = get_flicker_chance()
+		printdebug(LOG.INFO, LOG.UI_EXEC," actor flicker_chance: " .. flicker_chance)
+		if flicker_chance > 70 then
 			actor_flickering_duration = time_global() + math.random(10, 50) * 5
-			start_actor_flickering_loop()
+			npe_execution.Resume(Runner.actor_portrait_flickering.name)
 			actor_flickering_cooldown = time_global() + math.random(1, 10) * 500
 		end
 	else 
@@ -332,45 +413,30 @@ local function npe_portraits_scanlines_manager_loop()
 		end
 	end
 
-    return false
+    -- return false
 end
-local function stop_portraits_scanlines_manager_loop()
-	printdebug(LOG.RUN, LOG.UI_EXEC," stopping portraits_scanlines_manager loop")
-    if not run_portraits_scanlines_manager_loop then return end
-    run_portraits_scanlines_manager_loop = false
-	run_actor_flickering_loop = false
-	run_caller_flickering_loop = false
-	caller_flickering_cooldown = 0
-	actor_flickering_cooldown = 0	
-	printdebug(LOG.STOP, LOG.UI_EXEC," stopped portraits transparency loop")
+function stop_portraits_flickering_manager_loop()
+	printdebug(LOG.RUN, LOG.UI_EXEC," stopping portraits_flickering_manager loop")
+	npe_execution.Stop(Runner.caller_portrait_flickering.name)
+	npe_execution.Stop(Runner.actor_portrait_flickering.name)
+	return true
 end
 
-local function start_portraits_scanlines_manager_loop()
-	printdebug(LOG.RUN, LOG.UI_EXEC," starting portraits_scanlines_manager loop")
-    if run_portraits_scanlines_manager_loop then return end
-    run_portraits_scanlines_manager_loop = true
-	run_actor_flickering_loop = false
-	run_caller_flickering_loop = false
+function start_portraits_flickering_manager_loop()
+	printdebug(LOG.RUN, LOG.UI_EXEC," starting portraits_flickering_manager loop")
 	caller_flickering_cooldown = 0
 	actor_flickering_cooldown = 0		
-    CreateTimeEvent(run_portraits_scanlines_manager_loop_name, run_portraits_scanlines_manager_loop_name, portraits_scanlines_manager_loop, npe_portraits_scanlines_manager_loop)
-	printdebug(LOG.START, LOG.UI_EXEC," started portraits transparency loop")
+	return true
 end
 
 -- portraits secondary scanlines loop
 
-local run_portrait_scanlines_loop = false
-local portrait_scanlines_loop_name = 'NPE_portrait_scanlines_loop_Loop'
-local portrait_scanlines_loop = 0.015
 local portrait_scanlines_loop_count = 0
 local starting_y = 0
 local ending_y = 193
-local function npe_portrait_scanlines_loop()
-	printdebug(LOG.POOL, LOG.UI_EXEC," run portrait_scanlines loop")
-    if not run_portrait_scanlines_loop then return true end
+function npe_portrait_scanlines_loop()
+	-- printdebug(LOG.POOL, LOG.UI_EXEC," run portrait_scanlines loop")
 	if not GUI then return false end
-    ResetTimeEvent(portrait_scanlines_loop_name, portrait_scanlines_loop_name, portrait_scanlines_loop) -- offset time context_countdowns_loop
-	printdebug(LOG.RUN, LOG.UI_EXEC," portrait scanlines loop")
 	portrait_scanlines_loop_count = portrait_scanlines_loop_count + 1
 	if portrait_scanlines_loop_count > 1000 then portrait_scanlines_loop_count = 0 end
 	if (portrait_scanlines_loop_count % 2 == 0) then
@@ -393,25 +459,19 @@ local function npe_portrait_scanlines_loop()
 	if y > ending_y then y = starting_y end
 	GUI.codec_scanline_l:SetWndPos(vector2():set(x_l, y))
 	GUI.codec_scanline_r:SetWndPos(vector2():set(x_r, y))	
-	return false
 end
 
-local function start_portrait_scanlines_loop()
+function start_portrait_scanlines_loop()
 	printdebug(LOG.RUN, LOG.UI_EXEC," starting portrait scanlines loop")
-    if run_portrait_scanlines_loop then return end
 	if not GUI then return end
-    run_portrait_scanlines_loop = true
 	starting_y = GUI.codec_scanline_l:GetWndPos().y
-    CreateTimeEvent(portrait_scanlines_loop_name, portrait_scanlines_loop_name, portrait_scanlines_loop, npe_portrait_scanlines_loop)
-	printdebug(LOG.START, LOG.UI_EXEC," started portrait scanlines loop")
+	return true
 end
 
-local function stop_portrait_scanlines_loop()
+function stop_portrait_scanlines_loop()
 	printdebug(LOG.RUN, LOG.UI_EXEC," stopping portrait scanlines loop")
-    if not run_portrait_scanlines_loop then return end
-    run_portrait_scanlines_loop = false
 	portrait_scanlines_loop_count = 0
-	printdebug(LOG.STOP, LOG.UI_EXEC," stopped portrait scanlines loop")
+	return true
 end
 
 -- open codec dialog function as callback or timed event
@@ -429,8 +489,11 @@ local function open_codec_dialog_ui(set)
 		Register_UI("UINewPlayerExperience","npe_dialog")
 		GUI:DoStartActions()
 		start_portrait_scanlines_loop()
-		start_portraits_scanlines_manager_loop()
-		start_codec_signal_manager_loop()
+		-- start_portraits_flickering_manager_loop()
+		-- start_codec_signal_manager_loop()
+		npe_execution.Resume(Runner.codec_signal_manager.name)
+		npe_execution.Resume(Runner.portraits_flickering_manager.name)
+		npe_execution.Resume(Runner.portrait_scanlines.name)
 		npe_dialog.Enable_dof()
     else
         printdebug(LOG.INFO, LOG.UI," GUI already shown")
@@ -788,9 +851,13 @@ end
 local closing_dialog = false
 local function close_dialog(dialog)
 	printdebug(LOG.STOP, LOG.UI," close_dialog_after_delay")
-	stop_portrait_scanlines_loop()
-	stop_portraits_scanlines_manager_loop()
-	stop_codec_signal_manager_loop()
+	-- stop_portrait_scanlines_loop()
+	-- stop_portraits_flickering_manager_loop()
+	-- stop_codec_signal_manager_loop()
+	stop_codec_signal_manager()
+	npe_execution.Stop(Runner.portrait_scanlines.name)
+	npe_execution.Stop(Runner.portraits_flickering_manager.name)
+
 	npe_dialog.Disable_dof()
 ---@diagnostic disable-next-line: undefined-field
 	GUI:DoEndActions()
@@ -906,10 +973,16 @@ function UINewPlayerExperience:OnKeyboard(dik, keyboard_action)
 end
 
 function npe_on_log_update()
-    printf("NPE EVENT LOG UPDATE")
     LOG = npe_manager.LOG
 end
-
+function init_npe_execution()
+	add_runners()
+end
+function actor_on_net_destroy()
+	remove_runners()
+end
 function on_game_start()
+	RegisterScriptCallback("actor_on_net_destroy", actor_on_net_destroy)
     RegisterScriptCallback("npe_on_log_update", npe_on_log_update)
+	RegisterScriptCallback("npe_execution_manager_started",init_npe_execution)
 end
