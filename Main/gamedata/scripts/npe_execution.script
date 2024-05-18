@@ -240,10 +240,6 @@ local function queue_size(runner_queue)
     return queue and #queue
 end
 
-local function is_enabled(runner_name)
-    return Runner[runner_name].enabled
-end
-
 local function get_life(runner_name)
     return math.floor((time_global() - Runner[runner_name].life)/1000)
 end
@@ -386,11 +382,11 @@ local function start_runner(runner_name)
     end
 end
 
-local function reschedule_runner(runner_name)
-    if not Runner[runner_name].unscheduled then return end -- runner is already scheduled
-    printdebug(LOG.START, LOG.NPE_EXE," Runner: " .. runner_name .. " rescheduled")
-    Runner[runner_name].enabled = true
-end
+-- local function reschedule_runner(runner_name)
+--     if not Runner[runner_name].unscheduled then return end -- runner is already scheduled
+--     printdebug(LOG.START, LOG.NPE_EXE," Runner: " .. runner_name .. " rescheduled")
+--     Runner[runner_name].enabled = true
+-- end
 
 local function pause_runner(runner_name)
     if Runner[runner_name].paused then return end  -- runner is already paused
@@ -489,7 +485,7 @@ local execute_functor = function(runner_name)
             -- execute the stop functor
             execute_stop_functor(runner_name)
         end
-        -- the runner loop is terminated
+        -- the runner execution loop is terminated
         return true 
     end
     
@@ -506,22 +502,20 @@ local execute_functor = function(runner_name)
             -- check the stop condition
                 if execute_func(unpack(runner.config.stop_condition)) then
                     printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner.name .. " stop condition met")
+                    -- stop condition met, let signal it  to the run handler
                     set_runner_state(runner_name, RUNNER_STATE.stop_condition_met, true)
-                    set_runner_state(runner_name, RUNNER_STATE.running, false)
-                    set_runner_state(runner_name, RUNNER_STATE.executing, false)
-                    -- stop condition met, the runner loop is terminated
-                    return true
+                    -- skip this loop but continue the timed event
+                    return false
                 end
             end-- stop condition not met
             if runner.config.pause_condition then
                 -- check the pause condition
                 if execute_func(unpack(runner.config.pause_condition)) then
                     printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner.name .. " pause condition met")
+                    -- pause condition met, let signal it  to the run handler                    
                     set_runner_state(runner_name, RUNNER_STATE.pause_condition_met, true)
-                    set_runner_state(runner_name, RUNNER_STATE.running, false)
-                    set_runner_state(runner_name, RUNNER_STATE.executing, false)
-                    -- pause condition met, the runner loop is terminated
-                    return true
+                    -- skip this loop but continue the timed event
+                    return false
                 end
             end-- pause condition not met
         end
