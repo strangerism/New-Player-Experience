@@ -40,24 +40,24 @@ Runner ={
         module = "npe_dialog_codec",
 		group_name = "codec_ui",
 		execution = npe_execution.TYPE.CONDITIONAL,
-		stop_condition = { "npe_dialog_codec", "caller_flickering_duration_ended" },
+		stop_condition = { "npe_dialog_codec", "portrait_flickering_duration_ended", "caller" },
         start_timer = 0.015,
         loop_timer = 0.015,      
-        functor = { "npe_dialog_codec", "run_caller_flickering" },
-		start = { "npe_dialog_codec", "on_start_caller_flickering" },
-		stop = { "npe_dialog_codec", "on_stop_caller_flickering" },
+        functor = { "npe_dialog_codec", "run_portrait_flickering", "caller" },
+		start = { "npe_dialog_codec", "on_start_portrait_flickering", "caller" },
+		stop = { "npe_dialog_codec", "on_stop_portrait_flickering", "caller" },
     },
     actor_portrait_flickering = {
         name = "actor_portrait_flickering",
 		module = "npe_dialog_codec",
 		group_name = "codec_ui",
 		execution = npe_execution.TYPE.CONDITIONAL,
-		stop_condition = { "npe_dialog_codec", "actor_flickering_duration_ended" },
+		stop_condition = { "npe_dialog_codec", "portrait_flickering_duration_ended", "actor" },
         start_timer = 0.015,
         loop_timer = 0.015,      
-        functor = { "npe_dialog_codec", "run_actor_flickering" },
-		start = { "npe_dialog_codec", "on_start_actor_flickering" },
-		stop = { "npe_dialog_codec", "on_stop_actor_flickering" },
+        functor = { "npe_dialog_codec", "run_portrait_flickering", "actor" },
+		start = { "npe_dialog_codec", "on_start_portrait_flickering", "actor" },
+		stop = { "npe_dialog_codec", "on_stop_portrait_flickering", "actor" },
     },
     portraits_flickering_manager = {
         name = "portraits_flickering_manager",
@@ -298,113 +298,92 @@ function get_flicker_chance()
 	end
 	return chance
 end
--- caller portrait flickering loop
-local caller_flickering_duration = 0
-function run_caller_flickering()
+
+Portraits = {
+	caller = {
+		GUI = nil,
+		flickering_duration = 0,
+		flickering_cooldown = 0,
+	},
+	actor = {
+		GUI = nil,
+		flickering_duration = 0,
+		flickering_cooldown = 0,
+	},
+}
+
+-- portrait flickering loop
+function run_portrait_flickering(name)
 	-- printdebug(LOG.POOL, LOG.UI_EXEC," run caller_flickering loop")
 	if not GUI then return end
-	if GUI.portrait_caller:IsShown() then
-		GUI.portrait_caller:Show(false)
+	if Portraits[name].GUI:IsShown() then
+		Portraits[name].GUI:Show(false)
 	else
-		GUI.portrait_caller:Show(true)
+		Portraits[name].GUI:Show(true)
 	end
 end
 
-function on_start_caller_flickering()
+function on_start_portrait_flickering(name)
 	printdebug(LOG.RUN, LOG.UI_EXEC," resuming caller_flickering loop")
 	if not GUI then return false end
-	change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_FLICKERING_ALPHA)
+	if name == "caller" then
+		Portraits[name].GUI = GUI.portrait_caller
+	else
+		Portraits[name].GUI = GUI.portrait_actor
+	end
+	Portraits[name].flickering_duration = time_global() + math.random(10, 50) * 5
+
+	change_portrait_alpha(Portraits[name].GUI, CODEC_PORTAIT_FLICKERING_ALPHA)
 	-- signal successful execution of start functor
 	return true
 end
 
-function on_stop_caller_flickering()
+function on_stop_portrait_flickering(name)
 	if not GUI then return false end
-	change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_DEFAULT_ALPHA)
-	GUI.portrait_caller:Show(true)
-	caller_flickering_duration = 0
+	change_portrait_alpha(Portraits[name].GUI, CODEC_PORTAIT_DEFAULT_ALPHA)
+	Portraits[name].GUI:Show(true)
+	Portraits[name].flickering_duration = 0
+	Portraits[name].flickering_cooldown = time_global() + math.random(1, 10) * 500
 	return true
 end
 
-function caller_flickering_duration_ended()
-	if time_global() > caller_flickering_duration then 
+function portrait_flickering_duration_ended(name)
+	if time_global() > Portraits[name].flickering_duration then 
 		return true
 	else
 		return false
 	end
 end
 
--- actor portrait flickering loop
-local actor_flickering_duration = 0
-function run_actor_flickering()
-	-- printdebug(LOG.POOL, LOG.UI_EXEC," run actor_flickering loop")
-	if not GUI then return false end
-	if GUI.portrait_actor:IsShown() then
-		GUI.portrait_actor:Show(false)
-	else
-		GUI.portrait_actor:Show(true)
-	end
-end
-
-function on_start_actor_flickering()
-	printdebug(LOG.RUN, LOG.UI_EXEC," resuming actor_flickering loop")
-	if not GUI then return false end
-	change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_FLICKERING_ALPHA)
-	-- signal successful execution of start functor
-	return true	
-end
-
-function on_stop_actor_flickering()
-	if not GUI then return false end
-	change_portrait_alpha(GUI.portrait_caller, CODEC_PORTAIT_DEFAULT_ALPHA)
-	GUI.portrait_actor:Show(true)
-	actor_flickering_duration = 0
-	return true
-end
-
-function actor_flickering_duration_ended()
-	if time_global() > actor_flickering_duration then 
-		return true
-	else
-		return false
-	end
-end
-
--- Portraits transparency manager loop
-local caller_flickering_cooldown = 0
-local actor_flickering_cooldown = 0
+-- portraits flickering manager loop
 function run_portraits_flickering_manager()
-	printdebug(LOG.POOL, LOG.UI_EXEC," run portraits_flickering_manager loop: caller_flickering_cooldown: " .. caller_flickering_cooldown .. " actor_flickering_cooldown: " .. actor_flickering_cooldown)
+	printdebug(LOG.POOL, LOG.UI_EXEC," run portraits_flickering_manager loop: caller_flickering_cooldown: " .. Portraits["caller"].flickering_cooldown .. " actor_flickering_cooldown: " .. Portraits["actor"].flickering_cooldown)
 	-- caller scanlines loop management - cannot run if any scanline loop is active and it has a cooldown
 	local no_flickering_loop_running = not npe_execution.IsRunnerRunning(Runner.caller_portrait_flickering.name) and not npe_execution.IsRunnerRunning(Runner.actor_portrait_flickering.name)
 	printdebug(LOG.INFO, LOG.UI_EXEC," no_flickering_loop_running: " .. tostring(no_flickering_loop_running))
-	if caller_flickering_cooldown == 0 and no_flickering_loop_running then
+	if Portraits["caller"].flickering_cooldown == 0 and no_flickering_loop_running then
 		-- start caller scanlines loop by chance			
 		local flicker_chance = get_flicker_chance()
 		printdebug(LOG.INFO, LOG.UI_EXEC," caller flicker_chance: " .. flicker_chance)
 		if flicker_chance > 70 then
-			caller_flickering_duration = time_global() + math.random(10, 50) * 5
 			npe_execution.Resume(Runner.caller_portrait_flickering.name)
-			caller_flickering_cooldown = time_global() + math.random(1, 10) * 500
 		end
 	else 
-		if time_global() > caller_flickering_cooldown then
-			caller_flickering_cooldown = 0
+		if time_global() > Portraits["caller"].flickering_cooldown then
+			Portraits["caller"].flickering_cooldown = 0
 		end
 	end
 	-- actor scanlines loop management - cannot run if any scanline loop is active and it has a cooldown
-	if actor_flickering_cooldown == 0 and no_flickering_loop_running then
+	if Portraits["actor"].flickering_cooldown == 0 and no_flickering_loop_running then
 		-- start actor scanlines loop by chance
 		local flicker_chance = get_flicker_chance()
 		printdebug(LOG.INFO, LOG.UI_EXEC," actor flicker_chance: " .. flicker_chance)
 		if flicker_chance > 70 then
-			actor_flickering_duration = time_global() + math.random(10, 50) * 5
 			npe_execution.Resume(Runner.actor_portrait_flickering.name)
-			actor_flickering_cooldown = time_global() + math.random(1, 10) * 500
 		end
 	else 
-		if time_global() > actor_flickering_cooldown then
-			actor_flickering_cooldown = 0
+		if time_global() > Portraits["actor"].flickering_cooldown then
+			Portraits["actor"].flickering_cooldown = 0
 		end
 	end
 
@@ -419,8 +398,8 @@ end
 
 function on_start_portraits_flickering_manager()
 	printdebug(LOG.RUN, LOG.UI_EXEC," starting portraits_flickering_manager")
-	caller_flickering_cooldown = 0
-	actor_flickering_cooldown = 0		
+	Portraits["caller"].flickering_cooldown = 0
+	Portraits["actor"].flickering_cooldown = 0		
 	return true
 end
 
