@@ -2,8 +2,8 @@
 -------------------------------------------------- 0. Logging ----------------------------------------------------------
 
 local Settings = {
-    debug_logs = false,
-    exec_logs = false,
+    debug_logs = true,
+    exec_logs = true,
     trace_logs = false,
 }
 
@@ -300,6 +300,12 @@ local function validate_config(runner_config)
             return false 
         end
     end
+    if runner_config.execution == TYPE.FINITE then
+        if not runner_config.loops then
+            runner_config.loops = 1 -- TODO check this
+            printdebug(LOG.ADD, LOG.NPE_EXE," Runner loops is null, set to: 1" .. runner_config.loops)
+        end
+    end    
     if not runner_config.start_timer then
         runner_config.start_timer = 0 -- TODO check this
         printdebug(LOG.ADD, LOG.NPE_EXE," Runner start timer is null, set to 0")
@@ -572,8 +578,14 @@ local function run(runner_name)
         elseif runner.config.execution == TYPE.INFINITE then
             -- do nothing, the runner is infinite
         elseif runner.config.execution == TYPE.FINITE then
+            local max_loops 
+            if runner.config.start then
+                max_loops = runner.config.loops + 1
+            else
+                max_loops = runner.config.loops
+            end
             -- check the loop count
-            if runner.loop_count >= runner.config.loops then
+            if runner.loop_count >= max_loops then
                 printdebug(LOG.STOP, LOG.NPE_EXE," Runner: " .. runner_name .. " reached max loops")
                 -- terminate the runner
                 stop_runner(runner_name)
