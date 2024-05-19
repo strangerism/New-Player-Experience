@@ -2,8 +2,8 @@
 -------------------------------------------------- 0. Logging ----------------------------------------------------------
 
 local Settings = {
-    debug_logs = true,
-    exec_logs = true,
+    debug_logs = false,
+    exec_logs = false,
     trace_logs = false,
 }
 
