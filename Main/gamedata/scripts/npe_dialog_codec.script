@@ -79,19 +79,17 @@ Runner ={
 		loop_timer = 0.015,
 		functor = { "npe_dialog_codec", "npe_portrait_scanlines_loop" },
 		start = { "npe_dialog_codec", "start_portrait_scanlines_loop" },
-		stop = { "npe_dialog_codec", "stop_portrait_scanlines_loop" },
 	},
-	-- portrait_wide_scanlines = {
-	-- 	name = "portrait_wide_scanlines",
-	-- 	module = "npe_dialog_codec",
-	-- 	group_name = "codec_ui",
-	-- 	execution = npe_execution.TYPE.INFINITE,
-	-- 	start_timer = 0.5,
-	-- 	loop_timer = 0.5,
-	-- 	functor = { "npe_dialog_codec", "npe_codec_signal_manager_loop" },
-	-- 	start = { "npe_dialog_codec", "start_codec_signal_manager_loop" },
-	-- 	stop = { "npe_dialog_codec", "stop_codec_signal_manager_loop" },
-	-- },						  	   
+	portrait_wide_scanlines = {
+		name = "portrait_wide_scanlines",
+		module = "npe_dialog_codec",
+		group_name = "codec_ui",
+		execution = npe_execution.TYPE.INFINITE,
+		start_timer = 0.04,
+		loop_timer = 0.04,
+		functor = { "npe_dialog_codec", "npe_portrait_wide_scanlines_loop" },
+		start = { "npe_dialog_codec", "start_portrait_wide_scanlines_loop" },
+	},						  	   
 }
 
 local function add_runners()
@@ -143,8 +141,7 @@ function get_direction_str(direction)
 		return "DOWN"
 	end
 end
-local run_change_level_loop = false
-local run_change_level_loop_name = 'NPE_change_level_Loop'
+
 local change_level_loop = 0.15
 local bootstrap_loop = 0.05
 local bootstrapping = false
@@ -431,31 +428,16 @@ end
 
 -- portraits secondary scanlines loop
 
-local portrait_scanlines_loop_count = 0
 local starting_y = 0
 local ending_y = 193
 function npe_portrait_scanlines_loop()
 	-- printdebug(LOG.POOL, LOG.UI_EXEC," run portrait_scanlines loop")
 	if not GUI then return false end
-	portrait_scanlines_loop_count = portrait_scanlines_loop_count + 1
-	if portrait_scanlines_loop_count > 1000 then portrait_scanlines_loop_count = 0 end
-	if (portrait_scanlines_loop_count % 2 == 0) then
-		-- update big scanlines at half frequency
-		local x_l = GUI.codec_scanline_big_l:GetWndPos().x
-		local x_r = GUI.codec_scanline_big_r:GetWndPos().x
-		local y = GUI.codec_scanline_big_l:GetWndPos().y
-		y = y + 1
-		-- printdebug(LOG.INFO, LOG.UI_EXEC," portrait scanlines loop y: " .. y)
-		if y > ending_y then y = starting_y end
-		GUI.codec_scanline_big_l:SetWndPos(vector2():set(x_l, y))
-		GUI.codec_scanline_big_r:SetWndPos(vector2():set(x_r, y))			
-	end
 	-- update scanlines
 	local x_l = GUI.codec_scanline_l:GetWndPos().x
 	local x_r = GUI.codec_scanline_r:GetWndPos().x
 	local y = GUI.codec_scanline_l:GetWndPos().y
 	y = y + 1
-	-- printdebug(LOG.INFO, LOG.UI_EXEC," portrait scanlines loop y: " .. y)
 	if y > ending_y then y = starting_y end
 	GUI.codec_scanline_l:SetWndPos(vector2():set(x_l, y))
 	GUI.codec_scanline_r:SetWndPos(vector2():set(x_r, y))	
@@ -468,9 +450,75 @@ function start_portrait_scanlines_loop()
 	return true
 end
 
-function stop_portrait_scanlines_loop()
-	printdebug(LOG.RUN, LOG.UI_EXEC," stopping portrait scanlines loop")
-	portrait_scanlines_loop_count = 0
+local scanline_height = 15
+local starting_y = - 20
+local ending_y = 193 + 30
+local portrait_top_y
+local portrait_bottom_y
+local i = 0
+function npe_portrait_wide_scanlines_loop()
+	-- printdebug(LOG.POOL, LOG.UI_EXEC," run portrait_scanlines loop")
+	if not GUI then return false end
+	-- update wide scanlines
+	local x_l = GUI.codec_scanline_big_l:GetWndPos().x
+	local x_r = GUI.codec_scanline_big_r:GetWndPos().x
+	local y = GUI.codec_scanline_big_l:GetWndPos().y
+	
+
+	-- printdebug(LOG.INFO, LOG.UI_EXEC," portrait scanlines loop y: " .. y)
+
+	-- scanline reaching the top edge
+	-- start increasing the height
+	if y >= portrait_top_y and i < 15 then
+		i = i + 1
+		local h = i
+		printdebug(LOG.INFO, LOG.UI_EXEC," portrait scanlines top loop y: " .. y .. " height: " .. h)
+		local w = GUI.codec_scanline_big_l:GetWidth()
+		GUI.codec_scanline_big_l:SetWndSize(vector2():set(w,h))
+		GUI.codec_scanline_big_r:SetWndSize(vector2():set(w,h))
+		return
+	end 
+	
+	-- scanline reaching the bottom edge
+	if y + scanline_height > portrait_bottom_y and GUI.codec_scanline_big_l:GetHeight() > 0 then
+		local h = portrait_bottom_y - y
+		local w = GUI.codec_scanline_big_l:GetWidth()
+		GUI.codec_scanline_big_l:SetWndSize(vector2():set(w,h))
+		GUI.codec_scanline_big_r:SetWndSize(vector2():set(w,h))
+	end 
+	
+	y = y + 1
+	printdebug(LOG.INFO, LOG.UI_EXEC," portrait scanlines loop y: " .. y .. " height: " .. GUI.codec_scanline_big_l:GetHeight())
+	if y > ending_y then 
+		y = starting_y 
+		i = 0
+	end
+
+	-- scroll down the scanlines
+	GUI.codec_scanline_big_l:SetWndPos(vector2():set(x_l, y))
+	GUI.codec_scanline_big_r:SetWndPos(vector2():set(x_r, y))			
+end
+
+function start_portrait_wide_scanlines_loop()
+	printdebug(LOG.RUN, LOG.UI_EXEC," starting portrait wide scanlines loop")
+	if not GUI then return end
+
+	portrait_top_y = GUI.portrait_caller:GetWndPos().y
+	portrait_bottom_y = GUI.portrait_caller:GetWndPos().y + GUI.portrait_caller:GetHeight()
+	printdebug(LOG.INFO, LOG.UI_EXEC," portrait_top_y: " .. portrait_top_y .. " portrait_bottom_y: " .. portrait_bottom_y)
+
+	-- set the starting position of the scanlines ()
+	starting_y = 0
+	printdebug(LOG.INFO, LOG.UI_EXEC," starting_y: " .. starting_y)
+	local x_l = GUI.codec_scanline_big_l:GetWndPos().x
+	local x_r = GUI.codec_scanline_big_r:GetWndPos().x
+	GUI.codec_scanline_big_l:SetWndPos(vector2():set(x_l, starting_y))
+	GUI.codec_scanline_big_r:SetWndPos(vector2():set(x_r, starting_y))
+
+	-- start with height 0
+	local w = GUI.codec_scanline_big_l:GetWidth()
+	GUI.codec_scanline_big_l:SetWndSize(vector2():set(w,1))
+	GUI.codec_scanline_big_r:SetWndSize(vector2():set(w,1))
 	return true
 end
 
@@ -488,12 +536,10 @@ local function open_codec_dialog_ui(set)
 		GUI:ShowDialog(true)
 		Register_UI("UINewPlayerExperience","npe_dialog")
 		GUI:DoStartActions()
-		start_portrait_scanlines_loop()
-		-- start_portraits_flickering_manager_loop()
-		-- start_codec_signal_manager_loop()
 		npe_execution.Resume(Runner.codec_signal_manager.name)
 		npe_execution.Resume(Runner.portraits_flickering_manager.name)
 		npe_execution.Resume(Runner.portrait_scanlines.name)
+		npe_execution.Resume(Runner.portrait_wide_scanlines.name)
 		npe_dialog.Enable_dof()
     else
         printdebug(LOG.INFO, LOG.UI," GUI already shown")
@@ -851,11 +897,9 @@ end
 local closing_dialog = false
 local function close_dialog(dialog)
 	printdebug(LOG.STOP, LOG.UI," close_dialog_after_delay")
-	-- stop_portrait_scanlines_loop()
-	-- stop_portraits_flickering_manager_loop()
-	-- stop_codec_signal_manager_loop()
 	stop_codec_signal_manager()
 	npe_execution.Stop(Runner.portrait_scanlines.name)
+	npe_execution.Stop(Runner.portrait_wide_scanlines.name)
 	npe_execution.Stop(Runner.portraits_flickering_manager.name)
 
 	npe_dialog.Disable_dof()
