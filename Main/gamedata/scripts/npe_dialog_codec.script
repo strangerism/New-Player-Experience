@@ -22,17 +22,29 @@ Runner ={
 		start_timer = 0.0,
 		loop_timer = 0.05,
 		functor = { "npe_dialog_codec", "run_codec_change_signal_level" },
-		start = { "npe_dialog_codec", "on_start_codec_change_signal_level" },
+		-- start = { "npe_dialog_codec", "on_start_codec_change_signal_level" },
 	},
+	codec_bootstrap = {
+		name = "codec_bootstrap",
+		module = "npe_dialog_codec",
+		group_name = "codec_ui",
+		execution = npe_execution.TYPE.CONDITIONAL,
+		pause_condition = { "npe_dialog_codec", "codec_signal_target_level_reached" },
+		start_timer = 1,
+		loop_timer = 0.015,
+		functor = { "npe_dialog_codec", "run_codec_change_signal_level" },
+		start = { "npe_dialog_codec", "on_start_bootstrap_signal" },
+		stop = { "npe_dialog_codec", "start_codec_portraits_and_signal_animations" },
+	},	
 	codec_signal_manager = {
 		name = "codec_signal_manager",
 		module = "npe_dialog_codec",
 		group_name = "codec_ui",
 		execution = npe_execution.TYPE.INFINITE,
-		start_timer = 0.0,
+		start_timer = 0.5,
 		loop_timer = 0.5,
 		functor = { "npe_dialog_codec", "run_codec_signal_manager" },
-		start = { "npe_dialog_codec", "on_start_codec_signal_manager" },
+		-- start = { "npe_dialog_codec", "on_start_codec_signal_manager" },
 		stop = { "npe_dialog_codec", "on_stop_codec_signal_manager" },
 	},
     caller_portrait_showing = {
@@ -41,7 +53,7 @@ Runner ={
 		group_name = "codec_ui",
 		execution = npe_execution.TYPE.CONDITIONAL,
 		stop_condition = { "npe_dialog_codec", "portrait_showing_completed", "caller" },
-        start_timer = 0.0,
+        start_timer = 0.3,
         loop_timer = 0.0,      
         functor = { "npe_dialog_codec", "show_portrait", "caller" },
 		start = { "npe_dialog_codec", "on_start_show_portrait", "caller" },
@@ -53,7 +65,7 @@ Runner ={
 		group_name = "codec_ui",
 		execution = npe_execution.TYPE.CONDITIONAL,
 		stop_condition = { "npe_dialog_codec", "portrait_showing_completed", "actor" },
-        start_timer = 0.0,
+        start_timer = 0.3,
         loop_timer = 0.0,        
         functor = { "npe_dialog_codec", "show_portrait", "actor" },
 		start = { "npe_dialog_codec", "on_start_show_portrait", "actor" },
@@ -99,7 +111,7 @@ Runner ={
 		module = "npe_dialog_codec",
 		group_name = "codec_ui",
 		execution = npe_execution.TYPE.INFINITE,
-		start_timer = 1,
+		start_timer = 0.5,
 		loop_timer = 0.015,
 		functor = { "npe_dialog_codec", "run_portrait_scanlines" },
 		start = { "npe_dialog_codec", "on_start_portrait_scanlines" },
@@ -109,7 +121,7 @@ Runner ={
 		module = "npe_dialog_codec",
 		group_name = "codec_ui",
 		execution = npe_execution.TYPE.INFINITE,
-		start_timer = 1,
+		start_timer = 0.5,
 		loop_timer = 0.04,
 		functor = { "npe_dialog_codec", "run_portrait_wide_scanlines" },
 		start = { "npe_dialog_codec", "on_start_portrait_wide_scanlines" },
@@ -166,9 +178,6 @@ function get_direction_str(direction)
 	end
 end
 
-local change_level_loop = 0.15
-local bootstrap_loop = 0.05
-local bootstrapping = false
 local direction
 local target_level
 local current_level
@@ -179,10 +188,6 @@ local BOOTSTRAP_LEVEL = 7
 local MAX_LEVEL_CHANGE = 4
 function run_codec_change_signal_level()
 	printtrace(LOG.RUN, LOG.UI_EXEC,"run_change_signal_level: " .. current_level .. " going: " .. get_direction_str(direction) .. " target_level: " .. target_level)
-	local loop = change_level_loop
-	if bootstrapping then
-		loop = bootstrap_loop
-	end
 	-- update current level
 	set_codec_signal_band_to(current_level, direction)
 	if direction == DIRECTION_UP then
@@ -192,16 +197,27 @@ function run_codec_change_signal_level()
 	end
 end
 
-function on_start_codec_change_signal_level()
-	printtrace(LOG.RUN, LOG.UI_EXEC," starting change level loop")
-	local loop = change_level_loop
-	if bootstrapping then
-		printtrace(LOG.INFO, LOG.UI_EXEC,"bootstrapping")
-		direction = DIRECTION_UP
-		target_level = BOOTSTRAP_LEVEL		
-		loop = bootstrap_loop
-	end	
+function on_start_bootstrap_signal()
+	printtrace(LOG.RUN, LOG.UI_EXEC," on start bootstrapping signal")
+	set_codec_signal_band_to(0,0)
+	current_level = 0
+	direction = DIRECTION_UP
+	target_level = BOOTSTRAP_LEVEL
 	-- signal successful execution of start functor
+	return true
+end
+
+function start_codec_portraits_and_signal_animations()
+	printdebug(LOG.RUN, LOG.UI_EXEC," on stop bootstrapping signal")
+	npe_execution.Resume(Runner.codec_signal_manager.name)
+	-- start portraits display animation
+	npe_execution.Resume(Runner.caller_portrait_showing.name)
+	npe_execution.Resume(Runner.actor_portrait_showing.name)
+	-- start the portraits fx
+	npe_execution.Resume(Runner.portraits_flickering_manager.name)
+	npe_execution.Resume(Runner.portrait_scanlines.name)
+	npe_execution.Resume(Runner.portrait_wide_scanlines.name)
+	-- signal successful execution of stop functor
 	return true
 end
 
@@ -210,9 +226,6 @@ function codec_signal_target_level_reached()
 	if (direction == DIRECTION_UP and current_level > target_level) or (direction == DIRECTION_DOWN and current_level < target_level) then 
 		-- ends the loop
 		printtrace(LOG.STOP, LOG.UI_EXEC," change_level loop ended ")
-		if bootstrapping then
-			bootstrapping = false
-		end
 		current_level = target_level
 		-- run_change_level_loop = false
 		codec_signal_manager_cooldown = time_global() + math.random(2, 6) * 250
@@ -268,14 +281,6 @@ function run_codec_signal_manager()
 	end
 end
 
-function on_start_codec_signal_manager()
-	printdebug(LOG.RUN, LOG.UI_EXEC," starting codec_signal_manager")
-	set_codec_signal_band_to(0,0)
-	current_level = 0
-	bootstrapping = true
-	-- signal successful execution of start functor
-	return true
-end
 
 function on_stop_codec_signal_manager()
 	printdebug(LOG.RUN, LOG.UI_EXEC," stopping codec_signal_manager")
@@ -577,15 +582,14 @@ local function open_codec_dialog_ui(set)
 
 	if (GUI) and (not GUI:IsShown()) then
         printdebug(LOG.INFO, LOG.UI," Showing GUI")
-		GUI:ShowDialog(true)
 		Register_UI("UINewPlayerExperience","npe_dialog")
+		
+		-- start showing codec ui and signal strength bands
+		GUI:ShowDialog(true)
+		npe_execution.Resume(Runner.codec_bootstrap.name)
+		-- do any start actions defined in the set
 		GUI:DoStartActions()
-		npe_execution.Resume(Runner.codec_signal_manager.name)
-		npe_execution.Resume(Runner.portraits_flickering_manager.name)
-		npe_execution.Resume(Runner.portrait_scanlines.name)
-		npe_execution.Resume(Runner.portrait_wide_scanlines.name)
-		npe_execution.Resume(Runner.caller_portrait_showing.name)
-		npe_execution.Resume(Runner.actor_portrait_showing.name)
+		-- enable DoF if available
 		npe_dialog.Enable_dof()
     else
         printdebug(LOG.INFO, LOG.UI," GUI already shown")
