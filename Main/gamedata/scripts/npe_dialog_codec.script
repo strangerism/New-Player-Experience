@@ -30,11 +30,11 @@ Runner ={
 		group_name = "codec_ui",
 		execution = npe_execution.TYPE.CONDITIONAL,
 		stop_condition = { "npe_dialog_codec", "codec_signal_target_level_reached" },
-		start_timer = 1,
+		start_timer = 0.1,
 		loop_timer = 0.015,
 		functor = { "npe_dialog_codec", "run_codec_change_signal_level" },
 		start = { "npe_dialog_codec", "on_start_bootstrap_signal" },
-		stop = { "npe_dialog_codec", "start_codec_portraits_and_signal_animations" },
+		stop = { "npe_dialog_codec", "start_codec_convo" },
 	},	
 	codec_signal_manager = {
 		name = "codec_signal_manager",
@@ -203,16 +203,16 @@ function on_start_bootstrap_signal()
 	current_level = 0
 	direction = DIRECTION_UP
 	target_level = BOOTSTRAP_LEVEL
+	-- start portraits display animation
+	npe_execution.Resume(Runner.caller_portrait_showing.name)
+	npe_execution.Resume(Runner.actor_portrait_showing.name)
 	-- signal successful execution of start functor
 	return true
 end
 
-function start_codec_portraits_and_signal_animations()
+function start_codec_convo()
 	printdebug(LOG.RUN, LOG.UI_EXEC," on stop bootstrapping signal")
 	npe_execution.Resume(Runner.codec_signal_manager.name)
-	-- start portraits display animation
-	npe_execution.Resume(Runner.caller_portrait_showing.name)
-	npe_execution.Resume(Runner.actor_portrait_showing.name)
 	-- start the portraits fx
 	npe_execution.Resume(Runner.portraits_flickering_manager.name)
 	npe_execution.Resume(Runner.portrait_scanlines.name)
@@ -351,7 +351,7 @@ Portraits = {
 
 function show_portrait(name)
 	if not GUI then return end
-	Portraits[name].cursor = Portraits[name].cursor + 4
+	Portraits[name].cursor = Portraits[name].cursor + 6
 	local new_y = Portraits[name].y - Portraits[name].cursor
 	local new_height = Portraits[name].cursor * 2
 	Portraits[name].GUI:SetWndPos(vector2():set(Portraits[name].GUI:GetWndPos().x, new_y))
