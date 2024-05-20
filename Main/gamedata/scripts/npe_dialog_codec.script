@@ -70,7 +70,31 @@ Runner ={
         functor = { "npe_dialog_codec", "show_portrait", "actor" },
 		start = { "npe_dialog_codec", "on_start_show_portrait", "actor" },
 		stop = { "npe_dialog_codec", "on_stop_show_portrait", "actor" },
-    },		
+    },	
+    caller_portrait_hiding = {
+        name = "caller_portrait_hiding",
+        module = "npe_dialog_codec",
+		group_name = "codec_ui",
+		execution = npe_execution.TYPE.CONDITIONAL,
+		stop_condition = { "npe_dialog_codec", "portrait_hiding_completed", "caller" },
+        start_timer = 0.6,
+        loop_timer = 0.0,      
+        functor = { "npe_dialog_codec", "hide_portrait", "caller" },
+		start = { "npe_dialog_codec", "on_start_hide_portrait", "caller" },
+		stop = { "npe_dialog_codec", "on_stop_hide_portrait", "caller" },
+    },
+    actor_portrait_hiding = {
+        name = "actor_portrait_hiding",
+        module = "npe_dialog_codec",
+		group_name = "codec_ui",
+		execution = npe_execution.TYPE.CONDITIONAL,
+		stop_condition = { "npe_dialog_codec", "portrait_hiding_completed", "actor" },
+        start_timer = 0.6,
+        loop_timer = 0.0,        
+        functor = { "npe_dialog_codec", "hide_portrait", "actor" },
+		start = { "npe_dialog_codec", "on_start_hide_portrait", "actor" },
+		stop = { "npe_dialog_codec", "on_stop_hide_portrait", "actor" },
+    },			
     caller_portrait_flickering = {
         name = "caller_portrait_flickering",
         module = "npe_dialog_codec",
@@ -384,6 +408,41 @@ end
 
 function portrait_showing_completed(name)
 	if Portraits[name].GUI:GetHeight() >= Portraits[name].height then 
+		return true
+	else
+		return false
+	end
+end
+
+function hide_portrait(name)
+	if not GUI then return end
+	Portraits[name].cursor = Portraits[name].cursor +  6
+	local new_y = Portraits[name].y + Portraits[name].cursor
+	local new_height = Portraits[name].height - (Portraits[name].cursor * 2)
+	Portraits[name].GUI:SetWndPos(vector2():set(Portraits[name].GUI:GetWndPos().x, new_y))
+	Portraits[name].GUI:SetWndSize(vector2():set(Portraits[name].GUI:GetWidth(), new_height))
+end
+
+function on_start_hide_portrait(name)
+	printdebug(LOG.RUN, LOG.UI_EXEC," starting hide_portrait")
+	if not GUI then return end
+	if name == "caller" then
+		Portraits[name].GUI = GUI.portrait_caller
+	else
+		Portraits[name].GUI = GUI.portrait_actor
+	end
+	Portraits[name].height = Portraits[name].GUI:GetHeight()
+	Portraits[name].cursor = 0
+	Portraits[name].y = Portraits[name].GUI:GetWndPos().y
+	return true
+end
+
+function on_stop_hide_portrait(name)
+	printdebug(LOG.RUN, LOG.UI_EXEC," stopping hide_portrait")
+end
+
+function portrait_hiding_completed(name)
+	if Portraits[name].GUI:GetHeight() <= 0 then 
 		return true
 	else
 		return false
@@ -1001,6 +1060,8 @@ end
 -- can be used as timed event callback or direct call
 
 local function unequip_radio(dialog)
+	npe_execution.Resume(Runner.caller_portrait_hiding.name)
+	npe_execution.Resume(Runner.actor_portrait_hiding.name)
 	-- handle radio type
 	local radio_type = npe_actions.Get_radio_type()
 	printdebug(LOG.INFO, LOG.UI," Play open sound for radio_type: " .. radio_type)
