@@ -53,7 +53,7 @@
 		The last thing you remember was that %c[d_red]explosion%c[d_white] or something that look like one.
 		\n
 		\n
-		You were suppoded to be out of %c[d_blue]it%c[d_white]
+		You were suppoded to be out of %c[d_blue]this%c[d_white]
 		\n
 		\n
 		That was the %c[d_blue]wish%c[d_white]...	
@@ -144,7 +144,7 @@
 		<text>%c[d_blue]Listen</text>
 	</string>
 	<string id="ui_mgs_codec_we_need_a_plan_card1_message">
-		<text>Somehow you ended up in the %c[d_blue]Loners%c[d_white] base. Rememeber? The first village we crossed when we entered the %c[d_blue]zone%c[d_white].
+		<text>Somehow you ended up in the %c[d_blue]Loners%c[d_white] base. Remember? The first village we crossed when we entered the %c[d_blue]zone%c[d_white].
 		\n
 		\n
 		This is sheer luck. You can use the same route to get out of there. Through the %c[d_red]military%c[d_white]checkpoint!
@@ -160,7 +160,7 @@
 		<text>%c[d_blue]Lets make a plan</text>
 	</string>
 	<string id="ui_mgs_codec_we_need_a_plan_card2_message">
-		<text>The only way to pass unnoticed is to %c[d_blue]disguise%c[d_white] as an army men yourself.
+		<text>The only way to pass unnoticed is to %c[d_blue]disguise%c[d_white] as an army man yourself.
 		\n
 		\n
 		Remember when we crossed those %c[d_red]bandits%c[d_white] at their hideout at the car park?
@@ -182,7 +182,7 @@
 		<text>Go to their %c[d_blue]hideout%c[d_white] and see if you can find his uniform
 		\n
 		\n
-		This time around it will difficult to fool them, so expect a %c[d_red]fight%c[d_white].
+		This time around it will be difficult to fool them, so expect a %c[d_red]fight%c[d_white].
 		\n
 		\n
 		Once you grab the %c[d_blue]uniform%c[d_white], go to the military checkpoint and try to pass as one of them.
@@ -199,7 +199,7 @@
 		<text>%c[d_blue]Listen</text>
 	</string>
 	<string id="ui_mgs_codec_look_for_help_card1_message">
-		<text>Since you are in the %c[d_blue]Loners base%c[d_white], I am sure the leader ther can help you.
+		<text>Since you are in the %c[d_blue]Loners base%c[d_white], I am sure the leader there can help you.
 		\n
 		\n
 		%c[d_blue]Fanatic%c[d_white] was his name. Go talk to him or any of his subordinates,
@@ -211,7 +211,7 @@
 		See if they have a "business" to attend in the %c[d_blue]car park%c[d_white].
 		\n
 		\n
-		Talk to him first and then ask to one of his %c[d_blue]subordinates%c[d_white].
+		Talk to him first and then ask one of his %c[d_blue]subordinates%c[d_white].
 		</text>
 	</string>
 <!-- fanatic_boars chapter -->
@@ -225,7 +225,7 @@
 		<text>Really, sending you to kill boars?
 		\n
 		\n
-		What do they do all day? Well at least he's coming with you and nwo you have some ammmo.
+		What do they do all day? Well at least he's coming with you, and now you have some ammo.
 		\n
 		\n
 		We need to find help, Snake.
@@ -242,7 +242,7 @@
 		<text>%c[d_blue]What!</text>
 	</string>
 	<string id="ui_mgs_codec_save_the_curier_card1_message">
-		<text>A %c[d_blue]curier%c[d_white] kept in hostage by the bandits?
+		<text>A %c[d_blue]courier%c[d_white] kept in hostage by the bandits?
 		\n
 		\n
 		So they are sending you to save him? Well after the boars I am not surprised.
