@@ -116,6 +116,8 @@ Sounds = {
 	},    			
 }
 
+local Delayed_sounds_events = {}
+
 local snd
 function Stop_sound()
 	printdebug(LOG.INFO, LOG.UI," Stop sound")
@@ -146,7 +148,14 @@ end
 function Play_sound_with_delay(sound, delay)
 	printdebug(LOG.INFO, LOG.UI," Play sound with delay: " .. sound .. " delay: " .. delay)
 	local sound_name = GetFilename(sound .. ".ogg")
+	Delayed_sounds_events[sound_name] = "play_sound_with_delay" .. sound_name
 	CreateTimeEvent("play_sound_with_delay", "play_sound_with_delay" .. sound_name, delay, Play_delayed_sound, sound)
+end
+
+function Purge_all_sounds_events()
+	for k,v in pairs(Delayed_sounds_events) do
+		RemoveTimeEvent("play_sound_with_delay",v)
+	end
 end
 
 function Enable_dof(enable)

@@ -144,9 +144,14 @@ Devices = {
     },
     radio = {
         devices = {
-            ["detector_radio"] = 1
+            ["detector_radio"] = 1,
         },
     },
+    mgs_codec = {
+        devices = {
+            ["mgs_codec"] = 1
+        },
+    },    
     geiger = {
         devices = {
             ["detector_geiger"] = 1

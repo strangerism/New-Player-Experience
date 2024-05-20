@@ -29,7 +29,7 @@ Runner ={
 		module = "npe_dialog_codec",
 		group_name = "codec_ui",
 		execution = npe_execution.TYPE.CONDITIONAL,
-		pause_condition = { "npe_dialog_codec", "codec_signal_target_level_reached" },
+		stop_condition = { "npe_dialog_codec", "codec_signal_target_level_reached" },
 		start_timer = 1,
 		loop_timer = 0.015,
 		functor = { "npe_dialog_codec", "run_codec_change_signal_level" },
@@ -53,7 +53,7 @@ Runner ={
 		group_name = "codec_ui",
 		execution = npe_execution.TYPE.CONDITIONAL,
 		stop_condition = { "npe_dialog_codec", "portrait_showing_completed", "caller" },
-        start_timer = 0.3,
+        start_timer = 0.15,
         loop_timer = 0.0,      
         functor = { "npe_dialog_codec", "show_portrait", "caller" },
 		start = { "npe_dialog_codec", "on_start_show_portrait", "caller" },
@@ -65,7 +65,7 @@ Runner ={
 		group_name = "codec_ui",
 		execution = npe_execution.TYPE.CONDITIONAL,
 		stop_condition = { "npe_dialog_codec", "portrait_showing_completed", "actor" },
-        start_timer = 0.3,
+        start_timer = 0.15,
         loop_timer = 0.0,        
         functor = { "npe_dialog_codec", "show_portrait", "actor" },
 		start = { "npe_dialog_codec", "on_start_show_portrait", "actor" },
@@ -217,6 +217,8 @@ function start_codec_portraits_and_signal_animations()
 	npe_execution.Resume(Runner.portraits_flickering_manager.name)
 	npe_execution.Resume(Runner.portrait_scanlines.name)
 	npe_execution.Resume(Runner.portrait_wide_scanlines.name)
+	if not GUI then return end
+	GUI:PlayCard()
 	-- signal successful execution of stop functor
 	return true
 end
@@ -638,7 +640,7 @@ local function equip_anomaly_radio(set)
 	npe_actions.set_detector_open_sound(Sounds[SOUNDS_SET].open)
 
 	-- start equipping animation
-	npe_actions.select_detector(npe_actions.Devices.radio)
+	npe_actions.select_detector(npe_actions.Devices.mgs_codec)
 end
 
 
@@ -665,7 +667,7 @@ local function equip_nerfs_radio(nerfs_radio_type,set)
 	CreateTimeEvent("npe_dialog_codec", "open_codec_dialog_te", open_time, open_codec_dialog_te, set)
 
 	-- start equipping animation
-	npe_actions.select_detector(npe_actions.Devices.radio)
+	npe_actions.select_detector(npe_actions.Devices.mgs_codec)
 end
 
 -- codec call loop functions
@@ -811,8 +813,6 @@ function UINewPlayerExperience:InitControls(set)
 
 		self.card_title = xml:InitTextWnd(set.dialog .. ":card_title",self.dialog)
 		self.message = xml:InitTextWnd(set.dialog .. ":message",self.dialog)
-
-		self:PlayCard()
 	end
 
 	printdebug(LOG.INFO, LOG.UI," Creating Codec controls")
@@ -934,6 +934,7 @@ end
 
 function UINewPlayerExperience:OnButtonContinue()
     printdebug(LOG.INFO, LOG.UI," OnButtonContinue")
+	npe_dialog.Purge_all_sounds_events()
 	self.cardIndex = self.cardIndex + 1
 	if self.cardIndex <= #self.set.cards and self.set.cards[self.cardIndex] then
 
@@ -963,6 +964,7 @@ local function close_dialog(dialog)
 	npe_manager.Unregister_dialog(dialog)
 	npe_manager.Resume_execution_Deprecated()
 	closing_dialog = false
+	npe_dialog.Purge_all_sounds_events()
 	return true
 end
 
