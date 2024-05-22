@@ -689,17 +689,17 @@ local function equip_anomaly_radio(set)
 	local callback_name = "npe_dialog_codec_open_detector"
 	AddScriptCallback(callback_name)
 	RegisterScriptCallback(callback_name,open_codec_dialog(set, callback_name))
-	npe_actions.set_callback_on_equip(callback_name)
+	npe_utils.Set_callback_on_radio_equip(callback_name)
 
 	-- configure radio ui and sounds 
 	if set.codec_frequency then
-		npe_actions.set_radio_freq(math.floor(set.codec_frequency))
+		npe_utils.Set_radio_freq(math.floor(set.codec_frequency))
 	end	
-	npe_actions.Mute_radio(true)
-	npe_actions.set_detector_open_sound(Sounds[SOUNDS_SET].open)
+	npe_utils.Mute_radio(true)
+	npe_utils.Set_radio_open_sound(Sounds[SOUNDS_SET].open)
 
 	-- start equipping animation
-	npe_actions.select_detector(npe_actions.Devices.mgs_codec)
+	npe_utils.Equip_radio()
 end
 
 
@@ -709,10 +709,10 @@ local function equip_nerfs_radio(nerfs_radio_type,set)
 	local sound_time
 	-- configure radio ui and sounds 
 	if set.codec_frequency then
-		npe_actions.set_radio_freq(math.floor(set.codec_frequency))
+		npe_utils.Set_radio_freq(math.floor(set.codec_frequency))
 	end	
-	npe_actions.Mute_radio(true)
-	if nerfs_radio_type == npe_actions.RADIO_TYPE.NERFS then 
+	npe_utils.Mute_radio(true)
+	if nerfs_radio_type == npe_utils.RADIO_TYPE.NERFS then 
 		open_time = 0.5
 		sound_time = 0.5
 	else -- DAR
@@ -726,7 +726,7 @@ local function equip_nerfs_radio(nerfs_radio_type,set)
 	CreateTimeEvent("npe_dialog_codec", "open_codec_dialog_te", open_time, open_codec_dialog_te, set)
 
 	-- start equipping animation
-	npe_actions.select_detector(npe_actions.Devices.mgs_codec)
+	npe_utils.Equip_radio()
 end
 
 -- codec call loop functions
@@ -755,9 +755,9 @@ local function codec_call_loop(set)
 	codec_ring_count = 0
 
 	-- handle radio type
-	local radio_type = npe_actions.Get_radio_type()
+	local radio_type = npe_utils.Get_radio_type()
 	printdebug(LOG.INFO, LOG.UI_EXEC," Play open sound for radio_type: " .. radio_type)
-	if radio_type == npe_actions.RADIO_TYPE.VANILLA then
+	if radio_type == npe_utils.RADIO_TYPE.VANILLA then
 		equip_anomaly_radio(set)
 	else
 		equip_nerfs_radio(radio_type,set)
@@ -1029,12 +1029,12 @@ end
 
 local function unequip_nerfs_radio(radio_type, dialog)
 	printdebug(LOG.INFO, LOG.UI," unequip_nerfs_radio radio_type: " .. radio_type)
-	npe_actions.Unequip_detector()
-	if radio_type == npe_actions.RADIO_TYPE.NERFS then
+	npe_utils.Unequip_radio()
+	if radio_type == npe_utils.RADIO_TYPE.NERFS then
 		local close_time = 0
 		local unmute_time = 2
 		CreateTimeEvent("npe_dialog_codec", "play_close_sound", close_time, npe_dialog.Play_sound, Sounds[SOUNDS_SET].close)
-		CreateTimeEvent("npe_dialog_codec", "unmute_anomaly_radio", unmute_time, npe_actions.Mute_radio, false)
+		CreateTimeEvent("npe_dialog_codec", "unmute_anomaly_radio", unmute_time, npe_utils.Mute_radio, false)
 		CreateTimeEvent("npe_dialog_codec", "close_dialog", close_time, close_dialog, dialog)
 	else
 		local close_time = 0.9
@@ -1042,18 +1042,18 @@ local function unequip_nerfs_radio(radio_type, dialog)
 		local unmute_time = 2
 		printdebug(LOG.INFO, LOG.UI," Play close sound after delay %s", close_time)
 		CreateTimeEvent("npe_dialog_codec", "play_close_sound", close_snd_time, npe_dialog.Play_sound, Sounds[SOUNDS_SET].close)
-		CreateTimeEvent("npe_dialog_codec", "unmute_anomaly_radio", unmute_time, npe_actions.Mute_radio, false)
+		CreateTimeEvent("npe_dialog_codec", "unmute_anomaly_radio", unmute_time, npe_utils.Mute_radio, false)
 		CreateTimeEvent("npe_dialog_codec", "close_dialog", close_time, close_dialog, dialog)
 	end
 end
 
 local function unequip_anomaly_radio(dialog)
 	printdebug(LOG.INFO, LOG.UI," unequip_anomaly_radio")
-	npe_actions.Unequip_detector()
+	npe_utils.Unequip_radio()
 	local close_time = 0
 	local unmute_time = 2
 	CreateTimeEvent("npe_dialog_codec", "play_close_sound", close_time, npe_dialog.Play_sound, Sounds[SOUNDS_SET].close)
-	CreateTimeEvent("npe_dialog_codec", "unmute_anomaly_radio", unmute_time, npe_actions.Mute_radio, false)
+	CreateTimeEvent("npe_dialog_codec", "unmute_anomaly_radio", unmute_time, npe_utils.Mute_radio, false)
 	CreateTimeEvent("npe_dialog_codec", "close_dialog", close_time, close_dialog, dialog)
 end
 
@@ -1063,9 +1063,9 @@ local function unequip_radio(dialog)
 	npe_execution.Resume(Runner.caller_portrait_hiding.name)
 	npe_execution.Resume(Runner.actor_portrait_hiding.name)
 	-- handle radio type
-	local radio_type = npe_actions.Get_radio_type()
+	local radio_type = npe_utils.Get_radio_type()
 	printdebug(LOG.INFO, LOG.UI," Play open sound for radio_type: " .. radio_type)
-	if radio_type == npe_actions.RADIO_TYPE.VANILLA then
+	if radio_type == npe_utils.RADIO_TYPE.VANILLA then
 		unequip_anomaly_radio(dialog)
 	else
 		unequip_nerfs_radio(radio_type, dialog)

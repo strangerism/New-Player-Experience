@@ -1,0 +1,16 @@
+[task_npe_actions_default]
+
+icon = ui_inGame2_Mesta_evakuatsii
+storyline = false
+prior = 100
+dont_send_update_news = true
+;title = 
+title_functor = npe_task_text_functor
+;descr = 
+descr_functor = npe_task_text_functor
+
+condlist_0 = {+drx_sl_dummy_info} complete
+
+stage_complete = 2
+target_functor = npe_task_target_functor
+

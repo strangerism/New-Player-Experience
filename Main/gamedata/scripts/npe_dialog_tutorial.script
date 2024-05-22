@@ -150,6 +150,32 @@ function UINewPlayerExperience:InitControls(set)
 	self:AddCallback("btn_prev", ui_events.BUTTON_CLICKED, self.OnButtonPrev, self)
 
 	self:UpdateButtons()
+
+	self:PlayStartSounds()
+end
+
+function UINewPlayerExperience:PlayStartSounds()
+	if self.set.start_sounds then
+		-- play set sounds
+		local set_sounds = self.set.start_sounds
+		local starting_delay = 0
+		for i = 1, #set_sounds do
+			npe_dialog.Play_sound_with_delay(set_sounds[i].sound, starting_delay)
+			starting_delay = starting_delay + set_sounds[i].duration + 1
+		end		
+	end
+end
+
+function UINewPlayerExperience:PlayEndSounds()
+	if self.set.end_sounds then
+		-- play set sounds
+		local set_sounds = self.set.end_sounds
+		local starting_delay = 0
+		for i = 1, #set_sounds do
+			npe_dialog.Play_sound_with_delay(set_sounds[i].sound, starting_delay)
+			starting_delay = starting_delay + set_sounds[i].duration + 1
+		end		
+	end
 end
 
 ---@diagnostic disable-next-line: duplicate-set-field
@@ -282,6 +308,7 @@ end
 
 ---@diagnostic disable-next-line: duplicate-set-field
 function UINewPlayerExperience:Close()
+	self:PlayEndSounds()
 	if self.set.save_context then
 		self:Save()
 	end	
