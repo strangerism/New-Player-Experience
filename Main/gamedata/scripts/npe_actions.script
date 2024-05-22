@@ -149,7 +149,7 @@ function create_task(name, desc, target_id,complete_functor, create_functor)
 
     if complete_functor == nil then
         -- use the default functor
-        complete_functor = { "npe_events", "npe_on_near_game_object", task_target_id}
+        complete_functor = { "npe_events", "on_near_game_object", task_target_id}
     end
 
     local runner_config = {
