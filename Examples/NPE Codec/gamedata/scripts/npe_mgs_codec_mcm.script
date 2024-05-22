@@ -9,12 +9,6 @@ function has_codec()
     return npe_events.owns_item("mgs_codec")
 end
 
-function old_friend_eligible()
-    
-    local nanomachines_completed = npe_events.on_set_completed("mgs_codec", "nanomachines")
-    printf("[NPE] Old Friend Eligible: has_codec="..tostring(has_codec).." nanomachines_completed="..tostring(nanomachines_completed))
-    return has_codec() and nanomachines_completed
-end
 
 -- Actions and Events use functors definitions which must support the <functor> interface
 -- { "<script_name>", "<function_name>", "any_params".. }
@@ -58,55 +52,60 @@ local ACTION = {
 }
 
 -- Events must define an handler that support the <npe_executable> interface, which is
--- { name = <executable_id:string>, functor {functor_interface}}
+-- { name = <executable_id:string>, functors {{functor_interface}, ... }}
 local EVENT = {
     OLD_FRIEND = { 
         name = "Old Friend", 
         handler = { 
             name = "on_old_friend_eligible",
-            functor = {"npe_mgs_codec_mcm", "old_friend_eligible" }
+            functors = {
+                {"npe_mgs_codec_mcm", "has_codec" },
+                {"npe_events", "on_sets_completed", "mgs_codec", {"nanomachines"} },
+            }
         } 
     },  
     WE_NEED_A_PLAN = { 
         name = "We Need A Plan",
         handler = { 
             name = "on_we_need_a_plan_eligible",
-            functor = {"npe_events", "on_sets_completed", "mgs_codec", {"old_friend"} }
+            functors = {
+                {"npe_events", "on_sets_completed", "mgs_codec", {"old_friend"} },
+            }
         } 
     },   
     LOOK_FOR_HELP = { 
         name = "Look For Help",
         handler = { 
             name = "on_look_for_help_eligible",
-            functor = {"npe_events", "on_sets_completed", "mgs_codec", {"old_friend", "we_need_a_plan"} }
+            functors = {{"npe_events", "on_sets_completed", "mgs_codec", {"old_friend", "we_need_a_plan"} }}
         } 
     },   
     FANATIC_BOARS = { 
         name = "Fanatic Boars",
         handler = { 
             name = "on_fanatic_boars_task_received",
-            functor = {"npe_events", "is_on_task", npe.TASK.fanatic_training_day_boar_hunting }
+            functors = {{"npe_events", "is_on_task", npe.TASK.fanatic_training_day_boar_hunting }}
         } 
     },         
     SAVE_THE_CURIER = { 
         name = "Save The Curier",
         handler = { 
             name = "on_save_the_curier_task_received",
-            functor = {"npe_events", "is_on_task", npe.TASK.wolf_rescue_courier_from_cordon }
+            functors = {{"npe_events", "is_on_task", npe.TASK.wolf_rescue_courier_from_cordon }}
         } 
     },   
     WARN_TOWARDS_MILITARY = { 
         name = "Towards Military Base", 
         handler = { 
             name = "warn_on_towards_military_base",
-            functor = {"npe_events", "on_near_smart_terrain", npe.SMART_TERRAIN.cordon_loners_se_first_post }
+            functors = {{"npe_events", "on_near_game_object", 15740, 190}}
         } 
     },      
     DANGER_NEAR_MILITARY = { 
         name = "Near Military Base", 
         handler = { 
             name = "warn_on_near_military_base",
-            functor = {"npe_events","on_near_smart_terrain", npe.SMART_TERRAIN.cordon_military_base, 80 }
+            functors = {{"npe_events","on_near_game_object", 15740, 120 }}
         } 
     },    
 }

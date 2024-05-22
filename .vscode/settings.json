@@ -39,6 +39,7 @@
         "GetFontGraffiti50Russian",
         "npe_mcm",
         "npe",
+        "npe_events",
         "actor_menu",
         "ui_mcm",
         "actor_status",
@@ -51,6 +52,7 @@
         "utils_xml",
         "npe_utils",
         "dar_rf_noise",
-        "is_empty"
+        "is_empty",
+        "task_functor"
     ]
 }

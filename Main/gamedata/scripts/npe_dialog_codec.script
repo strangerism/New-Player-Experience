@@ -1008,9 +1008,6 @@ local closing_dialog = false
 local function close_dialog(dialog)
 	printdebug(LOG.STOP, LOG.UI," close_dialog_after_delay")
 	stop_codec_signal_manager()
-	npe_execution.Stop(Runner.portrait_scanlines.name)
-	npe_execution.Stop(Runner.portrait_wide_scanlines.name)
-	npe_execution.Stop(Runner.portraits_flickering_manager.name)
 	npe_dialog.Disable_dof()
 ---@diagnostic disable-next-line: undefined-field
 	GUI:DoEndActions()
@@ -1057,11 +1054,20 @@ local function unequip_anomaly_radio(dialog)
 	CreateTimeEvent("npe_dialog_codec", "close_dialog", close_time, close_dialog, dialog)
 end
 
+local function close_codec_portraits()
+	printdebug(LOG.INFO, LOG.UI," close_codec_portraits")
+	npe_execution.Stop(Runner.portrait_scanlines.name)
+	npe_execution.Stop(Runner.portrait_wide_scanlines.name)
+	npe_execution.Stop(Runner.portraits_flickering_manager.name)
+	npe_execution.Resume(Runner.caller_portrait_hiding.name)
+	npe_execution.Resume(Runner.actor_portrait_hiding.name)
+	return true
+end
+
 -- can be used as timed event callback or direct call
 
 local function unequip_radio(dialog)
-	npe_execution.Resume(Runner.caller_portrait_hiding.name)
-	npe_execution.Resume(Runner.actor_portrait_hiding.name)
+	close_codec_portraits()
 	-- handle radio type
 	local radio_type = npe_utils.Get_radio_type()
 	printdebug(LOG.INFO, LOG.UI," Play open sound for radio_type: " .. radio_type)

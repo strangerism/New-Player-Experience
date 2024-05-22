@@ -607,8 +607,15 @@ function run_npe_context_execution()  -- TODO refactor to a queue with key, valu
         local handler = table.remove(npeExecutionQueue.handlers, 1)
         if not handler.executed then
             printdebug(LOG.INFO, LOG.EXEC," Running handler [%s]", handler.name)
-            -- print_functor(handler.functor)
-            local success = execute_func(unpack(handler.functor))   
+            local success = true
+            for i, functor in ipairs(handler.functors) do
+                print_functor(functor)
+                success = execute_func(unpack(functor))
+                printdebug(LOG.INFO, LOG.EXEC," functor %s executed. Success: %s", functor[1], success)
+                if not success then
+                    break
+                end
+            end
             if success then
                 printdebug(LOG.ADD, LOG.EXEC," Handler [%s] executed. Success: %s", handler.name, success)
                 handler.executed = true

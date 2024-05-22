@@ -23,14 +23,14 @@ local EVENT = {
         name = "Binoculars Owned", 
         handler = { 
             name = "on_actor_owning_binoculars",
-            functor = {"npe_examples_mcm", "owns_item", "wpn_binoc_inv" }
+            functors = {{"npe_examples_mcm", "owns_item", "wpn_binoc_inv" }}
         } 
     },
     VODKA_OWNED = { 
         name = "Vodka Owned", 
         handler = { 
             name = "on_actor_owning_vodka",
-            functor = {"npe_examples_mcm", "owns_item", "vodka" }
+            functors = {{"npe_examples_mcm", "owns_item", "vodka" }}
         } 
     },    
 }
@@ -53,7 +53,8 @@ local deck_npe_examples = {
             },
             context = {
                 event = EVENT.BINOCULARS_OWNED,
-                delay = 15,
+                delay = 0,
+                strict = true,
             },
         },
         {
