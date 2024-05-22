@@ -5,18 +5,21 @@ local printdebug = npe_manager.Printdebug_npe
 
 -- custom functors
 
-function old_friend_eligible()
-    
-    local has_radio = npe.owns_item("mgs_codec")
-    local nanomachines_completed = npe.npe_on_set_completed("mgs_codec", "nanomachines")
-    printf("[NPE] Old Friend Eligible: has_radio="..tostring(has_radio).." nanomachines_completed="..tostring(nanomachines_completed))
-    return has_radio and nanomachines_completed
+function has_codec()
+    return npe.owns_item("mgs_codec")
 end
 
--- some constants use functors definitions which must support the <functor> interface
+function old_friend_eligible()
+    
+    local nanomachines_completed = npe.npe_on_set_completed("mgs_codec", "nanomachines")
+    printf("[NPE] Old Friend Eligible: has_codec="..tostring(has_codec).." nanomachines_completed="..tostring(nanomachines_completed))
+    return has_codec() and nanomachines_completed
+end
+
+-- Actions and Events use functors definitions which must support the <functor> interface
 -- { "<script_name>", "<function_name>", "any_params".. }
 
--- Actions must support the <npe_exacutable> interface, which is
+-- Actions must support the <npe_executable> interface, which is
 -- { name = <executable_id:string>, functor {functor_interface}, delay = <delay:int> }
 local ACTION = {
     NOOSPHERE_BUFF = {
@@ -24,17 +27,38 @@ local ACTION = {
         descr = "Noosphere Buff",
         functor = {"npe_actions", "set_all_psy_ppe_effects", 5, "nanomachines" },
         delay = 0, -- not used
-    },        
+    },
     ADD_CODEC_TO_STASH = {
         name = "add_codec_to_stash",
         descr = "Add Codec To Stash",
-        functor = {"npe_actions", "add_to_stash", {"mgs_codec"}, 15340 }, -- sidorovich box
+        functor = {"npe_actions", "add_to_stash", {"mgs_codec"}, 15340 }, -- 15340=sidorovich box
         delay = 10, -- not used
     },
+    CREATE_TASK_FIND_CODEC = {
+        name = "task_find_codec",
+        descr = "Find the codec",
+        functor = {
+                    "npe_actions", "create_task", -- action functor for creating tasks
+                    "Recover the codec", "Somebody stole your codec, find it", -- task title and description
+                    15340,  -- target_id = 15340   sidorovich box
+                    {"npe", "owns_item", "mgs_codec"} -- completion condition functor (optional)
+        }, 
+        delay = 10, -- not used
+    },
+    CREATE_TASK_G0_TO_THE_CAR_PARK = {
+        name = "go_to_the_car_park",
+        descr = "Go to the car park",
+        functor = {
+                    "npe_actions", "create_task", -- action functor for creating tasks
+                    "Go to the car park", "Go to the car part and look around for an army uniform, if you can find one", -- task title and description
+                    15228,  -- target_id = 15228 fireplace
+        }, 
+        delay = 10, -- not used
+    },    
 }
 
--- Actions must define an handler that support the <npe_exacutable> interface, which is
--- { name = <executable_id:string>, functor {functor_interface}, delay = <delay:int> }
+-- Events must define an handler that support the <npe_executable> interface, which is
+-- { name = <executable_id:string>, functor {functor_interface}}
 local EVENT = {
     OLD_FRIEND = { 
         name = "Old Friend", 
@@ -106,16 +130,22 @@ local deck_npe_mgs_codec = {
                 ACTION.NOOSPHERE_BUFF, 
                 ACTION.ADD_CODEC_TO_STASH 
             },
+            start_sounds = { -- this plays thorough the entire set, bg music, narrations, etc
+                [1] = { sound = "npe\\mgs_codec\\voiceover\\snake\\what",
+                        duration = 1 },
+            },
             cards = {
                 [1] = {
                     title = "ui_mgs_codec_nanomachines_card1_title",
                     description = "ui_mgs_codec_nanomachines_card1_message",
-                    image = "ui_mgs_codec_nanomachines_card1_wish_granter",                               
+                    image = "ui_mgs_codec_nanomachines_card1_wish_granter",
+                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\listentome",
+                        duration = 1 },
                 },
                 [2] = {
                     title = "ui_mgs_codec_nanomachines_card2_title",
                     description = "ui_mgs_codec_nanomachines_card2_message",
-                    image = "ui_mgs_codec_nanomachines_card2_sidorovich",                               
+                    image = "ui_mgs_codec_nanomachines_card2_sidorovich",
                 },                          
             },
             context = {
@@ -124,8 +154,14 @@ local deck_npe_mgs_codec = {
                 strict = true,
                 pause_game = false,
             },
-            end_actions = nil
-        },         
+            end_actions = {
+                ACTION.CREATE_TASK_FIND_CODEC
+            },
+            end_sounds = { -- this list of sounds can plays upon closing the tutorial.
+                [1] = { sound = "npe\\mgs_codec\\voiceover\\snake\\whats_going_on",
+                        duration = 1 },
+            },
+        },
         {
             id = "old_friend",
             title = "ui_mcm_npe_module_mgs_codec_old_friend_set_title",
@@ -226,6 +262,9 @@ local deck_npe_mgs_codec = {
                 pause_game = false,
             },
             save_context = {
+            },
+            end_actions = {
+                ACTION.CREATE_TASK_G0_TO_THE_CAR_PARK
             },
             completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\call-me-if-you-need-to", duration = 2 },
         },          

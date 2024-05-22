@@ -53,7 +53,7 @@ local deck_npe_examples = {
             },
             context = {
                 event = EVENT.BINOCULARS_OWNED,
-                delay = 0,
+                delay = 15,
             },
         },
         {
@@ -68,7 +68,8 @@ local deck_npe_examples = {
             },
             context = {
                 event = EVENT.VODKA_OWNED,
-                delay = 0,
+                delay = 15,
+                strict = true,
             },
         },        
         {
@@ -83,6 +84,7 @@ local deck_npe_examples = {
             },
             context = {
                 event = npe.EVENT.ENTERED_ANOMALOUS_FIELD,
+                delay = 5,
             },
         },
         {
