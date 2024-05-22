@@ -96,7 +96,7 @@ local run_execution_manager_loop = false
 -- Execution Watch settings
 local execution_watch_name = 'NPE_Execution_Manager_Watch'
 local run_execution_watch = false
-local execution_watch_timer = 15
+local execution_watch_timer = 300
 -- runners settings
 local runners_default_group_name = 'NPE_Runners'
 

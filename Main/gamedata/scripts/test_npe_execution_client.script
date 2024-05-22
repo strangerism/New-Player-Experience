@@ -72,7 +72,7 @@ function maximum_loops(runner_name, description, max_loops)
     printdebug(LOG.RUN, LOG.NPE_EXE," Stop Condition")
 
     printdebug(LOG.INFO, LOG.NPE_EXE, description .. " " .. max_loops)
-    local loop_count = npe_execution.Get_runner_count(runner_name)
+    local loop_count = npe_execution.GetRunnerCount(runner_name)
     printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " loop_count: " .. loop_count)
     -- Client can use directly the npe_execution API
     if loop_count >= max_loops then
@@ -194,7 +194,7 @@ function toggle_finite_runner() -- timed event
     if not run_toggle_loop then return true end
     if npe_execution.Is_running() then
         if not can_stop then
-            if npe_execution.Is_runner_enabled(CLIENT_RUNNER_CONFIG.default_finite.name) then
+            if npe_execution.IsRunnerEnabled(CLIENT_RUNNER_CONFIG.default_finite.name) then
                 printdebug(LOG.RUN, LOG.NPE_EXE," toggle_finite_runner Pause Runner")
                 -- pause the runner without resetting its state (loop count)
                 npe_execution.Pause(CLIENT_RUNNER_CONFIG.default_finite.name)
@@ -299,7 +299,7 @@ local function start_test_exclusive()
 end
 
 local test_started = false
-local function client_on_update()
+local function start_test()
     if not test_started then -- only once
         printdebug(LOG.START, LOG.NPE_EXE," Start Client Test")
         test_started = true
@@ -319,8 +319,12 @@ local function client_on_update()
 end
 
 
+local function client_on_update()
+    -- start_test()
+end
+
 function client_on_first_update()
-    printlog(LOG.RUN, LOG.NPE_EXE," Client First Update")
+    -- printlog(LOG.RUN, LOG.NPE_EXE," Client First Update")
 end
 
 if AddScriptCallback then
@@ -329,7 +333,7 @@ end
 
 
 function npe_on_log_update()
-    printf("NPE EVENT LOG UPDATE")
+    -- printf("NPE EVENT LOG UPDATE")
     LOG = npe_manager.LOG
 end
 

@@ -134,6 +134,7 @@ Printdebug_npe = printdebug
 local function printtrace(type,category, msg,...) -- debug logging
 	if Settings.trace_logs then printlog(type,category, msg,...) end
 end
+Printtrace_npe = printtrace
 
 local function print_table(t, indent)
     if not t then
@@ -494,7 +495,7 @@ local function update_runners_configs()
             group_name = "play",
             execution = npe_execution.TYPE.QUEUE,
             queue = { "npe_manager", "get_playableQueue"},
-            start_timer = 3, --Settings.play_loop,
+            start_timer = 10, --Settings.play_loop,
             functor = { "npe_manager", "play_set" }
         },
         play_now_set_queue = {
@@ -504,7 +505,7 @@ local function update_runners_configs()
             exclusive = true,
             execution = npe_execution.TYPE.QUEUE,
             queue = { "npe_manager", "get_playableHighPrioQueue"},
-            start_timer = 3,
+            start_timer = 1,
             functor = { "npe_manager", "play_now_set" }
         },                   
     }    

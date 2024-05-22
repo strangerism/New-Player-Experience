@@ -48,6 +48,9 @@
         "exec_console_cmd",
         "get_console_cmd",
         "ssfx_weapons_dof",
-        "utils_xml"
+        "utils_xml",
+        "npe_utils",
+        "dar_rf_noise",
+        "is_empty"
     ]
 }
