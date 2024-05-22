@@ -25,7 +25,7 @@ function owns_item(item)
     return found
 end
 -- return true if the actor is bleeding
-function npe_on_actor_bleeding()
+function on_actor_bleeding()
     if db.actor == nil then
         return false
     end
@@ -33,7 +33,7 @@ function npe_on_actor_bleeding()
     return bleeding
 end
 -- return true if the actor is irradiated
-function npe_on_actor_irradiated()
+function on_actor_irradiated()
     if db.actor == nil then
         return false
     end
@@ -41,7 +41,7 @@ function npe_on_actor_irradiated()
     return irradiated
 end
 -- return true if the actor is stressed
-function npe_on_actor_stressed()
+function on_actor_stressed()
     if db.actor == nil then
         return false
     end
@@ -49,7 +49,7 @@ function npe_on_actor_stressed()
     return stressed
 end
 -- return true if the actor is experiencing madness
-function npe_on_actor_mad()
+function on_actor_mad()
     if db.actor == nil then
         return false
     end
@@ -57,37 +57,37 @@ function npe_on_actor_mad()
     return madness
 end
 -- return true if the actor is hungry
-function npe_on_actor_hungry()
+function on_actor_hungry()
     local hungry = actor_status.get_satienty(true) > 0
     return hungry
 end
 -- return true if the actor is overweight
-function npe_on_actor_overweight()
+function on_actor_overweight()
     local overweight = actor_status.get_overweight(true) > 0
     return overweight
 end
 
-function npe_on_actor_thirsty()
+function on_actor_thirsty()
     -- local thirsty = actor_status.get_thirst(true) > 0
     -- return thirsty
     return false
 end
 
 -- returns true if set has been played, completed
-function npe_on_set_completed(module, set_id)
+function on_set_completed(module, set_id)
     return  npe_mcm.npe_module_get_setting(module, set_id)
 end
 -- returns true if all sets have been played, completed
-function npe_on_sets_completed(module, set_id_table)
+function on_sets_completed(module, set_id_table)
     for _, set_id in ipairs(set_id_table) do
-        if not npe_on_set_completed(module, set_id) then
+        if not on_set_completed(module, set_id) then
             return false
         end
     end
     return true
 end
 -- return true if the actor is on a task
-function npe_is_on_task(task)
+function is_on_task(task)
     printdebug(LOG.INFO, LOG.EVENT," looking for task " .. task)
     local has_task = false
     task_manager.task_ini:section_for_each(function(task_id)
@@ -101,7 +101,7 @@ end
 
 -- return true if the actor is near a smart terrain with the given name
 local default_limit_distance = 50
-function npe_on_near_smart_terrain(smart_name, near_distance)
+function on_near_smart_terrain(smart_name, near_distance)
     if near_distance == nil then
         near_distance = default_limit_distance
     end
@@ -120,7 +120,7 @@ end
 
 -- return true if the actor is near a game object with the id
 local default_limit_distance = 5
-function npe_on_near_game_object(id, near_distance)
+function on_near_game_object(id, near_distance)
     if near_distance == nil then
         near_distance = default_limit_distance
     end
@@ -156,10 +156,10 @@ end
 local function actor_on_update()
     -- printdebug(LOG.INFO, LOG.EVENT," Last_npc_talked = " .. tostring(Last_npc_talked))
 
-    -- if npe_on_near_smart_terrain(SMART_TERRAIN.cordon_loners_base) then
+    -- if on_near_smart_terrain(SMART_TERRAIN.cordon_loners_base) then
     --     printdebug(LOG.INFO, LOG.EVENT," Near cordon_loners_base ")
     -- end
-    -- if npe_on_near_smart_terrain(SMART_TERRAIN.cordon_military_base) then
+    -- if on_near_smart_terrain(SMART_TERRAIN.cordon_military_base) then
     --     printdebug(LOG.INFO, LOG.EVENT," Near cordon_military_base ")
     -- end
     -- if smart_terrain.nearest_to_actor_smart.id then

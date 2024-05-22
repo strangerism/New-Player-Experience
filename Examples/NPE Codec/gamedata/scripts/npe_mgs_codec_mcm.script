@@ -11,7 +11,7 @@ end
 
 function old_friend_eligible()
     
-    local nanomachines_completed = npe_events.npe_on_set_completed("mgs_codec", "nanomachines")
+    local nanomachines_completed = npe_events.on_set_completed("mgs_codec", "nanomachines")
     printf("[NPE] Old Friend Eligible: has_codec="..tostring(has_codec).." nanomachines_completed="..tostring(nanomachines_completed))
     return has_codec() and nanomachines_completed
 end
@@ -71,42 +71,42 @@ local EVENT = {
         name = "We Need A Plan",
         handler = { 
             name = "on_we_need_a_plan_eligible",
-            functor = {"npe_events", "npe_on_sets_completed", "mgs_codec", {"old_friend"} }
+            functor = {"npe_events", "on_sets_completed", "mgs_codec", {"old_friend"} }
         } 
     },   
     LOOK_FOR_HELP = { 
         name = "Look For Help",
         handler = { 
             name = "on_look_for_help_eligible",
-            functor = {"npe_events", "npe_on_sets_completed", "mgs_codec", {"old_friend", "we_need_a_plan"} }
+            functor = {"npe_events", "on_sets_completed", "mgs_codec", {"old_friend", "we_need_a_plan"} }
         } 
     },   
     FANATIC_BOARS = { 
         name = "Fanatic Boars",
         handler = { 
             name = "on_fanatic_boars_task_received",
-            functor = {"npe_events", "npe_is_on_task", npe.TASK.fanatic_training_day_boar_hunting }
+            functor = {"npe_events", "is_on_task", npe.TASK.fanatic_training_day_boar_hunting }
         } 
     },         
     SAVE_THE_CURIER = { 
         name = "Save The Curier",
         handler = { 
             name = "on_save_the_curier_task_received",
-            functor = {"npe_events", "npe_is_on_task", npe.TASK.wolf_rescue_courier_from_cordon }
+            functor = {"npe_events", "is_on_task", npe.TASK.wolf_rescue_courier_from_cordon }
         } 
     },   
     WARN_TOWARDS_MILITARY = { 
         name = "Towards Military Base", 
         handler = { 
             name = "warn_on_towards_military_base",
-            functor = {"npe_events", "npe_on_near_smart_terrain", npe.SMART_TERRAIN.cordon_loners_se_first_post }
+            functor = {"npe_events", "on_near_smart_terrain", npe.SMART_TERRAIN.cordon_loners_se_first_post }
         } 
     },      
     DANGER_NEAR_MILITARY = { 
         name = "Near Military Base", 
         handler = { 
             name = "warn_on_near_military_base",
-            functor = {"npe_events","npe_on_near_smart_terrain", npe.SMART_TERRAIN.cordon_military_base, 80 }
+            functor = {"npe_events","on_near_smart_terrain", npe.SMART_TERRAIN.cordon_military_base, 80 }
         } 
     },    
 }
