@@ -132,24 +132,6 @@ task_functor.npe_task_text_functor = function (task_id,field,p,tsk)
     end
 end
 
--- default functor for the task completion
-local wp_clear_dist = 5
-function check_waypoint_proximity(id)
-    printdebug(LOG.INFO, LOG.ACTION," check_waypoint_proximity("..tostring(id)..")")
-    local se_obj = id and alife_object(id)
-    if (not se_obj) or not (se_obj and se_obj.online) then 
-        printdebug(LOG.INFO, LOG.ACTION," waypoint does not exist or is not online")
-        return 
-    end
-    local szpos = se_obj.position
-    local dist = szpos:distance_to(db.actor:position()) or 0
-    printdebug(LOG.INFO, LOG.ACTION," distance to waypoint = "..dist)
-    if dist <= wp_clear_dist then
-        return true
-    else
-        return false
-    end
-end
 
 local default_task_id  = "task_npe_actions_default"
 function create_task(name, desc, target_id,complete_functor, create_functor)
@@ -167,7 +149,7 @@ function create_task(name, desc, target_id,complete_functor, create_functor)
 
     if complete_functor == nil then
         -- use the default functor
-        complete_functor = { "npe_actions", "check_waypoint_proximity", task_target_id}
+        complete_functor = { "npe_events", "npe_on_near_game_object", task_target_id}
     end
 
     local runner_config = {
@@ -198,6 +180,8 @@ end
 function actor_on_item_put_in_box(box, itm)
 	printdebug(LOG.INFO, LOG.ACTION," box_id = " .. box:id())
 end
+
+-------------------------------------------------------------------------- GANE SYSTEM CALLBACKS --------------------------------------------------------------------------
 
 function npe_on_log_update()
     printf("NPE EVENT LOG UPDATE")

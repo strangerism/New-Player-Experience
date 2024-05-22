@@ -1,18 +1,34 @@
-local printlog = npe_manager.Printlog_npe
-local printdebug = npe_manager.Printdebug_npe
-LOG = npe_manager.LOG
--- This file contains the events that can be used to trigger the NPE system
--- The events are defined as constants
+----------------------------------------------------------------- NPE CONSTANTS AND PREFABS -----------------------------------------------------------------
 
+-- This file contains the built-in events that can be used to trigger the NPE system
+-- The events are defined as constants
+-- It also contains all the constants that can be referenced in the npe_modules
+
+-- module types is referenced in the EVENTs
 MODULE_TYPE = {
     NONE = "NONE",
     NPE = "NPE",
     ANOMALY = "ANOMALY",
 }
+-- Dialog type is referenced in the npe_module's deck definitions
 DIALOG = {
     UI_TUTORIAL = "npe_dialog_tutorial",
     UI_CODEC = "npe_dialog_codec"
 }
+-- Tasks can be referenced in the npe_modules custom events  
+TASK = {
+    fanatic_training_day_boar_hunting = "task_fanat_training_1",
+    wolf_mutant_threat_from_cordon = "esc_2_12_stalker_wolf_task_1_name",
+    wolf_rescue_courier_from_cordon = "esc_2_12_stalker_wolf_task_2_name"
+}
+-- smart terrains can be referenced in the npe_modules custom events
+SMART_TERRAIN = {
+    cordon_loners_base = "esc_smart_terrain_2_12",
+    cordon_military_base = "esc_smart_terrain_3_16",
+    cordon_loners_se_first_post = "esc_smart_terrain_4_13",
+    cordon_underpass_workshop_overlook = "esc_smart_terrain_5_12",
+}
+-- the full list of built-in events that can be referenced in the npe_modules sets' contexts definitions
 EVENT = {
 
     GAME_START = { name = "Game Start", handler = { name ="on_game_start", module = MODULE_TYPE.NONE } },
@@ -36,13 +52,13 @@ EVENT = {
     ACTOR_USE_NPC_CORPSE = { name = "Check NPC Corpse", handler = { name = "npc_on_use", module = MODULE_TYPE.ANOMALY } },
     ACTOR_DEATH = { name = "Actor Death", handler = nil, module = MODULE_TYPE.NPE },
     ACTOR_HIT = { name = "Actor Hit", handler = { name = "actor_on_hit_callback", module = MODULE_TYPE.ANOMALY } },
-    ACTOR_BLEEDING = { name = "Actor Bleeding", handler = { name = "npe_on_actor_bleeding", functor = { "npe", "npe_on_actor_bleeding" }, module = MODULE_TYPE.NPE } },
-    ACTOR_IRRADIATED = { name = "Actor Irradiated", handler = { name = "npe_on_actor_irradiated", functor = { "npe", "npe_on_actor_irradiated" }, module = MODULE_TYPE.NPE } },
-    ACTOR_HUNGRY = { name = "Actor Hungry", handler = { name = "npe_on_actor_hungry", functor = { "npe", "npe_on_actor_hungry" }, module = MODULE_TYPE.NPE } },
-    ACTOR_OVERWEIGHT = { name = "Actor Overweight", handler = { name = "npe_on_actor_overweight", functor = { "npe", "npe_on_actor_overweight" }, module = MODULE_TYPE.NPE } },
-    ACTOR_THIRSTY = { name = "Actor Thirsty", handler = { name = "npe_on_actor_thirsty", functor = { "npe", "npe_on_actor_thirsty" }, module = MODULE_TYPE.NPE } },
-    ACTOR_STRESSED = { name = "Actor Stressed", handler = { name = "npe_on_actor_stressed", functor = { "npe", "npe_on_actor_stressed" }, module = MODULE_TYPE.NPE } },
-    ACTOR_MAD = { name = "Actor Mad", handler = { name = "npe_on_actor_mad", functor = { "npe", "npe_on_actor_mad" }, module = MODULE_TYPE.NPE } },
+    ACTOR_BLEEDING = { name = "Actor Bleeding", handler = { name = "npe_on_actor_bleeding", functor = { "npe_events", "npe_on_actor_bleeding" }, module = MODULE_TYPE.NPE } },
+    ACTOR_IRRADIATED = { name = "Actor Irradiated", handler = { name = "npe_on_actor_irradiated", functor = { "npe_events", "npe_on_actor_irradiated" }, module = MODULE_TYPE.NPE } },
+    ACTOR_HUNGRY = { name = "Actor Hungry", handler = { name = "npe_on_actor_hungry", functor = { "npe_events", "npe_on_actor_hungry" }, module = MODULE_TYPE.NPE } },
+    ACTOR_OVERWEIGHT = { name = "Actor Overweight", handler = { name = "npe_on_actor_overweight", functor = { "npe_events", "npe_on_actor_overweight" }, module = MODULE_TYPE.NPE } },
+    ACTOR_THIRSTY = { name = "Actor Thirsty", handler = { name = "npe_on_actor_thirsty", functor = { "npe_events", "npe_on_actor_thirsty" }, module = MODULE_TYPE.NPE } },
+    ACTOR_STRESSED = { name = "Actor Stressed", handler = { name = "npe_on_actor_stressed", functor = { "npe_events", "npe_on_actor_stressed" }, module = MODULE_TYPE.NPE } },
+    ACTOR_MAD = { name = "Actor Mad", handler = { name = "npe_on_actor_mad", functor = { "npe_events", "npe_on_actor_mad" }, module = MODULE_TYPE.NPE } },
     ACTOR_SLEEP = { name = "Actor Sleep", handler = "actor_on_sleep", module = MODULE_TYPE.NPE },
     ACTOR_RANK_UP = { name = "Actor Rank Up", handler = nil, module = MODULE_TYPE.NPE },
     ACTOR_LEVEL_UP = { name = "Actor Level Up", handler = nil, module = MODULE_TYPE.NPE },
@@ -85,171 +101,3 @@ EVENT = {
     TALKED_TO_NPC = { name = "Talked To NPC", handler = nil, module = MODULE_TYPE.NPE },
 
 }
--- list of all the events that can be triggered
-
-function owns_item(item)
-    printf("Checking if actor owns item: %s", item)
-    local found = false
-
-	local function check_items(actor,itm)
-		local sec = itm:section()
-        if sec == item then
-            found = true
-        end
-	end
-	db.actor:iterate_inventory(check_items,db.actor)
-
-    return found
-end
-
-function npe_on_actor_bleeding()
-    if db.actor == nil then
-        return false
-    end
-    local bleeding = db.actor.bleeding > 0
-    return bleeding
-end
-
-function npe_on_actor_irradiated()
-    if db.actor == nil then
-        return false
-    end
-    local irradiated = db.actor.radiation > 0
-    return irradiated
-end
-
-function npe_on_actor_stressed()
-    if db.actor == nil then
-        return false
-    end
-    local stressed = db.actor.psy_health < 1
-    return stressed
-end
-
-function npe_on_actor_mad()
-    if db.actor == nil then
-        return false
-    end
-    local madness = db.actor.psy_health < 0.5
-    return madness
-end
-
-function npe_on_actor_hungry()
-    local hungry = actor_status.get_satienty(true) > 0
-    return hungry
-end
-
-function npe_on_actor_overweight()
-    local overweight = actor_status.get_overweight(true) > 0
-    return overweight
-end
-
-function npe_on_actor_thirsty()
-    -- local thirsty = actor_status.get_thirst(true) > 0
-    -- return thirsty
-    return false
-end
-
--- returns true if set has been played, completed
-function npe_on_set_completed(module, set_id)
-    return  npe_mcm.npe_module_get_setting(module, set_id)
-end
-
-function npe_on_sets_completed(module, set_id_table)
-    for _, set_id in ipairs(set_id_table) do
-        if not npe_on_set_completed(module, set_id) then
-            return false
-        end
-    end
-    return true
-end
--- return true if the actor is on a task
-TASK = {
-    fanatic_training_day_boar_hunting = "task_fanat_training_1",
-    wolf_mutant_threat_from_cordon = "esc_2_12_stalker_wolf_task_1_name",
-    wolf_rescue_courier_from_cordon = "esc_2_12_stalker_wolf_task_2_name"
-}
-function npe_is_on_task(task)
-    printdebug(LOG.INFO, LOG.EVENT," looking for task " .. task)
-    local has_task = false
-    task_manager.task_ini:section_for_each(function(task_id)
-        if db.actor:get_task(task_id, true) and task_id == task then
-            printdebug(LOG.INFO, LOG.EVENT," found task " .. task_id)
-            has_task = true
-        end
-      end)
-    return has_task
-end
-
--- return true if the actor is near a smart terrain with the given name
-SMART_TERRAIN = {
-    cordon_loners_base = "esc_smart_terrain_2_12",
-    cordon_military_base = "esc_smart_terrain_3_16",
-    cordon_loners_se_first_post = "esc_smart_terrain_4_13",
-    cordon_underpass_workshop_overlook = "esc_smart_terrain_5_12",
-}
-
-local default_limit_distance = 50
-function npe_on_near_smart_terrain(smart_name, near_distance)
-    if near_distance == nil then
-        near_distance = default_limit_distance
-    end
-    local id = smart_terrain.nearest_to_actor_smart.id
-    
-    local smart = id and alife_object(id)
-    if smart and smart:name() == smart_name then
-        local dist = smart and smart.position:distance_to(db.actor:position())
-        printdebug(LOG.INFO, LOG.EVENT," looking for smart " .. smart_name .. ", found " .. smart:name() .. " at distance" .. dist .. ", limit " .. near_distance)
-        if dist and dist < near_distance then
-            return true
-        end
-    end    
-    return false
-end
-
--- general monkey patching
-
--- saves the last npc talked to
-Last_npc_talked = nil
-local who_is_npc_mp = dialogs.who_is_npc
-function dialogs.who_is_npc(first_speaker, second_speaker)
-    local npc = who_is_npc_mp(first_speaker, second_speaker)
-    npe.Last_npc_talked = npc:character_name()
-    printdebug(LOG.INFO, LOG.EVENT, "Last_npc_talked = " .. tostring(npe.Last_npc_talked))
-	return npc
-end
-
--- for debugging monkey patching
-local function actor_on_update()
-    -- printdebug(LOG.INFO, LOG.EVENT," Last_npc_talked = " .. tostring(Last_npc_talked))
-
-    -- if npe_on_near_smart_terrain(SMART_TERRAIN.cordon_loners_base) then
-    --     printdebug(LOG.INFO, LOG.EVENT," Near cordon_loners_base ")
-    -- end
-    -- if npe_on_near_smart_terrain(SMART_TERRAIN.cordon_military_base) then
-    --     printdebug(LOG.INFO, LOG.EVENT," Near cordon_military_base ")
-    -- end
-    -- if smart_terrain.nearest_to_actor_smart.id then
-    --     local id = smart_terrain.nearest_to_actor_smart.id
-    --     printdebug(LOG.INFO, LOG.EVENT," Near smart terrain " .. smart_terrain.nearest_to_actor_smart.id)
-    --     local smart = id and alife_object(id)
-    --     if smart and smart:name() then
-    --         printdebug(LOG.INFO, LOG.EVENT," Near smart terrain " .. smart:name())
-    --     end
-    -- end
-
-    -- if npe_is_on_task(TASK.fanatic_training_day_boar_hunting) then
-    --     printdebug(LOG.INFO, LOG.EVENT," On task Training Day: Boar Hunting")
-    -- end
-    
-end
-
-function npe_on_log_update()
-    printf("NPE EVENT LOG UPDATE")
-    LOG = npe_manager.LOG
-end
-
-function on_game_start()
-    RegisterScriptCallback("actor_on_update", actor_on_update)
-    RegisterScriptCallback("npe_on_log_update", npe_on_log_update)
-end

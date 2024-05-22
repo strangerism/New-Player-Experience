@@ -2,7 +2,7 @@
 	<npe_dialog_tutorial x="0" y="0" width="1024" height="768">
 
         <frame x="112" y="134" width="800" height="500" stretch="1">
-            <texture r="77" g="0" b="0" a="255">ui_icons_PDA_tooltips</texture>
+            <texture r="77" g="0" b="0" a="230">ui_icons_PDA_dialog</texture>
         </frame>
 
 		<auto_frameline x="112" y="134" width="800" height="2" vertical="0">
