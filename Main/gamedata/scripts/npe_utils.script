@@ -1,7 +1,10 @@
--- a collection of utility functions for NPE scripts
-local printlog = npe_manager.Printlog_npe
-local printdebug = npe_manager.Printdebug_npe
-local LOG = npe_manager.LOG
+local printlog = npe_logging.Printlog_npe
+local printdebug = npe_logging.Printdebug_npe
+local printtrace = npe_logging.Printtrace_npe
+local print_table = npe_logging.Print_table_npe
+local debug_table = npe_logging.Debug_table_npe
+local print_functor = npe_logging.Print_functor_npe
+local LOG = npe_logging
 
 
 -------------------------------------------------------------- Codec to Radio RF-Receiver integration functions --------------------------------------------------------------
@@ -300,12 +303,7 @@ end
 
 --------------------------------------------------------------------------------- GAME standard Callbacks ------------------------------------------
 
-function npe_on_log_update()
-    printf("NPE EVENT LOG UPDATE")
-    LOG = npe_manager.LOG
-end
 
 function on_game_start()
-    RegisterScriptCallback("npe_on_log_update", npe_on_log_update)
     configure_radio_sounds_for_restoration()
 end

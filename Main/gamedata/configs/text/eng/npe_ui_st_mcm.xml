@@ -57,11 +57,11 @@
 	<string id="ui_mcm_npe_logs_help1">
 		<text>Enable logs only when developing npe modules or troubleshooting issue. Leave it all disabled otherwise</text>
 	</string>				
-	<string id="ui_mcm_npe_logs_debug_logs">
-		<text>Debug Logs</text>
+	<string id="ui_mcm_npe_logs_logging_level">
+		<text>Logging Level</text>
 	</string>
-	<string id="ui_mcm_npe_logs_debug_logs_desc">
-		<text>Logs debug messages to the console</text>
+	<string id="ui_mcm_npe_logs_logging_level_desc">
+		<text>Determine the level of logging on the console</text>
 	</string>	
 	<string id="ui_mcm_npe_logs_title_cat">
 		<text>Logs Categories</text>

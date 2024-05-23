@@ -1,3 +1,10 @@
+local printlog = npe_logging.Printlog_npe
+local printdebug = npe_logging.Printdebug_npe
+local printtrace = npe_logging.Printtrace_npe
+local print_table = npe_logging.Print_table_npe
+local debug_table = npe_logging.Debug_table_npe
+local print_functor = npe_logging.Print_functor_npe
+local LOG = npe_logging
 -------------------------------------------------- NPE Data Structures --------------------------------------------------
 
 -- this queue is populated at startup from other npe modules when available otherwise it will only have the npe tutorial module
@@ -60,48 +67,6 @@ Settings = {
     play_loop = 10,
     sounds_set = "NPE",
     pause_game = false,
-    debug_logs = true,
-    trace_logs = false,
-    conf_logs = false,
-    overr_logs = false,
-    rgstr_logs = false,
-    pool_logs = false,
-    exec_logs = false,
-    activ_logs = false,
-    queue_logs = false,
-    play_logs = false,
-    event_logs = false,
-    action_logs = false,
-    ui_logs = false,
-    ui_exec_logs = false,
-}
-
-LOG = {
-    -- NPE tag
-    NPE = { tag = "[NPE]"},
-    -- log types
-    INFO = { tag = ""},
-    START = { tag = "-"},
-    STOP = { tag = "!"},
-    ERROR = { tag = "!"},
-    WARN = { tag = "!"},
-    ADD = { tag = "-"},
-    REMOVE = { tag = "!"},
-    RUN = { tag = "//"},
-    -- categories
-    CONF = { tag = "[CONF]", enabled = Settings.conf_logs},
-    OVERR = { tag = "[OVERR]", enabled = Settings.overr_logs},
-    RGSTR = { tag = "[RGSTR]", enabled = Settings.rgstr_logs},
-    POOL = { tag = "[POOL]", enabled = Settings.pool_logs},
-    EXEC = { tag = "[EXEC]", enabled = Settings.exec_logs},
-    ACTIV = { tag = "[ACTIV]", enabled = Settings.activ_logs},
-    QUEUE = { tag = "[QUEUE]", enabled = Settings.queue_logs},
-    PLAY = { tag = "[PLAY]", enabled = Settings.play_logs},
-    EVENT = { tag = "[EVENT]", enabled = Settings.event_logs},
-    ACTION = { tag = "[ACTION]", enabled = Settings.action_logs},
-    UI = { tag = "[UI]", enabled = Settings.ui_logs},
-    UI_EXEC = { tag = "[UI_EXEC]", enabled = Settings.ui_exec_logs},
-    NPE_EXE = { tag = "[NPE_EXE]", enabled = true},
 }
 
 RegisteredCustomCallbacks = {}
@@ -111,74 +76,6 @@ Dialog_in_use = false
 Dialog_name = nil
 
 -------------------------------------------------- NPE Utils --------------------------------------------------
-
-local function printlog(type,category,msg,...)
-	msg = msg or " "
-    if not category.enabled then return end
-    if type then
-        msg = type.tag .. LOG.NPE.tag .. category.tag  .. msg
-    else
-        msg = LOG.NPE.tag .. category.tag  .. msg
-    end
-	if select('#', ...) ~= 0 then printf(string.format(msg,...))
-	else printf(msg)
-	end
-end
-
-local function printdebug(type,category, msg,...) -- debug logging
-	if Settings.debug_logs then printlog(type,category, msg,...) end
-end
-Printlog_npe = printlog
-Printdebug_npe = printdebug
-
-local function printtrace(type,category, msg,...) -- debug logging
-	if Settings.trace_logs then printlog(type,category, msg,...) end
-end
-Printtrace_npe = printtrace
-
-local function print_table(t, indent)
-    if not t then
-        return
-    end
-    indent = indent or ''
-    for key, value in pairs(t) do
-        if type(value) == 'table' then
-            printlog(LOG.INFO, LOG.CONF, indent .. '' .. key .. ':')
-            print_table(value, indent .. '  ')
-        else
-            printlog(LOG.INFO, LOG.CONF, indent .. key .. ': ' .. tostring(value))
-        end
-    end
-end
-Print_table_npe = print_table
-
-local function debug_table(t, indent)
-    if not t then
-        return
-    end
-    indent = indent or ''
-    for key, value in pairs(t) do
-        if type(value) == 'table' then
-            printdebug(LOG.INFO, LOG.CONF,indent .. '' .. key .. ':')
-            debug_table(value, indent .. '  ')
-        else
-            printdebug(LOG.INFO, LOG.CONF,indent .. key .. ': ' .. tostring(value))
-        end
-    end
-end
-Debug_table_npe = debug_table
-
-local function print_functor(functor)
-    for i, v in ipairs(functor) do
-        if type(v) == "table" then
-            printdebug(LOG.INFO, LOG.EXEC,"Table at index " .. i .. ":")
-            print_functor(v)
-        else
-            printdebug(LOG.INFO, LOG.EXEC,"Element at index " .. i .. ": " .. v)
-        end
-    end
-end
-Print_functor_npe = print_functor
 
 -------------------------------------------------- NPE hashing functions --------------------------------------------------
 
@@ -790,36 +687,6 @@ function Register_npe_callbacks()
     end
 end
 
-local function update_log()
-    LOG = {
-        -- NPE tag
-        NPE = { tag = "[NPE]"},
-        -- log types
-        INFO = { tag = ""},
-        START = { tag = "-"},
-        STOP = { tag = "!"},
-        ERROR = { tag = "!"},
-        ADD = { tag = "-"},
-        REMOVE = { tag = "!"},
-        RUN = { tag = "//"},
-        -- categories
-        CONF = { tag = "[CONF]", enabled = npe_mcm.npe_get_setting("logs", "conf_logs")},
-        OVERR = { tag = "[OVERR]", enabled = npe_mcm.npe_get_setting("logs", "overr_logs")},
-        RGSTR = { tag = "[RGSTR]", enabled = npe_mcm.npe_get_setting("logs", "rgstr_logs")},
-        POOL = { tag = "[POOL]", enabled = npe_mcm.npe_get_setting("logs", "pool_logs")},
-        EXEC = { tag = "[EXEC]", enabled =  npe_mcm.npe_get_setting("logs", "exec_logs")},
-        ACTIV = { tag = "[ACTIV]", enabled = npe_mcm.npe_get_setting("logs", "activ_logs")},
-        QUEUE = { tag = "[QUEUE]", enabled = npe_mcm.npe_get_setting("logs", "queue_logs")},
-        PLAY = { tag = "[PLAY]", enabled = npe_mcm.npe_get_setting("logs", "play_logs")},
-        EVENT = { tag = "[EVENT]", enabled = npe_mcm.npe_get_setting("logs", "event_logs")},
-        ACTION = { tag = "[ACTION]", enabled = npe_mcm.npe_get_setting("logs", "action_logs")},
-        UI = { tag = "[UI]", enabled = npe_mcm.npe_get_setting("logs", "ui_logs")},
-        UI_EXEC = { tag = "[UI_EXEC]", enabled = npe_mcm.npe_get_setting("logs", "ui_exec_logs")},
-        NPE_EXE = { tag = "[NPE_EXE]", enabled = true},
-    }
-    
-end
-
 local function update_settings()
     -- NPE FLAGS
     Dialog_in_use = false
@@ -830,8 +697,6 @@ local function update_settings()
     Settings.play_loop = npe_mcm.npe_get_setting("general", "play_loop")  
     Settings.sounds_set = npe_mcm.npe_get_setting("general", "sounds_set")  
     Settings.pause_game = npe_mcm.npe_get_setting("general", "pause_game")  
-    -- NPE Logs Settings
-    Settings.debug_logs = npe_mcm.npe_get_setting("logs", "debug_logs")
     printf(" Settings:")
 
     local function m_print_table(t, indent)
@@ -850,11 +715,6 @@ local function update_settings()
     end    
     m_print_table(Settings)
 
-    update_log()
-    printlog(LOG.RUN, LOG.CONF," LOG:")
-    print_table(LOG)
-
-    SendScriptCallback("npe_on_log_update")
 end
 
 local function first_time_initialization()
@@ -901,7 +761,7 @@ local function start_npe() -- timed event
     return true
 end
 
-local function npe_actor_on_first_update()
+local function npe_on_log_init()
     printlog(LOG.RUN, LOG.EXEC," Actor on first update")
 
     -- initialize npe configuration
@@ -955,13 +815,11 @@ local function teardown_npe()
     remove_runners()
 end
 
-
-if AddScriptCallback then
-    AddScriptCallback("npe_on_log_update")
-end
 function on_game_start()
+    -- the app will start after the logging system is initialized
+    RegisterScriptCallback("npe_on_log_init", npe_on_log_init)
+    
     RegisterScriptCallback("on_option_change", mcm_on_option_change)
-    RegisterScriptCallback("actor_on_first_update", npe_actor_on_first_update)
     RegisterScriptCallback("actor_on_net_destroy", teardown_npe)
     RegisterScriptCallback("actor_on_before_death",teardown_npe)
     RegisterScriptCallback("npe_execution_manager_started",init_npe_execution)

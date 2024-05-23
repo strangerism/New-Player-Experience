@@ -1,94 +1,14 @@
 
 -------------------------------------------------- 0. Logging ----------------------------------------------------------
+local printlog = npe_logging.Printlog_npe
+local printdebug = npe_logging.Printdebug_npe
+local printtrace = npe_logging.Printtrace_npe
+local print_table = npe_logging.Print_table_npe
+local debug_table = npe_logging.Debug_table_npe
+local print_functor = npe_logging.Print_functor_npe
+local LOG = npe_logging
 
-local Settings = {
-    debug_logs = true,
-    exec_logs = true,
-    trace_logs = false,
-}
-
-local LOG = {
-    -- NPE tag
-    APP = { tag = "[NPE]"},
-    -- log types
-    INFO = { tag = ""},
-    START = { tag = "-"},
-    STOP = { tag = "!"},
-    ERROR = { tag = "!"},
-    WARN = { tag = "!"},
-    ADD = { tag = "-"},
-    REMOVE = { tag = "!"},
-    RUN = { tag = "//"},
-    -- categories
-    CONF = { tag = "[CONF]", enabled = true},
-    NPE_EXE = { tag = "[NPE_EXE]", enabled = true},
-}
-
-local function printlog(type,category,msg,...)
-	msg = msg or " "
-    if not category.enabled then return end
-    if type then
-        msg = type.tag .. LOG.APP.tag .. category.tag  .. msg
-    else
-        msg = LOG.APP.tag .. category.tag  .. msg
-    end
-	if select('#', ...) ~= 0 then printf(string.format(msg,...))
-	else printf(msg)
-	end
-end
-
-local function printdebug(type,category, msg,...) -- debug logging
-	if Settings.debug_logs then printlog(type,category, msg,...) end
-end
-
-local function printtrace(type,category, msg,...) -- debug logging
-	if Settings.trace_logs then printlog(type,category, msg,...) end
-end
-
-local function print_table(t, indent)
-    if not t then
-        return
-    end
-    indent = indent or ''
-    for key, value in pairs(t) do
-        if type(value) == 'table' then
-            printlog(LOG.INFO, LOG.CONF, indent .. '' .. key .. ':')
-            print_table(value, indent .. '  ')
-        else
-            printlog(LOG.INFO, LOG.CONF, indent .. key .. ': ' .. tostring(value))
-        end
-    end
-end
-
-local function debug_table(t, indent)
-    if not t then
-        return
-    end
-    indent = indent or ''
-    for key, value in pairs(t) do
-        if type(value) == 'table' then
-            printdebug(LOG.INFO, LOG.CONF,indent .. '' .. key .. ':')
-            debug_table(value, indent .. '  ')
-        else
-            printdebug(LOG.INFO, LOG.CONF,indent .. key .. ': ' .. tostring(value))
-        end
-    end
-end
-
-local function trace_table(t, indent)
-    if not t then
-        return
-    end
-    indent = indent or ''
-    for key, value in pairs(t) do
-        if type(value) == 'table' then
-            printtrace(LOG.INFO, LOG.CONF,indent .. '' .. key .. ':')
-            trace_table(value, indent .. '  ')
-        else
-            printtrace(LOG.INFO, LOG.CONF,indent .. key .. ': ' .. tostring(value))
-        end
-    end
-end
+-------------------------------------------------- 1. NPE Execution Manager Constants ----------------------------------------------------------
 
 -- Execution Manager settings
 local execution_manager_group_name = 'NPE_Execution_Manager' -- group name for the execution manager watch
@@ -275,86 +195,86 @@ end
 
 local function validate_config(runner_config)
     if not runner_config then
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner configuration is null") 
+        printdebug(LOG.ERROR, LOG.EXEC," Runner configuration is null") 
         return false 
     end
     if not runner_config.name then
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner name is null") 
+        printdebug(LOG.ERROR, LOG.EXEC," Runner name is null") 
         return false 
     end
-    printdebug(LOG.RUN, LOG.NPE_EXE," Validate Runner Configuration: " .. runner_config.name)
+    printdebug(LOG.RUN, LOG.EXEC," Validate Runner Configuration: " .. runner_config.name)
     if not runner_config.module then
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner module is null") 
+        printdebug(LOG.ERROR, LOG.EXEC," Runner module is null") 
         return false 
     end    
     print_table(runner_config)
     if not runner_config.group_name then
         runner_config.group_name = runners_default_group_name -- TODO check this
-        printdebug(LOG.ADD, LOG.NPE_EXE," Runner group name is null, set to " .. runner_config.group_name)
+        printdebug(LOG.ADD, LOG.EXEC," Runner group name is null, set to " .. runner_config.group_name)
         -- runners in the runners_default_group_name cannot use exclusive execution
         runner_config.exclusive = false -- TODO check this
     end
     if is_execution_type_queue(runner_config.execution) then
         if not runner_config.queue then
-            printdebug(LOG.ERROR, LOG.NPE_EXE," Runner: " .. runner_config.name .. " queue is null")
+            printdebug(LOG.ERROR, LOG.EXEC," Runner: " .. runner_config.name .. " queue is null")
             return false 
         end
     end
     if runner_config.execution == TYPE.FINITE then
         if not runner_config.loops then
             runner_config.loops = 1 -- TODO check this
-            printdebug(LOG.ADD, LOG.NPE_EXE," Runner loops is null, set to: 1" .. runner_config.loops)
+            printdebug(LOG.ADD, LOG.EXEC," Runner loops is null, set to: 1" .. runner_config.loops)
         end
     end    
     if not runner_config.start_timer then
         runner_config.start_timer = 0 -- TODO check this
-        printdebug(LOG.ADD, LOG.NPE_EXE," Runner start timer is null, set to 0")
+        printdebug(LOG.ADD, LOG.EXEC," Runner start timer is null, set to 0")
     end
     if not runner_config.loop_timer then
         runner_config.loop_timer = runner_config.start_timer > 0 and runner_config.start_timer or 1
-        printdebug(LOG.ADD, LOG.NPE_EXE," Runner loop timer is null, set to: " .. runner_config.loop_timer)
+        printdebug(LOG.ADD, LOG.EXEC," Runner loop timer is null, set to: " .. runner_config.loop_timer)
     end
     if not runner_config.execution then
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner execution type is null") 
+        printdebug(LOG.ERROR, LOG.EXEC," Runner execution type is null") 
         return false 
     end
     if not runner_config.functor then
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner functor is null") 
+        printdebug(LOG.ERROR, LOG.EXEC," Runner functor is null") 
         return false 
     end
-    printdebug(LOG.ADD, LOG.NPE_EXE," Runner configuration validated")
+    printdebug(LOG.ADD, LOG.EXEC," Runner configuration validated")
     return true
 end
 
 -- functor, queue and stop_condition validation
 
 local function validate_functor(functor)
-    printdebug(LOG.RUN, LOG.NPE_EXE," Validate Functor")
+    printdebug(LOG.RUN, LOG.EXEC," Validate Functor")
     if not functor then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor is null")
+        printdebug(LOG.ERROR, LOG.EXEC," Functor is null")
         return false 
     end
     -- checks is a table
     if type(functor) ~= "table" then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor is not a table")
+        printdebug(LOG.ERROR, LOG.EXEC," Functor is not a table")
         return false 
     end
     -- checks mandatory fields (script, function)
     if #functor < 2 then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor has less than 2 parameters")
+        printdebug(LOG.ERROR, LOG.EXEC," Functor has less than 2 parameters")
         return false 
     end
     if type(functor[1]) ~= "string" then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor script name is not a string")
+        printdebug(LOG.ERROR, LOG.EXEC," Functor script name is not a string")
         return false 
     end
     if type(functor[2]) ~= "string" then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Functor function name is not a string")
+        printdebug(LOG.ERROR, LOG.EXEC," Functor function name is not a string")
         return false 
     end
 
     -- validated
-    printdebug(LOG.ADD, LOG.NPE_EXE," Functor validated")
+    printdebug(LOG.ADD, LOG.EXEC," Functor validated")
     return true
 end
 
@@ -362,7 +282,7 @@ end
 
 local function stop_runner(runner_name)
     if not Runner[runner_name].enabled then return end -- runner is already disabled
-    printdebug(LOG.STOP, LOG.NPE_EXE," Runner: " .. runner_name .. " disabled")
+    printdebug(LOG.STOP, LOG.EXEC," Runner: " .. runner_name .. " disabled")
     Runner[runner_name].enabled = false
     if Runner[runner_name].exclusive then
         Execution_group[Runner[runner_name].group_name].exclusive_run = false
@@ -371,7 +291,7 @@ end
 
 local function unschedule_runner(runner_name)
     if Runner[runner_name].unscheduled then return end -- runner is already unscheduled
-    printdebug(LOG.STOP, LOG.NPE_EXE," Runner: " .. runner_name .. " unscheduled")
+    printdebug(LOG.STOP, LOG.EXEC," Runner: " .. runner_name .. " unscheduled")
     Runner[runner_name].enabled = false
     Runner[runner_name].unscheduled = true
     -- if is_execution_type_queue(Runner[runner_name].config.execution) then
@@ -381,7 +301,7 @@ end
 
 local function start_runner(runner_name)
     if Runner[runner_name].enabled then return end -- runner is already enabled
-    printdebug(LOG.START, LOG.NPE_EXE," Runner: " .. runner_name .. " enabled")
+    printdebug(LOG.START, LOG.EXEC," Runner: " .. runner_name .. " enabled")
     Runner[runner_name].enabled = true
     if Runner[runner_name].exclusive then
         Execution_group[Runner[runner_name].group_name].exclusive_run = true
@@ -390,13 +310,13 @@ end
 
 -- local function reschedule_runner(runner_name)
 --     if not Runner[runner_name].unscheduled then return end -- runner is already scheduled
---     printdebug(LOG.START, LOG.NPE_EXE," Runner: " .. runner_name .. " rescheduled")
+--     printdebug(LOG.START, LOG.EXEC," Runner: " .. runner_name .. " rescheduled")
 --     Runner[runner_name].enabled = true
 -- end
 
 local function pause_runner(runner_name)
     if Runner[runner_name].paused then return end  -- runner is already paused
-    printdebug(LOG.STOP, LOG.NPE_EXE," Runner: " .. runner_name .. " paused")
+    printdebug(LOG.STOP, LOG.EXEC," Runner: " .. runner_name .. " paused")
     Runner[runner_name].enabled = false
     Runner[runner_name].paused = true
     if Runner[runner_name].exclusive then
@@ -406,7 +326,7 @@ end
 
 local function pause_on_queue_runner(runner_name)
     if Runner[runner_name].paused_on_queue then return end  -- runner is already paused
-    printdebug(LOG.STOP, LOG.NPE_EXE," Runner: " .. runner_name .. " paused on queue")
+    printdebug(LOG.STOP, LOG.EXEC," Runner: " .. runner_name .. " paused on queue")
     Runner[runner_name].enabled = false
     Runner[runner_name].paused_on_queue = true
     if Runner[runner_name].exclusive then
@@ -415,7 +335,7 @@ local function pause_on_queue_runner(runner_name)
 end    
 
 local function reset_state(runner_name)
-    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner_name .. " state is reset")
+    printdebug(LOG.INFO, LOG.EXEC," Runner: " .. runner_name .. " state is reset")
     -- Runner[runner_name].loop_count = 0
     Runner[runner_name].stop_condition_met = false
     Runner[runner_name].pause_condition_met = false
@@ -438,7 +358,7 @@ local function execute_start_functor(runner_name)
     local runner = Runner[runner_name]
     if runner.config.start then
         local success = execute_func(unpack(runner.config.start))
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner: " .. runner.name .. " start functor executed: " .. tostring(success))
+        printdebug(LOG.ERROR, LOG.EXEC," Runner: " .. runner.name .. " start functor executed: " .. tostring(success))
     end
 end
 
@@ -446,7 +366,7 @@ local function execute_stop_functor(runner_name)
     local runner = Runner[runner_name]
     if runner.config.stop then
         local success = execute_func(unpack(runner.config.stop))
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner: " .. runner.name .. " stop functor executed: " .. tostring(success))
+        printdebug(LOG.ERROR, LOG.EXEC," Runner: " .. runner.name .. " stop functor executed: " .. tostring(success))
     end
 end
 
@@ -475,15 +395,15 @@ local execute_functor = function(runner_name)
     local runner = Runner[runner_name]
     -- check if the functor's runner has been removed, if so stop the execution
     if not runner then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE,"[execute_functor] Runner is null")
+        printdebug(LOG.ERROR, LOG.EXEC,"[execute_functor] Runner is null")
         return true 
     end
-    printtrace(LOG.RUN, LOG.NPE_EXE," Functor Execution: " .. runner.name)
+    printtrace(LOG.RUN, LOG.EXEC," Functor Execution: " .. runner.name)
 
     if not Runner[runner_name].enabled then ---------------------- Stopping runner execution loop --------------------------------
 
         -- the runner is disabled, stop the execution state of timed event
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner: " .. runner.name .. " is " .. get_disabled_reason(runner_name) .. " at loop: " .. runner.loop_count)
+        printdebug(LOG.ERROR, LOG.EXEC," Runner: " .. runner.name .. " is " .. get_disabled_reason(runner_name) .. " at loop: " .. runner.loop_count)
         -- update the runner state
         set_runner_state(runner_name, RUNNER_STATE.running, false)
         set_runner_state(runner_name, RUNNER_STATE.executing, false)
@@ -507,7 +427,7 @@ local execute_functor = function(runner_name)
             if runner.config.stop_condition then 
             -- check the stop condition
                 if execute_func(unpack(runner.config.stop_condition)) then
-                    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner.name .. " stop condition met")
+                    printdebug(LOG.INFO, LOG.EXEC," Runner: " .. runner.name .. " stop condition met")
                     -- stop condition met, let signal it  to the run handler
                     set_runner_state(runner_name, RUNNER_STATE.stop_condition_met, true)
                     -- skip this loop but continue the timed event
@@ -517,7 +437,7 @@ local execute_functor = function(runner_name)
             if runner.config.pause_condition then
                 -- check the pause condition
                 if execute_func(unpack(runner.config.pause_condition)) then
-                    printdebug(LOG.INFO, LOG.NPE_EXE," Runner: " .. runner.name .. " pause condition met")
+                    printdebug(LOG.INFO, LOG.EXEC," Runner: " .. runner.name .. " pause condition met")
                     -- pause condition met, let signal it  to the run handler                    
                     set_runner_state(runner_name, RUNNER_STATE.pause_condition_met, true)
                     -- skip this loop but continue the timed event
@@ -533,7 +453,7 @@ local execute_functor = function(runner_name)
 
     -- update the loop count
     increase_loop_count(runner_name)
-    printtrace(LOG.INFO, LOG.NPE_EXE," Executed Runner: " .. runner.name .. " Loop: " .. runner.loop_count)
+    printtrace(LOG.INFO, LOG.EXEC," Executed Runner: " .. runner.name .. " Loop: " .. runner.loop_count)
 
     -- reset this timed event timer for the next execution loop
     ResetTimeEvent(runner.group_name, runner.name, runner.config.loop_timer)
@@ -568,7 +488,7 @@ local function run(runner_name)
         reset_state(runner_name)
         set_runner_state(runner_name, RUNNER_STATE.running, true)
         CreateTimeEvent(runner.group_name, runner.name, create_timer, execute_functor, runner_name)
-        printlog (LOG.INFO, LOG.NPE_EXE," Runner: " .. runner.name .. " started with timer " .. create_timer)
+        printlog (LOG.INFO, LOG.EXEC," Runner: " .. runner.name .. " started with timer " .. create_timer)
     else ----------------------------------------------------- STOP RUNNER --------------------------------
         -- otherwise try to stop the runner
 
@@ -586,7 +506,7 @@ local function run(runner_name)
             end
             -- check the loop count
             if runner.loop_count >= max_loops then
-                printdebug(LOG.STOP, LOG.NPE_EXE," Runner: " .. runner_name .. " reached max loops")
+                printdebug(LOG.STOP, LOG.EXEC," Runner: " .. runner_name .. " reached max loops")
                 -- terminate the runner
                 stop_runner(runner_name)
             end
@@ -607,7 +527,7 @@ local function run(runner_name)
                 pause_on_queue_runner(runner_name)
             end
         else
-            printdebug(LOG.ERROR, LOG.NPE_EXE," Runner: " .. runner_name .. " execution type " .. runner.config.execution .. " not supported")
+            printdebug(LOG.ERROR, LOG.EXEC," Runner: " .. runner_name .. " execution type " .. runner.config.execution .. " not supported")
         end
     end
 end
@@ -629,10 +549,10 @@ local function execution_manager()
             -- check if the queue is not empty
             local size = queue_size(runner.config.queue)
             if size > 0 then
-                printtrace(LOG.INFO, LOG.NPE_EXE," Queue for runner: " .. runner_name .. " size " .. size)
+                printtrace(LOG.INFO, LOG.EXEC," Queue for runner: " .. runner_name .. " size " .. size)
                 -- reshedule the runner if execution group allows it
                 if runner.unscheduled and Execution_group[runner.group_name].exclusive_run then
-                    printtrace(LOG.ERROR, LOG.NPE_EXE," Runner: " .. runner_name .. " is unscheduled and won't start because of exclusive execution rights")
+                    printtrace(LOG.ERROR, LOG.EXEC," Runner: " .. runner_name .. " is unscheduled and won't start because of exclusive execution rights")
                     -- do nothing
                 else
                     -- start the runner
@@ -648,14 +568,14 @@ end
 -------------------------------------------------- 5. Execution Manager Watch ----------------------------------------------------------
 
 local function execution_watch()
-    printdebug(LOG.RUN, LOG.NPE_EXE," Execution Manager watch loop")
+    printdebug(LOG.RUN, LOG.EXEC," Execution Manager watch loop")
     if not run_execution_manager_loop then return true end -- stop the watch
     -- reset the timer
     ResetTimeEvent(execution_manager_group_name, execution_watch_name, execution_watch_timer)
 
     -- watch execution manager
     if run_execution_manager_loop then
-        printlog(LOG.START, LOG.NPE_EXE," Execution Manager running")
+        printlog(LOG.START, LOG.EXEC," Execution Manager running")
     end
     -- watch runners
     for runner_name, runner in pairs(Runner) do
@@ -663,12 +583,12 @@ local function execution_watch()
         if not runner.enabled or not runner.running or runner.paused or runner.unscheduled then
             log_type = LOG.ERROR
         end        
-        printdebug(log_type, LOG.NPE_EXE," Runner: [" .. runner_name .. "] in group [" .. runner.group_name .. "], exclusive[" .. tostring(runner.exclusive) .. "]") 
-        printdebug(LOG.INFO, LOG.NPE_EXE,"  status:         enabled[" .. tostring(runner.enabled) .. "], paused[" .. tostring(runner.paused) .. "], paused_on_queue[" .. tostring(runner.paused_on_queue) .. "], unscheduled[" .. tostring(runner.unscheduled) .. "]")
-        printdebug(LOG.INFO, LOG.NPE_EXE,"  execution:      running[" .. tostring(runner.running) .. "], executing[" .. tostring(runner.executing) .. "]")
-        printdebug(LOG.INFO, LOG.NPE_EXE,"  state:          loop_count[" .. runner.loop_count .. "], life[" .. get_life(runner_name) .. "] seconds, max_life[" .. tostring(runner.config.max_life) .. "]")
+        printdebug(log_type, LOG.EXEC," Runner: [" .. runner_name .. "] in group [" .. runner.group_name .. "], exclusive[" .. tostring(runner.exclusive) .. "]") 
+        printdebug(LOG.INFO, LOG.EXEC,"  status:         enabled[" .. tostring(runner.enabled) .. "], paused[" .. tostring(runner.paused) .. "], paused_on_queue[" .. tostring(runner.paused_on_queue) .. "], unscheduled[" .. tostring(runner.unscheduled) .. "]")
+        printdebug(LOG.INFO, LOG.EXEC,"  execution:      running[" .. tostring(runner.running) .. "], executing[" .. tostring(runner.executing) .. "]")
+        printdebug(LOG.INFO, LOG.EXEC,"  state:          loop_count[" .. runner.loop_count .. "], life[" .. get_life(runner_name) .. "] seconds, max_life[" .. tostring(runner.config.max_life) .. "]")
         if runner.config.max_life and get_life(runner_name) > runner.config.max_life then
-            printdebug(LOG.STOP, LOG.NPE_EXE," Runner: " .. runner.name .. " reached max life")
+            printdebug(LOG.STOP, LOG.EXEC," Runner: " .. runner.name .. " reached max life")
             stop_runner(runner_name)
             if runner.config.autoremove then
                 Remove(runner_name)
@@ -698,7 +618,7 @@ end
 function Manager_start()
     RegisterScriptCallback("actor_on_update", execution_manager)
 
-    printlog(LOG.START, LOG.NPE_EXE," Execution Manager started")
+    printlog(LOG.START, LOG.EXEC," Execution Manager started")
     if run_execution_manager_loop then return end
     run_execution_manager_loop = true
     watch()
@@ -707,7 +627,7 @@ end
 
 function Manager_stop()
     UnregisterScriptCallback("actor_on_update", execution_manager)
-    printlog(LOG.STOP, LOG.NPE_EXE," Execution Manager stopped")
+    printlog(LOG.STOP, LOG.EXEC," Execution Manager stopped")
     if not run_execution_manager_loop then return end
     run_execution_manager_loop = false
     for runner_name, runner in pairs(Runner) do
@@ -726,7 +646,7 @@ end
 -- add runner config get instance from template name and module_name (client script)
 function GetRunnerConfig(template_name, module_name, runner_name)
     if not DEFAULT_RUNNER_CONFIG[template_name] then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner template: " .. template_name .. " does not exist")
+        printdebug(LOG.ERROR, LOG.EXEC," Runner template: " .. template_name .. " does not exist")
         return 
     end
     local runner_config = copy(DEFAULT_RUNNER_CONFIG[template_name])
@@ -737,10 +657,10 @@ end
 
 function Add(runner_config) -- TODO add must pass module_name
     if not Is_running() then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
+        printdebug(LOG.ERROR, LOG.EXEC," Execution Manager not running")
         return 
     end
-    printdebug(LOG.RUN, LOG.NPE_EXE," Add Runner")
+    printdebug(LOG.RUN, LOG.EXEC," Add Runner")
     if not validate_config(runner_config) then return end
 
     -- add the new runner to the list Runner
@@ -755,24 +675,24 @@ function Add(runner_config) -- TODO add must pass module_name
 
         -- functor is mandatory, must validate the functor's parameters
         if not validate_functor(new_runner_instance.config.functor) then
-            printdebug(LOG.ERROR, LOG.NPE_EXE," Runner config's field \"functor\" is not a functor")
-            printdebug(LOG.ERROR, LOG.NPE_EXE," Runner config is rejected")
+            printdebug(LOG.ERROR, LOG.EXEC," Runner config's field \"functor\" is not a functor")
+            printdebug(LOG.ERROR, LOG.EXEC," Runner config is rejected")
             return false
         end
         
         -- stop_condition is optional
         if new_runner_instance.config.stop_condition then
             if not validate_functor(new_runner_instance.config.stop_condition) then
-                printdebug(LOG.ERROR, LOG.NPE_EXE," Runner config's field \"stop_condition\" is not a functor")
-                printdebug(LOG.ERROR, LOG.NPE_EXE," Runner config is rejected")
+                printdebug(LOG.ERROR, LOG.EXEC," Runner config's field \"stop_condition\" is not a functor")
+                printdebug(LOG.ERROR, LOG.EXEC," Runner config is rejected")
                 return false
             end
         end
         -- pause_condition is optional
         if new_runner_instance.config.pause_condition then
             if not validate_functor(new_runner_instance.config.pause_condition) then
-                printdebug(LOG.ERROR, LOG.NPE_EXE," Runner config's field \"pause_condition\" is not a functor")
-                printdebug(LOG.ERROR, LOG.NPE_EXE," Runner config is rejected")
+                printdebug(LOG.ERROR, LOG.EXEC," Runner config's field \"pause_condition\" is not a functor")
+                printdebug(LOG.ERROR, LOG.EXEC," Runner config is rejected")
                 return false
             end
         end
@@ -780,8 +700,8 @@ function Add(runner_config) -- TODO add must pass module_name
         -- stop_condition is optional
         if is_execution_type_queue(new_runner_instance.config.execution) then
             if not validate_functor(new_runner_instance.config.queue) then
-                printdebug(LOG.ERROR, LOG.NPE_EXE," Runner config's field \"queue\" is not a functor")
-                printdebug(LOG.ERROR, LOG.NPE_EXE," Runner config is rejected")
+                printdebug(LOG.ERROR, LOG.EXEC," Runner config's field \"queue\" is not a functor")
+                printdebug(LOG.ERROR, LOG.EXEC," Runner config is rejected")
                 return false
             end
         end
@@ -802,35 +722,35 @@ function Add(runner_config) -- TODO add must pass module_name
         Runner[new_runner_instance.name] = new_runner_instance
         -- set the life time
         Runner[new_runner_instance.name].life = time_global()
-        printdebug(LOG.ADD, LOG.NPE_EXE," Runner: " .. new_runner_instance.name .. " added")
+        printdebug(LOG.ADD, LOG.EXEC," Runner: " .. new_runner_instance.name .. " added")
     else
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner: " .. runner_config.name .. " already exists")
+        printdebug(LOG.ERROR, LOG.EXEC," Runner: " .. runner_config.name .. " already exists")
     end
 end
 
 function Remove(runner_name)
     if not Is_running() then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
+        printdebug(LOG.ERROR, LOG.EXEC," Execution Manager not running")
         return 
     end
     -- I need to remove a runner from the list Runner
     if not runner_name then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Runner name is null")
+        printdebug(LOG.ERROR, LOG.EXEC," Runner name is null")
         return 
     end
     local runner = Runner[runner_name]
     if runner then 
         RemoveTimeEvent(runner.group_name, runner.name)
         Runner[runner_name] = nil
-        printdebug(LOG.REMOVE, LOG.NPE_EXE," Runner: " .. runner_name .. " removed")
+        printdebug(LOG.REMOVE, LOG.EXEC," Runner: " .. runner_name .. " removed")
     else
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Removing Runner: " .. runner_name .. " does not exist")
+        printdebug(LOG.ERROR, LOG.EXEC," Removing Runner: " .. runner_name .. " does not exist")
     end
 end
 
 function RemoveAll(module_name)
     if not Is_running() then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
+        printdebug(LOG.ERROR, LOG.EXEC," Execution Manager not running")
         return 
     end
     for runner_name, runner in pairs(Runner) do
@@ -844,7 +764,7 @@ end
 
 function Stop(runner_name)
     if not Is_running() then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
+        printdebug(LOG.ERROR, LOG.EXEC," Execution Manager not running")
         return 
     end
     if not runner_name then return end
@@ -856,7 +776,7 @@ end
 
 function Pause(runner_name)
     if not Is_running() then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
+        printdebug(LOG.ERROR, LOG.EXEC," Execution Manager not running")
         return 
     end
     if not runner_name then return end
@@ -867,7 +787,7 @@ end
 
 function Resume(runner_name)
     if not Is_running() then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
+        printdebug(LOG.ERROR, LOG.EXEC," Execution Manager not running")
         return 
     end
     if not runner_name then return end
@@ -880,7 +800,7 @@ end
 
 function GetRunnerCount(runner_name)
     if not Is_running() then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
+        printdebug(LOG.ERROR, LOG.EXEC," Execution Manager not running")
         return 
     end
     if Runner[runner_name] and Runner[runner_name].enabled then
@@ -892,7 +812,7 @@ end
 
 function IsRunnerRunning(runner_name)
     if not Is_running() then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
+        printdebug(LOG.ERROR, LOG.EXEC," Execution Manager not running")
         return 
     end
     if Runner[runner_name] then
@@ -904,7 +824,7 @@ end
 
 function IsRunnerEnabled(runner_name)
     if not Is_running() then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
+        printdebug(LOG.ERROR, LOG.EXEC," Execution Manager not running")
         return 
     end
     if Runner[runner_name] then
@@ -916,7 +836,7 @@ end
 
 function IsRunnerPaused(runner_name)
     if not Is_running() then 
-        printdebug(LOG.ERROR, LOG.NPE_EXE," Execution Manager not running")
+        printdebug(LOG.ERROR, LOG.EXEC," Execution Manager not running")
         return 
     end
     if Runner[runner_name] then
@@ -932,25 +852,21 @@ if AddScriptCallback then
     AddScriptCallback("npe_execution_manager_stopped")
 end
 
-local function actor_on_first_update()
+local function npe_on_log_init()
     -- start the execution manager
     Manager_start()
 end
 
 local function actor_on_net_destroy()
-    printlog(LOG.RUN, LOG.NPE_EXE," Actor Net Destroy")
+    printlog(LOG.RUN, LOG.EXEC," Actor Net Destroy")
     Manager_stop()
 end
 
-local function npe_on_log_update()
-    printf("NPE EVENT LOG UPDATE")
-    -- LOG = npe_manager.LOG
-end
 
 function on_game_start()
 
-    --- Execution Manager callbacks registration
-    RegisterScriptCallback("actor_on_first_update", actor_on_first_update)
-    RegisterScriptCallback("npe_on_log_update", npe_on_log_update)
+    -- the app will start after the logging system is initialized
+    RegisterScriptCallback("npe_on_log_init", npe_on_log_init)
+
     RegisterScriptCallback("actor_on_net_destroy", actor_on_net_destroy)
 end
