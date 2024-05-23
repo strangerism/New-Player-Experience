@@ -657,7 +657,7 @@ local function open_codec_dialog_ui(set)
 		npe_dialog.Enable_dof()
     else
         printdebug(LOG.INFO, LOG.UI," GUI already shown")
-		npe_manager.Resume_execution_Deprecated()
+		npe_director.Resume_execution_Deprecated()
     end	
 end
 
@@ -784,10 +784,10 @@ end
 function Play(set)
 	if set == nil then
 		printdebug(LOG.INFO, LOG.UI," Play set is nil")
-		npe_manager.Resume_execution_Deprecated()
+		npe_director.Resume_execution_Deprecated()
 		return
 	end
-	npe_manager.Register_dialog(set.dialog)
+	npe_director.Register_dialog(set.dialog)
 
 	start_codec_call_loop(set)
 end
@@ -913,7 +913,7 @@ function UINewPlayerExperience:DoStartActions()
 
 	if self.set.start_actions then
 		for i, action in pairs(self.set.start_actions) do
-			npe_manager.Execute_npe_action(action, self.set.id)
+			npe_director.Execute_npe_action(action, self.set.id)
 		end
 	
 	end
@@ -925,7 +925,7 @@ function UINewPlayerExperience:DoEndActions()
 
 	if self.set.end_actions then
 		for i, action in pairs(self.set.end_actions) do
-			npe_manager.Execute_npe_action(action, self.set.id)
+			npe_director.Execute_npe_action(action, self.set.id)
 		end
 	
 	end
@@ -1020,8 +1020,8 @@ local function close_dialog(dialog)
 	GUI:Show(false)
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
-	npe_manager.Unregister_dialog(dialog)
-	npe_manager.Resume_execution_Deprecated()
+	npe_director.Unregister_dialog(dialog)
+	npe_director.Resume_execution_Deprecated()
 	closing_dialog = false
 	npe_dialog.Purge_all_sounds_events()
 	return true

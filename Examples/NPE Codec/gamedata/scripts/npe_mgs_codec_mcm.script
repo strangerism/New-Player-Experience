@@ -1,7 +1,7 @@
 
 
-local printlog = npe_manager.Printlog_npe
-local printdebug = npe_manager.Printdebug_npe
+local printlog = npe_director.Printlog_npe
+local printdebug = npe_director.Printdebug_npe
 
 -- custom functors
 
@@ -424,6 +424,6 @@ end
 
 function on_game_start()
     if npe then
-        npe_manager.Register_npe_module(deck_npe_mgs_codec)
+        npe_director.Register_npe_module(deck_npe_mgs_codec)
     end
 end

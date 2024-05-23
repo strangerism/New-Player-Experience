@@ -16,17 +16,17 @@ local SOUNDS_SET
 function Play(set)
 	if set == nil then
 		printdebug(LOG.INFO, LOG.UI," Play set is nil")
-		npe_manager.Resume_execution_Deprecated()
+		npe_director.Resume_execution_Deprecated()
 		return
 	end
-	npe_manager.Register_dialog(set.dialog)
+	npe_director.Register_dialog(set.dialog)
 
-	SOUNDS_SET = npe_manager.Settings.sounds_set
+	SOUNDS_SET = npe_director.Settings.sounds_set
 
     printdebug(LOG.INFO, LOG.UI," Play set module: " .. set.module .. " set : " .. set.id)
 	printdebug(LOG.INFO, LOG.UI," Play set title: " .. set.title)
 	printdebug(LOG.INFO, LOG.UI," Sounds set: " .. SOUNDS_SET)
-	if npe_manager.Settings.pause_game or set.context.pause_game then
+	if npe_director.Settings.pause_game or set.context.pause_game then
     	npe_dialog.Change_gametime_to(GAMETIME_STATE.STOPPED)
 	end
 
@@ -43,7 +43,7 @@ function Play(set)
 		GUI:DoStartActions()
     else
         printdebug(LOG.INFO, LOG.UI," GUI already shown")
-		npe_manager.Resume_execution_Deprecated()
+		npe_director.Resume_execution_Deprecated()
 		return
     end
 end
@@ -187,7 +187,7 @@ function UINewPlayerExperience:DoStartActions()
 
 	if self.set.start_actions then
 		for i, action in pairs(self.set.start_actions) do
-			npe_manager.Execute_npe_action(action, self.set.id)
+			npe_director.Execute_npe_action(action, self.set.id)
 		end
 	
 	end
@@ -199,7 +199,7 @@ function UINewPlayerExperience:DoEndActions()
 
 	if self.set.end_actions then
 		for i, action in pairs(self.set.end_actions) do
-			npe_manager.Execute_npe_action(action, self.set.id)
+			npe_director.Execute_npe_action(action, self.set.id)
 		end
 	
 	end
@@ -323,8 +323,8 @@ function UINewPlayerExperience:Close()
 	npe_dialog.Disable_dof()
 	npe_dialog.Play_sound(Sounds[SOUNDS_SET].close)
 	npe_dialog.Change_gametime_to(GAMETIME_STATE.INMOTION)
-	npe_manager.Unregister_dialog(self.set.dialog)
-	npe_manager.Resume_execution_Deprecated()
+	npe_director.Unregister_dialog(self.set.dialog)
+	npe_director.Resume_execution_Deprecated()
 end
 
 ---@diagnostic disable-next-line: duplicate-set-field

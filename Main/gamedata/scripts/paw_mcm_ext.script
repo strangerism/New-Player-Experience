@@ -1,5 +1,5 @@
--- local printlog = npe_manager.Printlog_npe
--- local printdebug = npe_manager.Printdebug_npe
+-- local printlog = npe_director.Printlog_npe
+-- local printdebug = npe_director.Printdebug_npe
 
 -- Sample_deck = { 
 --     title = "New Player Experience Examples Deck",

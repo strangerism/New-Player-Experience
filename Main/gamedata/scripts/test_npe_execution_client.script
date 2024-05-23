@@ -334,12 +334,6 @@ if AddScriptCallback then
     AddScriptCallback("client_queue_empty")
 end
 
-
-function npe_on_log_update()
-    -- printf("NPE EVENT LOG UPDATE")
-    LOG = npe_manager.LOG
-end
-
 function on_game_start()
     -- test client registration
     RegisterScriptCallback("actor_on_first_update", client_on_first_update)

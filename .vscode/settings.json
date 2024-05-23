@@ -2,7 +2,7 @@
     "Lua.diagnostics.globals": [
         "Unregister_UI",
         "npe_dialog",
-        "npe_manager",
+        "npe_director",
         "npe_execution",
         "time_global",
         "execute_func",
@@ -53,6 +53,7 @@
         "npe_utils",
         "dar_rf_noise",
         "is_empty",
-        "task_functor"
+        "task_functor",
+        "npe_logging"
     ]
 }

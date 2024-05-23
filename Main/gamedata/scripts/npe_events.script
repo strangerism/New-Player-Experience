@@ -9,7 +9,7 @@ local LOG = npe_logging
 ------------------------------------------------------------------ NPE EVENT SYSTEM ------------------------------------------------------------------
 -- this file list all the functors that can be used to poll the game state for events
 -- the functors are used/referenced by the Event prefabs defined in npe script or directly in the npe_modules 
--- the functors are executed by the npe_manager to trigger events
+-- the functors are executed by the npe_director to trigger events
 
 -- list of all the events that can be triggered
 

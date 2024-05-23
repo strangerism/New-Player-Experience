@@ -361,49 +361,49 @@ local function update_runners_configs()
     Runner ={
         contexts_execution_queue = {
             name = "contexts_execution_queue",
-            module = "npe_manager",
+            module = "npe_director",
             group_name = "default",
             execution = npe_execution.TYPE.QUEUE,
-            queue = { "npe_manager", "get_npeExecutionQueue"},
+            queue = { "npe_director", "get_npeExecutionQueue"},
             start_timer = 0.25, 
-            functor = { "npe_manager", "run_npe_context_execution" }
+            functor = { "npe_director", "run_npe_context_execution" }
         },        
         context_cooldown_queue = {
             name = "context_cooldown_queue",
-            module = "npe_manager",
+            module = "npe_director",
             group_name = "default",
             execution = npe_execution.TYPE.QUEUE,
-            queue = { "npe_manager", "get_playableOnCountdownQueue"},
+            queue = { "npe_director", "get_playableOnCountdownQueue"},
             start_timer = 1,  
-            functor = { "npe_manager", "update_all_npe_contexts_countdowns" }
+            functor = { "npe_director", "update_all_npe_contexts_countdowns" }
         },
         actions_execution_queue = {
             name = "actions_execution_queue",
-            module = "npe_manager",
+            module = "npe_director",
             group_name = "default",
             execution = npe_execution.TYPE.QUEUE,
-            queue = { "npe_manager", "get_npeActionsQueue"},
+            queue = { "npe_director", "get_npeActionsQueue"},
             start_timer = Settings.actions_execution_loop,   
-            functor = { "npe_manager", "run_npe_action" }
+            functor = { "npe_director", "run_npe_action" }
         },
         play_set_queue = {
             name = "play_set_queue",
-            module = "npe_manager",
+            module = "npe_director",
             group_name = "play",
             execution = npe_execution.TYPE.QUEUE,
-            queue = { "npe_manager", "get_playableQueue"},
+            queue = { "npe_director", "get_playableQueue"},
             start_timer = 10, --Settings.play_loop,
-            functor = { "npe_manager", "play_set" }
+            functor = { "npe_director", "play_set" }
         },
         play_now_set_queue = {
             name = "play_now_set_queue",
-            module = "npe_manager",
+            module = "npe_director",
             group_name = "play",
             exclusive = true,
             execution = npe_execution.TYPE.QUEUE,
-            queue = { "npe_manager", "get_playableHighPrioQueue"},
+            queue = { "npe_director", "get_playableHighPrioQueue"},
             start_timer = 1,
-            functor = { "npe_manager", "play_now_set" }
+            functor = { "npe_director", "play_now_set" }
         },                   
     }    
 end

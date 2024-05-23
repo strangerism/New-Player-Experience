@@ -50,6 +50,6 @@ end
 
 function on_game_start()
     if npe then
-        npe_manager.Register_npe_module(deck_npe_welcome)
+        npe_director.Register_npe_module(deck_npe_welcome)
     end
 end
