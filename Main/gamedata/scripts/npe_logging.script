@@ -8,19 +8,19 @@ LEVEL = 0
 
 -- log types
 INFO = { tag = ""}
-START = { tag = "-"}
-STOP = { tag = "!"}
+START = { tag = "$"}
+STOP = { tag = "%"}
 ERROR = { tag = "!"}
-WARN = { tag = "!"}
+WARN = { tag = "~"}
 ADD = { tag = "-"}
-REMOVE = { tag = "!"}
+REMOVE = { tag = "*"}
 RUN = { tag = "//"}
 
 -- categories
 CONF = { tag = "[CONF]", enabled = false}
 OVERR = { tag = "[OVERR]", enabled = false}
 RGSTR = { tag = "[RGSTR]", enabled = false}
-POOL = { tag = "[POOL]", enabled = false}
+TRACE = { tag = "[TRACE]", enabled = false}
 EXEC = { tag = "[EXEC]", enabled = false}
 ACTIV = { tag = "[ACTIV]", enabled = false}
 QUEUE = { tag = "[QUEUE]", enabled = false}
@@ -92,10 +92,10 @@ Debug_table_npe = debug_table
 local function print_functor(functor)
     for i, v in ipairs(functor) do
         if type(v) == "table" then
-            printdebug(INFO, EXEC,"Table at index " .. i .. ":")
+            printtrace(INFO, EXEC,"Table at index " .. i .. ":")
             print_functor(v)
         else
-            printdebug(INFO, EXEC,"Element at index " .. i .. ": " .. v)
+            printtrace(INFO, EXEC,"Element at index " .. i .. ": " .. v)
         end
     end
 end
@@ -109,7 +109,7 @@ local function update_logs()
     printf("CONF enabled: %s", tostring(CONF.enabled))
     OVERR.enabled = npe_mcm.npe_get_setting("logs", "overr_logs")
     RGSTR.enabled = npe_mcm.npe_get_setting("logs", "rgstr_logs")
-    POOL.enabled = npe_mcm.npe_get_setting("logs", "pool_logs")
+    TRACE.enabled = npe_mcm.npe_get_setting("logs", "trace_logs")
     EXEC.enabled = npe_mcm.npe_get_setting("logs", "exec_logs")
     ACTIV.enabled = npe_mcm.npe_get_setting("logs", "activ_logs")
     QUEUE.enabled = npe_mcm.npe_get_setting("logs", "queue_logs")

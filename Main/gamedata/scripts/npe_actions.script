@@ -17,7 +17,7 @@ EFFECTOR = {
 }
 
 function remove_all_psy_ppe_effects()
-    printdebug(LOG.INFO, LOG.ACTION," remove_all_psy_ppe_effects")
+    printdebug(LOG.RUN, LOG.ACTION," remove_all_psy_ppe_effects")
     level.remove_pp_effector(EFFECTOR.BLUR.c_id)
     -- level.remove_pp_effector(EFFECTOR.BLACK_INFINITE.name)
     level.remove_pp_effector(EFFECTOR.AUDIO_SHOCK.c_id)
@@ -27,7 +27,7 @@ function remove_all_psy_ppe_effects()
 end
 
 function set_all_psy_ppe_effects(duration, set_id)
-    printdebug(LOG.INFO, LOG.ACTION," set_all_psy_ppe_effects with duration = " .. duration .. " for set_id = " .. set_id)
+    printdebug(LOG.RUN, LOG.ACTION," set_all_psy_ppe_effects with duration = " .. duration .. " for set_id = " .. set_id)
     level.add_pp_effector(EFFECTOR.BLUR.name, EFFECTOR.BLUR.c_id, true)
     -- level.add_pp_effector(EFFECTOR.BLACK_INFINITE.name, EFFECTOR.BLACK_INFINITE.c_id, true)
     level.add_pp_effector(EFFECTOR.AUDIO_SHOCK.name, EFFECTOR.AUDIO_SHOCK.c_id, true)
@@ -38,13 +38,13 @@ function set_all_psy_ppe_effects(duration, set_id)
 end
 
 function npe_remove_effector(effector)
-    printdebug(LOG.INFO, LOG.ACTION," npe_remove_effector("..effector.name..")")
+    printdebug(LOG.RUN, LOG.ACTION," npe_remove_effector("..effector.name..")")
     level.remove_pp_effector(effector.c_id)
     return true
 end
 
 function npe_remove_effectors(effectors_table)
-    printdebug(LOG.INFO, LOG.ACTION," npe_remove_effectors")
+    printdebug(LOG.RUN, LOG.ACTION," npe_remove_effectors")
     for i, effector in ipairs(effectors_table) do
         npe_remove_effector(effector)
     end
@@ -52,7 +52,7 @@ function npe_remove_effectors(effectors_table)
 end
 
 function npe_add_effector(effector, duration, set_id)
-    printdebug(LOG.INFO, LOG.ACTION," npe_add_effector("..effector.name..", "..duration..", "..set_id..")")
+    printdebug(LOG.RUN, LOG.ACTION," npe_add_effector("..effector.name..", "..duration..", "..set_id..")")
     level.add_pp_effector(effector.name. effector.c_id, true)
     if duration then
         CreateTimeEvent("npe_remove_effector", "npe_remove_effector" .. set_id, duration, npe_remove_effector, effector)
@@ -61,7 +61,7 @@ function npe_add_effector(effector, duration, set_id)
 end
 
 function npe_add_effectors(effectors_table, duration, set_id)
-    printdebug(LOG.INFO, LOG.ACTION," npe_add_effectors")
+    printdebug(LOG.RUN, LOG.ACTION," npe_add_effectors")
     for i, effector in ipairs(effectors_table) do
         npe_add_effector(effector, duration, set_id)
     end
@@ -69,7 +69,7 @@ function npe_add_effectors(effectors_table, duration, set_id)
 end
 
 function add_to_actor(money, items)
-    printdebug(LOG.INFO, LOG.ACTION," add_to_actor("..money..", items)")
+    printdebug(LOG.RUN, LOG.ACTION," add_to_actor("..money..", items)")
     local reward = {
         [1] = { reward_money = money, reward_item = items}
     }
@@ -79,16 +79,16 @@ function add_to_actor(money, items)
 end
 
 function remove_from_actor(items)
-    printdebug(LOG.INFO, LOG.ACTION," remove_from_actor(items)")
+    printdebug(LOG.RUN, LOG.ACTION," remove_from_actor(items)")
     xr_effects.remove_item(db.actor, nil, items)
     return true
 end
 
 function add_to_stash(items, stash_id)
-    printdebug(LOG.INFO, LOG.ACTION," add_to_stash(items, "..stash_id..")")
+    printdebug(LOG.RUN, LOG.ACTION," add_to_stash(items, "..stash_id..")")
     local stash_obj = alife_object(stash_id) 
     if not stash_obj then
-        printdebug(LOG.INFO, LOG.ACTION," stash does not exists")
+        printdebug(LOG.ERROR, LOG.ACTION," stash does not exists")
         return true
     end
 	for i=1,#items do
@@ -111,7 +111,7 @@ function dummy_task_functor()
 end
 
 function clearup_task(task_id)
-    printdebug(LOG.INFO, LOG.ACTION," clearup_task("..task_id..")")
+    printdebug(LOG.RUN, LOG.ACTION," clearup_task("..task_id..")")
     tm.task_info[task_id] = nil
     npe_execution.Stop(Runner[task_id].name)
     npe_execution.Remove(Runner[task_id].name)
@@ -138,7 +138,7 @@ end
 
 local default_task_id  = "task_npe_actions_default"
 function create_task(name, desc, target_id,complete_functor, create_functor)
-    printdebug(LOG.INFO, LOG.ACTION," create_task("..tostring(name)..", "..tostring(desc)..", "..tostring(target_id)..")")
+    printdebug(LOG.RUN, LOG.ACTION," create_task("..tostring(name)..", "..tostring(desc)..", "..tostring(target_id)..")")
     print_functor(LOG.INFO, LOG.ACTION," create_functor", create_functor)
     print_functor(LOG.INFO, LOG.ACTION," complete_functor", complete_functor)
     my_task_name  = name
@@ -181,7 +181,7 @@ function create_task(name, desc, target_id,complete_functor, create_functor)
 end
 
 function actor_on_item_put_in_box(box, itm)
-	printdebug(LOG.INFO, LOG.ACTION," box_id = " .. box:id())
+	printdebug(LOG.RUN, LOG.ACTION," box_id = " .. box:id())
 end
 
 -------------------------------------------------------------------------- GANE SYSTEM CALLBACKS --------------------------------------------------------------------------

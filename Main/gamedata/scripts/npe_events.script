@@ -15,7 +15,6 @@ local LOG = npe_logging
 
 -- return true if the actor has the given item
 function owns_item(item)
-    printf("Checking if actor owns item: %s", item)
     local found = false
 
 	local function check_items(actor,itm)
@@ -92,11 +91,11 @@ function on_sets_completed(module, set_id_table)
 end
 -- return true if the actor is on a task
 function is_on_task(task)
-    printdebug(LOG.INFO, LOG.EVENT," looking for task " .. task)
+    printtrace(LOG.INFO, LOG.EVENT," looking for task " .. task)
     local has_task = false
     task_manager.task_ini:section_for_each(function(task_id)
         if db.actor:get_task(task_id, true) and task_id == task then
-            printdebug(LOG.INFO, LOG.EVENT," found task " .. task_id)
+            printtrace(LOG.INFO, LOG.EVENT," found task " .. task_id)
             has_task = true
         end
       end)
@@ -114,7 +113,7 @@ function on_near_smart_terrain(smart_name, near_distance)
     local smart = id and alife_object(id)
     if smart and smart:name() == smart_name then
         local dist = smart and smart.position:distance_to(db.actor:position())
-        printdebug(LOG.INFO, LOG.EVENT," looking for smart " .. smart_name .. ", found " .. smart:name() .. " at distance" .. dist .. ", limit " .. near_distance)
+        printtrace(LOG.INFO, LOG.EVENT," looking for smart " .. smart_name .. ", found " .. smart:name() .. " at distance" .. dist .. ", limit " .. near_distance)
         if dist and dist < near_distance then
             return true
         end
@@ -128,15 +127,15 @@ function on_near_game_object(id, near_distance)
     if near_distance == nil then
         near_distance = default_limit_distance
     end
-    printdebug(LOG.INFO, LOG.EVENT," looking for game object " .. id .. " at distance " .. near_distance)
+    printtrace(LOG.INFO, LOG.EVENT," looking for game object " .. id .. " at distance " .. near_distance)
     local se_obj = id and alife_object(id)
     if (not se_obj) or not (se_obj and se_obj.online) then 
-        printdebug(LOG.INFO, LOG.ACTION," game_object does not exist or is not online")
+        printlog(LOG.ERROR, LOG.EVENT," game_object does not exist or is not online")
         return 
     end
     local szpos = se_obj.position
     local dist = szpos:distance_to(db.actor:position()) or 0
-    printdebug(LOG.INFO, LOG.EVENT," distance to game object " .. id .. " is " .. dist)
+    printtrace(LOG.INFO, LOG.EVENT," distance to game object " .. id .. " is " .. dist)
     if dist <= near_distance then
         return true
     else
@@ -152,7 +151,7 @@ local who_is_npc_mp = dialogs.who_is_npc
 function dialogs.who_is_npc(first_speaker, second_speaker)
     local npc = who_is_npc_mp(first_speaker, second_speaker)
     npe_events.Last_npc_talked = npc:character_name()
-    printdebug(LOG.INFO, LOG.EVENT, "Last_npc_talked = " .. tostring(npe_events.Last_npc_talked))
+    printtrace(LOG.INFO, LOG.EVENT, "Last_npc_talked = " .. tostring(npe_events.Last_npc_talked))
 	return npc
 end
 

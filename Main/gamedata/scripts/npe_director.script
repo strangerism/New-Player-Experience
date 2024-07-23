@@ -219,11 +219,11 @@ local function compare_events(event1, event2)
 end
 
 local function find_sets_on(event)
-    printdebug(LOG.INFO, LOG.ACTIV," Find sets activating on event [%s]", event.name)
+    printdebug(LOG.RUN, LOG.ACTIV," Find sets activating on event [%s]", event.name)
     local setsKeys = {}
     for setKey, queued_context in pairs(npeSetsActivationQueue.contexts) do
         if compare_events(queued_context.event, event) then
-            printdebug(LOG.INFO, LOG.ACTIV," queued context [%s]", setKey)
+            printtrace(LOG.INFO, LOG.ACTIV," queued context [%s]", setKey)
             table.insert(setsKeys, setKey)
         end
     end
@@ -231,9 +231,9 @@ local function find_sets_on(event)
 end
 
 local function add_to_sets_queue(set, deckId, module)
-    -- printdebug(LOG.INFO, LOG.QUEUE," Add sets to activation queue: [%s] [%s]", deckId, set.id)
+    printdebug(LOG.ADD, LOG.QUEUE," Add sets to activation queue: [%s] [%s]", deckId, set.id)
     local setKey = map_to_set_key(deckId, set.id)
-    -- printdebug(LOG.INFO, LOG.QUEUE," setKey [%s]", setKey)
+    printtrace(LOG.INFO, LOG.QUEUE," setKey [%s]", setKey)
     if set ~= nil then
         -- do not queue a set that was used to override another set
         if set.overridden then return end
@@ -250,7 +250,7 @@ local function add_to_sets_queue(set, deckId, module)
             if npeSetsActivationQueue.contexts[setKey] == nil then
                 -- Add the new context to the table with contextId as the key
                 npeSetsActivationQueue.contexts[setKey] = context
-            printdebug(LOG.INFO, LOG.QUEUE," context with id [" .. setKey .. "] added to the queue with event [" .. context.event.name .. "] and module [" .. context.event.handler.module .. "]")
+                printtrace(LOG.INFO, LOG.QUEUE," context with id [" .. setKey .. "] added to the queue with event [" .. context.event.name .. "] and module [" .. context.event.handler.module .. "]")
             else 
             -- TODO we should use here THE context.override directive to replace the contexts
             printlog(LOG.ERROR, LOG.QUEUE," context with id [" .. setKey .. "] already exists.")
@@ -269,14 +269,14 @@ local function add_to_playable_queue(setsKeys)
         if set then
             if set.context.delay then 
                 if set.context.delay == 0 then
-                    printdebug(LOG.INFO, LOG.QUEUE," Set [%s] plays instantly - Set added to the play_now queue", setKey)
+                    printdebug(LOG.ADD, LOG.QUEUE," Set [%s] plays instantly - Set added to the play_now queue", setKey)
                     table.insert(playableHighPrioQueue.setsKeys, setKey)                
                 else 
-                    printdebug(LOG.INFO, LOG.QUEUE," Set [%s] has a delay of [%s] - Set added to the countdown queue", setKey, set.context.delay)
+                    printdebug(LOG.ADD, LOG.QUEUE," Set [%s] has a delay of [%s] - Set added to the countdown queue", setKey, set.context.delay)
                     table.insert(playableOnCountdownQueue.setsKeys, setKey)
                 end
             else
-                printdebug(LOG.INFO, LOG.QUEUE," Set [%s] plays with default play_loop - Set added to the play queue", setKey)
+                printdebug(LOG.ADD, LOG.QUEUE," Set [%s] plays with default play_loop - Set added to the play queue", setKey)
                 table.insert(playableQueue.setsKeys, setKey)
             end
             -- removes it from the npeSetsActivationQueue
@@ -286,6 +286,7 @@ local function add_to_playable_queue(setsKeys)
 end
 
 local function add_to_execution_queue(handler)
+    printdebug(LOG.ADD, LOG.QUEUE," Add handler to execution queue")
     if handler == nil then
         return
     end
@@ -293,6 +294,7 @@ local function add_to_execution_queue(handler)
 end
 
 local function add_to_actions_queue(action)
+    printdebug(LOG.ADD, LOG.QUEUE," Add action to actions queue")
     if action == nil then
         return
     end
@@ -321,12 +323,13 @@ local function start_dialog(set)
     if not set.dialog then
         set.dialog = npe.DIALOG.UI_TUTORIAL
     end
-    printlog(LOG.INFO, LOG.PLAY," Starting dialog [%s]",set.dialog )
+    printdebug(LOG.RUN, LOG.PLAY," Starting dialog [%s]",set.dialog )
     local dialog_functor = {set.dialog, "Play", set}
     execute_func(unpack(dialog_functor))
 end
 
 local function tear_down_dialog()
+    printdebug(LOG.RUN, LOG.PLAY," Tear down dialog")
     local dialog_functor = {Dialog_name .. "_dialog", "TearDown"}
     execute_func(unpack(dialog_functor))
 end
@@ -342,7 +345,7 @@ function Unregister_dialog()
 end
 
 local function play_set_dialog(set)
-    printdebug(LOG.INFO, LOG.PLAY," Playing set [%s] from module [%s]", set.id, set.module)
+    printdebug(LOG.RUN, LOG.PLAY," Playing set [%s] from module [%s]", set.id, set.module)
     printdebug(LOG.INFO, LOG.PLAY," Set Title: [%s]", set.title)
 
     set.played = true
@@ -411,7 +414,7 @@ end
 -- runners management
 
 local function add_runners()
-    printlog(LOG.RUN, LOG.EXEC," Register runners")
+    printlog(LOG.ADD, LOG.EXEC," Register runners")
     update_runners_configs()
     for _, runner in pairs(Runner) do
         npe_execution.Add(runner)
@@ -419,19 +422,19 @@ local function add_runners()
 end
 
 local function stop_runners()
-    printlog(LOG.RUN, LOG.EXEC," Stop runners")
+    printlog(LOG.STOP, LOG.EXEC," Stop runners")
     for _, runner in pairs(Runner) do
         npe_execution.Stop(runner.name)
     end
 end
 
 local function stop_execution(runner_name)
-    printlog(LOG.RUN, LOG.EXEC," Stop execution: [%s]", runner_name)
+    printlog(LOG.STOP, LOG.EXEC," Stop execution: [%s]", runner_name)
     npe_execution.Stop(runner_name)
 end
 
 local function start_runners() -- used as time event
-    printlog(LOG.RUN, LOG.EXEC," Start runners")
+    printlog(LOG.START, LOG.EXEC," Start runners")
     for _, runner in pairs(Runner) do
         npe_execution.Resume(runner.name)
     end
@@ -440,18 +443,18 @@ local function start_runners() -- used as time event
 end
 
 local function resume_execution(runner_name)
-    printlog(LOG.RUN, LOG.EXEC," Resume execution: [%s]", runner_name)
+    printlog(LOG.START, LOG.EXEC," Resume execution: [%s]", runner_name)
     npe_execution.Resume(runner_name)
 end
 
 local function restart_runners()
-    printlog(LOG.RUN, LOG.EXEC," Restart runners")
+    printlog(LOG.START, LOG.EXEC," Restart runners")
     stop_runners()
     CreateTimeEvent("NPE_Execution", "Restart", 2, start_runners)
 end
 
 local function remove_runners()
-    printlog(LOG.RUN, LOG.EXEC," Remove runners")
+    printlog(LOG.REMOVE, LOG.EXEC," Remove runners")
     for _, runner in pairs(Runner) do
         npe_execution.Remove(runner.name)
     end
@@ -465,19 +468,19 @@ end
 -- update all contexts countdowns in the queue
 -- activated contexts (run_npe_context_execution successful) are added to playableOnCountdownQueue if they have a delay
 function update_all_npe_contexts_countdowns() -- TODO refactor to a queue with key, value
-    printtrace(LOG.RUN, LOG.QUEUE," Update all queued contexts countdowns")
+    printdebug(LOG.RUN, LOG.QUEUE," Update all queued contexts countdowns")
     if playableOnCountdownQueue.setsKeys and #playableOnCountdownQueue.setsKeys > 0 then
         for i, setKey in ipairs(playableOnCountdownQueue.setsKeys) do
             local set, deckId, module = get_set_from_key(setKey)
             if set and set.context.delay and set.context.delay > 0 then
                 if not set.context.countdown then
-                    printdebug(LOG.INFO, LOG.QUEUE," Play Set [%s] has a delay of %s", set.id, set.context.delay)
+                    printtrace(LOG.INFO, LOG.QUEUE," Play Set [%s] has a delay of %s", set.id, set.context.delay)
                     set.context.countdown = set.context.delay
                 elseif set.context.countdown > 0 then
-                    printdebug(LOG.INFO, LOG.QUEUE," Play Set [%s] countdown is %s", set.id, set.context.countdown)
+                    printtrace(LOG.INFO, LOG.QUEUE," Play Set [%s] countdown is %s", set.id, set.context.countdown)
                     set.context.countdown = set.context.countdown - 1
                 elseif set.context.countdown == 0 then
-                    printdebug(LOG.INFO, LOG.QUEUE," Play Set [%s] countdown is over", set.id)
+                    printdebug(LOG.ADD, LOG.QUEUE," Play Set [%s] countdown is over", set.id)
                     table.remove(playableOnCountdownQueue.setsKeys, i)
                     -- if delay countdown is strict, add it to the high prio queue
                     if set.context.strict then
@@ -499,16 +502,16 @@ end
 -- contexts that fail execution are put back in the queue
 
 function run_npe_context_execution()  -- TODO refactor to a queue with key, value
-    printtrace(LOG.RUN, LOG.EXEC," Run Set Context activation functor")
+    printdebug(LOG.RUN, LOG.EXEC," Run Set Context activation functor")
     -- for i, handler in ipairs(npeExecutionQueue.handlers) do
         local handler = table.remove(npeExecutionQueue.handlers, 1)
         if not handler.executed then
-            printdebug(LOG.INFO, LOG.EXEC," Running handler [%s]", handler.name)
+            printtrace(LOG.INFO, LOG.EXEC," Running handler [%s]", handler.name)
             local success = true
             for i, functor in ipairs(handler.functors) do
                 print_functor(functor)
                 success = execute_func(unpack(functor))
-                printdebug(LOG.INFO, LOG.EXEC," functor %s executed. Success: %s", functor[1], success)
+                printtrace(LOG.INFO, LOG.EXEC," functor %s executed. Success: %s", functor[1], success)
                 if not success then
                     break
                 end
@@ -536,7 +539,7 @@ end
 -- the first set in the queue is played
 -- if cannot be played because of UI busy, it is put back in the queue
 function play_set()
-    printdebug(LOG.RUN, LOG.EXEC," Run Play Queued Set")
+    printdebug(LOG.RUN, LOG.PLAY," Run Play Queued Set")
     if playableQueue.setsKeys and #playableQueue.setsKeys > 0 then
         local setKey = table.remove(playableQueue.setsKeys, 1)
         local set, deckId, module, dialog = get_set_from_key(setKey)
@@ -560,7 +563,7 @@ end
 -- the first set in the queue is played
 -- if cannot be played because of UI busy, it is put back in the queue
 function play_now_set()
-    printdebug(LOG.RUN, LOG.EXEC," Run Play Now Set")
+    printdebug(LOG.RUN, LOG.PLAY," Run Play Now Set")
     if playableHighPrioQueue.setsKeys and #playableHighPrioQueue.setsKeys > 0 then
         local setKey = table.remove(playableHighPrioQueue.setsKeys, 1)
         local set, deckId, module, dialog = get_set_from_key(setKey)    
@@ -585,15 +588,15 @@ end
 -- if action fails, it is lost undefinitely
 -- TODO think about if a retry mechanism is needed
 function run_npe_action()
-    printdebug(LOG.RUN, LOG.EXEC," Run action")
+    printdebug(LOG.RUN, LOG.ACTION," Run action")
         local action = table.remove(npeActionsQueue.actions, 1)
         if action then
-            printdebug(LOG.INFO, LOG.EXEC," Running action [%s]", action.name)
+            printtrace(LOG.INFO, LOG.ACTION," Running action [%s]", action.name)
             local success = execute_func(unpack(action.functor))
             if success then
-                printdebug(LOG.INFO, LOG.EXEC," action [%s] executed. Success: %s", action.name, success)
+                printdebug(LOG.INFO, LOG.ACTION," action [%s] executed. Success: %s", action.name, success)
             else
-                printdebug(LOG.ERROR, LOG.EXEC," action [%s] failed. Success: %s", action.name, success)
+                printdebug(LOG.ERROR, LOG.ACTION," action [%s] failed. Success: %s", action.name, success)
                 -- TODO implement retry mechanism?
                 -- table.insert(npeActionsQueue.actions, action)
             end
@@ -606,7 +609,7 @@ function Activate_contexts_on(event)
     printdebug(LOG.RUN, LOG.ACTIV," Activate contexts on [%s]", event.name)
     local setsKeys = find_sets_on(event)
     if setsKeys then
-        printdebug(LOG.ADD, LOG.ACTIV," Found sets on [%s]", event.name)
+        printdebug(LOG.INFO, LOG.ACTIV," Found sets on [%s]", event.name)
         print_table(setsKeys)
         add_to_playable_queue(setsKeys)
         -- resume_play_queues_manager_loop()
@@ -718,7 +721,7 @@ local function update_settings()
 end
 
 local function first_time_initialization()
-    printlog(LOG.RUN, LOG.EXEC," First time initialization")
+    printlog(LOG.RUN, LOG.CONF," First time initialization")
     -- npe Settings
     update_settings()
     
