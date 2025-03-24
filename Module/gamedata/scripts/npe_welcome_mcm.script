@@ -3,10 +3,10 @@ npe_default_settings = {
     ["introduction"]		= false	-- Enable/Disable New Player Experience
 }
 
-local deck_npe_welcome = { 
+local deck_welcome = { 
     title = "New Player Experience Welcome Deck",
-    module= "npe_welcome",
-    id="npe_welcome",
+    module= "welcome",
+    id="welcome",
     dialog= nil, -- using the default dialog
     sets = {
         {
@@ -38,8 +38,8 @@ local deck_npe_welcome = {
 
 function on_mcm_load()
 
-	op =  { id= "npe_welcome", sh=true, text="ui_mcm_npe_module_npe_welcome", gr ={
-				{id = "title",type= "slide",link= "ui_options_slider_player",text="ui_mcm_npe_module_npe_welcome_title",size= {512,50},spacing= 20 },
+	op =  { id= "welcome", sh=true, text="ui_mcm_npe_module_welcome", gr ={
+				{id = "title",type= "slide",link= "ui_options_slider_player",text="ui_mcm_npe_module_welcome_title",size= {512,50},spacing= 20 },
 				{id = "introduction", type = "check", val = 1, def=false},
 			}
 		}
@@ -50,6 +50,6 @@ end
 
 function on_game_start()
     if npe then
-        npe_director.Register_npe_module(deck_npe_welcome)
+        npe_director.Register_npe_module(deck_welcome)
     end
 end
