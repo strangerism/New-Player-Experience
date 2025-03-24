@@ -429,7 +429,7 @@ local function stop_runners()
 end
 
 local function stop_execution(runner_name)
-    printlog(LOG.STOP, LOG.EXEC," Stop execution: [%s]", runner_name)
+    printlog(LOG.STOP, LOG.EXEC," Stop execution: " .. runner_name)
     npe_execution.Stop(runner_name)
 end
 
@@ -443,7 +443,7 @@ local function start_runners() -- used as time event
 end
 
 local function resume_execution(runner_name)
-    printlog(LOG.START, LOG.EXEC," Resume execution: [%s]", runner_name)
+    printlog(LOG.START, LOG.EXEC," Resume execution: " .. runner_name)
     npe_execution.Resume(runner_name)
 end
 
