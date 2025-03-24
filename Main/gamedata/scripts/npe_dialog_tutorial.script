@@ -85,7 +85,7 @@ function UINewPlayerExperience:InitControls(set)
 	
 ---@diagnostic disable-next-line: undefined-field
 	self.context = xml:InitTextWnd(set.dialog .. ":context",self.dialog)
-	self.context:SetText("%c[0,255,208,0]" .. "NPE > " .. set.context.event.name)
+	self.context:SetText("%c[0,255,208,0]" .. "Context > " .. set.context.event.name)
 
 	local text
 	text = game.translate_string(self.set.title)
@@ -151,6 +151,9 @@ function UINewPlayerExperience:InitControls(set)
     self.btn_prev = xml:Init3tButton(set.dialog .. ":btn_prev", self.dialog)
     self:Register(self.btn_prev, "btn_prev")	
 	self:AddCallback("btn_prev", ui_events.BUTTON_CLICKED, self.OnButtonPrev, self)
+
+	self.credits = xml:InitTextWnd(set.dialog .. ":credits",self.dialog)
+	self.credits:SetText("%c[d_cyan]NPE by Strangerism")
 
 	self:UpdateButtons()
 
