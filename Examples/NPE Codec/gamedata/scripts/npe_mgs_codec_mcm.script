@@ -17,8 +17,8 @@ end
 -- { name = <executable_id:string>, functor {functor_interface}, delay = <delay:int> }
 local ACTION = {
     NOOSPHERE_BUFF = {
-        name = "noosphere_buff",
-        descr = "Noosphere Buff",
+        name = "noosphere_buff", -- action id (choose what you want) 
+        descr = "Noosphere Buff", -- decr (choose what you want)
         functor = {"npe_actions", "set_all_psy_ppe_effects", 5, "nanomachines" },
         delay = 0, -- not used
     },
@@ -28,6 +28,18 @@ local ACTION = {
         functor = {"npe_actions", "add_to_stash", {"mgs_codec"}, 15340 }, -- 15340=sidorovich box
         delay = 10, -- not used
     },
+    ADD_BINO_TO_STASH = {
+        name = "add_bino_to_stash",
+        descr = "Add Binocular To Stash",
+        functor = {"npe_actions", "add_to_stash", {"wpn_binoc_inv"}, 15340 }, -- 15340=sidorovich box
+        delay = 10, -- not used
+    },
+    ADD_MILGEAR_TO_STASH = {
+        name = "add_milgear_to_stash",
+        descr = "Add Military uniform To Stash",
+        functor = {"npe_actions", "add_to_stash", {"wpn_binoc_inv"}, 15340 }, -- 15340=sidorovich box
+        delay = 10, -- not used
+    },         
     CREATE_TASK_FIND_CODEC = {
         name = "task_find_codec",
         descr = "Find the codec",
@@ -50,6 +62,8 @@ local ACTION = {
         delay = 10, -- not used
     },    
 }
+
+-- events are used to trigger the various sets (a set is a particular tutorial or quest stage)
 
 -- Events must define an handler that support the <npe_executable> interface, which is
 -- { name = <executable_id:string>, functors {{functor_interface}, ... }}
@@ -107,7 +121,14 @@ local EVENT = {
             name = "warn_on_near_military_base",
             functors = {{"npe_events","on_near_game_object", 15740, 120 }}
         } 
-    },    
+    },
+    CARPARK_OUTLOOK = { 
+        name = "Approach Car Park", 
+        handler = { 
+            name = "approach_carpark",
+            functors = {{"npe_events","on_near_game_object", 15228, 30 }}
+        } 
+    },          
 }
 
 ACTORS = {
@@ -119,15 +140,16 @@ local deck_npe_mgs_codec = {
     title = "MGS Codec", 
     module= "mgs_codec", 
     id="mgs_codec", 
-    dialog= npe.DIALOG.UI_CODEC,
+    dialog= npe.DIALOG.UI_CODEC, -- default dialog used by sets if not specified
     sets = {
         {
-            dialog= npe.DIALOG.UI_TUTORIAL,
+            dialog= npe.DIALOG.UI_TUTORIAL, -- override default dialog
             id = "nanomachines",
             title = "ui_mcm_npe_module_mgs_codec_nanomachines_set_title",
-            start_actions = {
-                ACTION.NOOSPHERE_BUFF, 
-                ACTION.ADD_CODEC_TO_STASH 
+            start_actions = {   -- these list of action play at the start of the tutorial, before the first card is shown
+                ACTION.NOOSPHERE_BUFF, -- we give a buff to the player
+                ACTION.ADD_CODEC_TO_STASH,  -- we add the codec (quest item) to the stash
+                ACTION.ADD_BINO_TO_STASH
             },
             start_sounds = { -- this plays thorough the entire set, bg music, narrations, etc
                 [1] = { sound = "npe\\mgs_codec\\voiceover\\snake\\what",
@@ -138,7 +160,7 @@ local deck_npe_mgs_codec = {
                     title = "ui_mgs_codec_nanomachines_card1_title",
                     description = "ui_mgs_codec_nanomachines_card1_message",
                     image = "ui_mgs_codec_nanomachines_card1_wish_granter",
-                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\listentome",
+                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\listentome", -- do we need this ??????
                         duration = 1 },
                 },
                 [2] = {
@@ -147,13 +169,13 @@ local deck_npe_mgs_codec = {
                     image = "ui_mgs_codec_nanomachines_card2_sidorovich",
                 },                          
             },
-            context = {
+            context = { -- the context under which the set is shown
                 event = npe.EVENT.DLC_START,
                 delay = 0,
                 strict = true,
                 pause_game = false,
             },
-            end_actions = {
+            end_actions = { -- this list of actions are executed upon closing the tutorial.
                 ACTION.CREATE_TASK_FIND_CODEC
             },
             end_sounds = { -- this list of sounds can plays upon closing the tutorial.
@@ -211,7 +233,7 @@ local deck_npe_mgs_codec = {
             },
             save_context = {
             },
-            completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
+            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
         }, 
         {
             id = "we_need_a_plan",
@@ -265,7 +287,7 @@ local deck_npe_mgs_codec = {
             end_actions = {
                 ACTION.CREATE_TASK_G0_TO_THE_CAR_PARK
             },
-            completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\call-me-if-you-need-to", duration = 2 },
+            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\call-me-if-you-need-to", duration = 2 },
         },          
         {
             id = "look_for_help",
@@ -291,7 +313,7 @@ local deck_npe_mgs_codec = {
                 strict = true,
                 pause_game = false,
             },
-            completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
+            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
         },
         {
             id = "fanatic_boars",
@@ -316,7 +338,7 @@ local deck_npe_mgs_codec = {
                 delay = 2,
                 pause_game = false,
             },
-            completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
+            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
         },          
         {
             id = "save_the_curier",
@@ -341,7 +363,7 @@ local deck_npe_mgs_codec = {
                 delay = 2,
                 pause_game = false,
             },
-            completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
+            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
         },                 
         {
             id = "warn_military_base",
@@ -365,9 +387,9 @@ local deck_npe_mgs_codec = {
                 event = EVENT.WARN_TOWARDS_MILITARY,
                 delay = 0,
                 strict = true,
-                pause_game = false,
+                pause_game = true,
             },
-            completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
+            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
         }, 
         {
             id = "danger_military_base",
@@ -391,10 +413,36 @@ local deck_npe_mgs_codec = {
                 event = EVENT.DANGER_NEAR_MILITARY,
                 delay = 0,
                 strict = true,
-                pause_game = false,
+                pause_game = true,
             },
-            completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
-        },                  
+            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
+        },
+        {
+            id = "approach_carpark",
+            title = "ui_mcm_npe_module_mgs_codec_approach_carpark_set_title",
+            codec_frequency = 140.85,
+            cards = {
+                [1] = {
+                    title = "ui_mgs_codec_approach_carpark_card1_title",
+                    message = "ui_mgs_codec_approach_carpark_card1_message",
+                    portrait_caller = "ui_npe_mgs_codec_otacon",
+                    portrait_actor = "ui_npe_mgs_codec_snake",
+                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\listentome",
+                                    duration = 1 },
+                    -- tts_sounds = {
+                    --     [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon_mgs1\\danger_mil_base",
+                    --             duration = 5 },
+                    -- },                                      
+                },              
+            },
+            context = {
+                event = EVENT.CARPARK_OUTLOOK,
+                delay = 0,
+                strict = true,
+                pause_game = true,
+            },
+            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
+        },                          
     },
 }
 

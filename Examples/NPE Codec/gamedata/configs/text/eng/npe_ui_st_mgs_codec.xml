@@ -36,7 +36,10 @@
 	</string>
 	<string id="ui_mcm_npe_module_mgs_codec_we_need_a_plan">
 		<text>We need a plan</text>
-	</string>							
+	</string>
+	<string id="ui_mcm_npe_module_mgs_codec_approach_carpark">
+		<text>Approaching the car park</text>
+	</string>								
 	<!-- deck_mgs_codec -->
 
 <!-- nanomachines chapter -->
@@ -297,4 +300,24 @@
 		%c[d_red]Now!!%c[d_white]
 		</text>
 	</string>	
+<!-- approaching the car park -->
+	<string id="ui_mcm_npe_module_mgs_codec_approach_carpark_set_title">
+		<text>Approaching the carpark</text>
+	</string>
+	<string id="ui_mgs_codec_approach_carpark_card1_title">
+		<text>%c[d_blue]Car park in sight</text>
+	</string>
+	<string id="ui_mgs_codec_approach_carpark_card1_message">
+		<text>Snake, the %c[d_blue]car park%c[d_white] is in sight.
+		\n
+		\n
+		wait a second, take the binoculars (if you have them) and check the area.
+		\n
+		\n
+		%c[d_blue]Do not%c[d_white] go in there without a plan.
+		\n
+		\n
+		A surprise attack might be the best option considering the situation.
+		</text>
+	</string>		
 </string_table>

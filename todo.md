@@ -1,0 +1,8 @@
+-- refactor npe_module mcm so to move the decks definitions into its own file?
+-- refactor npe_module mcm to generate options based on sets list
+-- refactor logging into its own script npe_logging
+-- make sure all dialogs implements the same interface from sets
+-- make sure you cannot escape from tutorial dialog unless the last card was played, this to ensure all actions and sounds defined in cards are played
+-- maybe add option to escape from any card, for instance for tutorial sets where actions are not used
+-- maybe rename tutorial dialog as quest dialog?
+-- npe_execution make Remove so it stops all runners in execution 
