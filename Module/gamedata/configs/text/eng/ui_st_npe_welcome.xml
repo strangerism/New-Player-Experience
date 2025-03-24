@@ -26,16 +26,21 @@
 		<text>You have installed the New Player Experience mod, NPE in brief. 
 		\n
 		\n
-		NPE is a tutorial system that aims to help new players to get started in the game.
+		NPE framework is a tutorial system that aims to help new players to get started in the game.
 		\n
 		\n
-		Mods that add tutorials using NPE will be able to use this system to guide new players through their content. 
+		Mods makers that add tutorials using the NPE framework will be able to use this system to guide new players through their content. 
 		\n
 		\n
-		A tutorial or deck, is a series of cards that are displayed to player when specific conditions are met (contexes).
+		A deck of tutorials or simply deck, is a series of sets of cards (ui panels) that are displayed to player when specific conditions are met (contexts).
 		\n
 		\n
 		For example, starting the game, opening a stash, looting an item, or talking to an NPC, etc.
+		A deck can contain several sets about various topics.
+		\n
+		\n
+		Each card or ui panel displays a title, text, and an image. A set normally consist of a max of three cards that are enough to explain something to you.
+		The firt card usually presents the topic at hand, the second the explanation or action needed to be taken and the last card the conclusion or the results of the action.
 		\n
 		\n
 		You can find more information about NPE on the mod page on the ModDb website.
@@ -48,10 +53,18 @@
 		<text>NPE has its own MCM menu where you can configure the NPE system to your liking.
 		\n
 		\n
-		Open the MCM menu and navitate to New Player Experience and General Settings to configure the NPE system.
+		Open the MCM menu and select the NPE tab on the left. From there you can navigate to the Logging and General pages to configure the NPE system.
 		\n
 		\n
-		The most important setting is Enable. If this is set to false (unchecked), the NPE system will not run.
+		The most important setting is Enable in the General page. If this is set to false (unchecked), the NPE system will not run.
+		\n
+		\n
+		You can change the ui sounds with different sound libraries and volule presets.
+		\n
+		\n
+		You can also configure the game to forcefully pause while a tutorial is shown. 
+		Normally modules tutorials can make this decision for you, pausing the game based on the specific event and sets. 
+		This setting instead ovverides that ensuring the action is paused the moment a tutorial pops up.
 		</text>
 	</string>	
 	<string id="ui_npe_welcome_card_03_title">
@@ -61,15 +74,19 @@
 		<text>The NPE system is modular, meaning that you can add or remove modules that add tutorials to the game.
 		\n
 		\n
-		Mods can add their own tutorials (deck) using NPE, as a series of cards (sets) that are displayed to the player when specific conditions are met.
+		Mods can add their own tutorials using the NPE framework.
 		\n
 		\n
-		In the New Player Experience MCM menu tab, there will be listed other tabs each representing a module that adds tutorials to the game. 
+		Open the MCM menu and select the NPE Modules tab on the left. This will list the setting's pages for all the modules currently installed. 
 		\n
 		\n
-		The module page will show you the sets that are added by the module. Each set setting shows if the set has been played or not, already. They all start disabled.
+		The module page will show you the sets that are added by the module. Each set's setting shows if the set has been played or not, already. They all start disabled.
 		\n
-		\n	
+		\n
+		An NPE module contains a deck (a series of tutorials about game topics) normally included with a mod or a modpack
+		Each deck contains several sets or tutorials (a series of cards about a specific topic).	
+		\n
+		\n		
 		If a set has been played to you, e.g. you have seen the tutorial, the setting will be enabled (checked)
 		\n
 		\n
