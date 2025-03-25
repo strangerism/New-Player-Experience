@@ -1,8 +1,4 @@
 
-npe_default_settings = {
-    ["handler_test_01"]		= false	-- Enable/Disable New Player Experience
-}
-
 function owns_item(item)
     -- printf("Checking if actor owns item: %s", item)
     local found = false
