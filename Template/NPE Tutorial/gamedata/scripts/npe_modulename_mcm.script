@@ -1,26 +1,34 @@
 -- NPE Module template
 
--- PREPARATION
+-- 1. PREPARATION
+
+-- The preparation requires you refactor the templates files (placeholders renaming) so you can start working on it as your new module for NPE 
 
 -- FIRST STEP
 --      you need to define the name of this module
 --      use as module name the name of your mod main script preceded by npe_
 --      for example (mymod.script --> npe_mymod_mcm.script). Therefore the modelname chosen in this example is "npe_mymod"
 --      or something that you know will be unique in the hypotetical modlist's scripts' namespace, where this npe module will be added
+--      you can go beyond the module name rule, e.g. if you plan to add more then one npe_module in your mod, and just assign a consistent name with a topic, for example npe_mymod_encumbrance_mcm.script
+--      this will still ensure your mcm scripts are unique among others because of the npe_mymod prefix 
 -- SECOND STEP
 --      replace in all filenames included in this template module, this script included, the string "modulename" with your chosen module name
 --      replace in this script all the instances of modulename and setname as required
 
--- CREATION OF A NEW NPE MODULE
 
--- [OPTIONAL] Custom event handlers
---      Define here all your custom events handlers that are any of the custom events you defined below
+
+
+-- 2. DEVELOPMENT OF THE NEW NPE MODULE
+
+----------------------------------------------------------------------------------------- [OPTIONAL] Custom functors ---------------------------------------------------------------------------------------
+-- 
+--      Define here all your custom events handlers or functors that are used in any of the custom events defined below
 
 -- for example
 
 -- function owns_item(item)
---     -- printf("Checking if actor owns item: %s", item)
---     local found = false
+--  printf("Checking if actor owns item: %s", item)
+--  local found = false
 
 -- 	local function check_items(actor,itm)
 -- 		local sec = itm:section()
@@ -33,14 +41,26 @@
 --     return found
 -- end
 
+-- !! this is the event handler/functor sample
 function a_custom_handler_functor(obj)
     printf("Custom handler functor called with parameter: %s", obj)
 end
 
--- [OPTIONAL] Custom events
+-- [OPTIONAL] Prefab functors and handlers
+-- npe_events.script contains a library of prefab functors and handlers that can be used in the custom events
+-- your custom event handlers or functor can also reference npe_events functors and handlers
+-- for example
+
+-- function has_binocular()
+--     return npe_events.owns_item("wpn_binoc_inv")
+-- end
+
+----------------------------------------------------------------------------------------- [OPTIONAL] Custom events ---------------------------------------------------------------------------------------
+-- 
 --      Define here all your custom events that use the custom event handlers defined above
 
 -- local EVENT = {
+
 --     BINOCULARS_OWNED = { 
 --         name = "Binoculars Owned", 
 --         handler = { 
@@ -48,26 +68,134 @@ end
 --             functor = {"npe_modulename_mcm", "owns_item", "wpn_binoc_inv" }
 --         } 
 --     },
+
 --     VODKA_OWNED = { 
 --         name = "Vodka Owned", 
 --         handler = { 
 --             name = "on_actor_owning_vodka",
 --             functor = {"npe_modulename_mcm", "owns_item", "vodka" }
 --         } 
---     },    
+--     },
+
+--     you can define events that use the npe_events handlers or functors
+--     VODKA_OWNED_ALT = { 
+--         name = "Vodka Owned", 
+--         handler = { 
+--             name = "on_actor_owning_vodka",
+--             functor = {"npe_events", "owns_item", "vodka" }
+--         } 
+--     },
+
 -- }
+
+-- !! this is the event sample
 
 local EVENT = {
     MY_CUSTOM_EVENT = { 
         name = "My Custom Event", -- this will be presented in the tutorial window as breadcrumb in the top left. It represent the context of the event  and it's not localized (use english preferably)
         handler = { 
             name = "a_custom_event_name",
-            functor = {"npe_modulename_mcm", "a_custom_handler_functor", "my_custom_parameter"}
+            functor = {"npe_modulename_mcm", "a_custom_handler_functor", "my_custom_parameter_obj"}
         } 
     },
 }
 
--- [MANDATORY] Define your deck
+-- custom events are assigned to context as triggers for the tutorial sets
+-- for example 
+
+-- context = {
+--     event = EVENT.MY_CUSTOM_EVENT,
+-- },
+
+----------------------------------------------------------------------------------------- [OPTIONAL] Prefab events ---------------------------------------------------------------------------------------
+
+-- 
+-- npe.script contains a library of prefab events.
+-- You can use any of these prefab events for your cards context instead of creating custom ones as above
+-- for example
+
+-- context = {
+--     event = npe.EVENT.ACTOR_OVERWEIGHT,
+-- },
+
+----------------------------------------------------------------------------------------- [OPTIONAL] Custom Actions ---------------------------------------------------------------------------------------
+-- 
+--      Define here all your custom actions that are used in the sets as the start or end action of the tutorial
+
+-- you can use actions to trigger game events, like adding an item to a stash at the beginning or closing of a tutorial set
+-- for instance if the tutorial set is about repairing a gun with some items, after explaining the process you can hand in the cleaning items to the player inventory for him to excerise the process
+-- you can literally do anything as action (e.g. spawn enemies) provided you build the code to support the action you want to trigger and then define the action that uses that code
+-- for example 
+
+-- function add_to_stash(items, stash_id)
+--     printdebug(LOG.RUN, LOG.ACTION," add_to_stash(items, "..stash_id..")")
+--     local stash_obj = alife_object(stash_id) 
+--     if not stash_obj then
+--         printdebug(LOG.ERROR, LOG.ACTION," stash does not exists")
+--         return true
+--     end
+-- 	for i=1,#items do
+-- 		local section = items[i]
+--         local se_itm = alife_create_item(section, stash_obj, nil)
+--     end
+--     return true
+-- end
+
+-- local ACTION = {
+--     ADD_BINO_TO_STASH = {
+--         name = "add_bino_to_stash",
+--         descr = "Add Codec To Stash",
+--         functor = {"npe_modulename_mcm", "add_to_stash", {"wpn_binoc_inv"}, 15340 }, -- 15340=sidorovich box
+--         delay = 10, -- not used
+--     },
+-- }
+
+-- this is the code functor sample supporting a custom action
+function a_custom_action_functor(obj)
+    printf("Custom action functor called with parameter: %s", obj)
+end
+
+local ACTION = {
+    MY_CUSTOM_ACTION = {
+        name = "my_custom_action",
+        descr = "description of the action",
+        functor = {"npe_modulename_mcm", "a_custom_action_functor", "obj" }, -- the execturor of the action
+    },
+}
+
+-- custom actions are assigned as start or end actions for the tutorial sets
+-- for example 
+
+-- start_actions = {   -- these list of action play at the start of the tutorial, before the first card is shown
+--     ACTION.NOOSPHERE_BUFF, -- we give a buff to the player
+--     ACTION.ADD_CODEC_TO_STASH,  -- we add the codec (quest item) to the stash
+--     ACTION.ADD_BINO_TO_STASH
+-- },
+
+-- end_actions = { -- this list of actions are executed upon closing the tutorial.
+--     ACTION.CREATE_TASK_FIND_CODEC
+-- },
+
+----------------------------------------------------------------------------------------- [OPTIONAL] Prefab Actions ---------------------------------------------------------------------------------------
+--
+
+-- npe_actions.script contains a library of prefab actions.
+-- You can use any of these prefab actions for your set's actions instead of creating custom functors as above
+-- for example
+
+-- local ACTION = {
+--     ADD_CODEC_TO_STASH = {
+--         name = "add_codec_to_stash",
+--         descr = "Add Codec To Stash",
+--         functor = {"npe_actions", "add_to_stash", {"mgs_codec"}, 15340 }, -- 15340=sidorovich box
+--         delay = 10, -- not used
+--     },
+-- }
+
+
+----------------------------------------------------------------------------------------- [MANDATORY] Define your deck ---------------------------------------------------------------------------------------
+
+-- 
 --      Define here your deck, with all the sets and cards
 --      A deck represents a number of sets that contains cards that will be shown to the player in a specific order
 --      A set representing a tutorial in practice that can become active when a specific event is triggered. Once active NPE will show it to the player
@@ -78,11 +206,56 @@ local deck_npe_modulename = {
     title = "Your module title", -- e.g. "My Mod Introduction" -- only used internally by the NPE Manager
     module= "modulename", -- must be unique thus the use of modulename whatever you have choosen above
     id="modulename", -- must be unique thus the use of modulename whatever you have choosen above
+
+    ------------------------------------ [MANDATORY] Define the dialog type of the deck ---------------------------------------------------------------------------------------
+    --      dialog type is used to define the type of dialog that will be shown to the player
+    --      it can be a tutorial dialog or a codec dialog
+    --      the dialog type is defined in the npe.script file
     dialog= npe.DIALOG.UI_TUTORIAL,
+
+    ------------------------------------ [MANDATORY] Define the sets ---------------------------------------------------------------------------------------
+    --
+    --      sets are the tutorials that will be shown to the player
+    --      each set can have one or more cards
+    --      each set can have a context that defines when the set will be shown to the player
+    --      each set can have a start and end action that will be executed when the set is shown or closed
+    --      each set can have a title that will be shown in the tutorial window for all the cards in the set
+    --      each set can have a unique id that will be used to track the set in the MCM menu
     sets = {
         {
             id = "setname", -- e.g. "encumbrance"
-            title = "ui_mcm_npe_module_modulename_setname_set_title", -- it must reference a string in the localization file "npe_ui_st_modulename.xml"
+            title = "ui_npe_modulename_setname_set_title", -- it must reference a string in the localization file "ui_st_npe_modulename.xml"
+            
+            -- [OPTIONAL] Override Cards Count
+            -- By design tutorials are supposed to strick to three cards rule (topic introduction, action to take, conclusion/outcome)
+            -- this restriction gives a good balance between the tutorial effectiveness and the player's time
+            -- remember that other tutorials can be present or installed at the same time and longer interruptions of the player's action mine the player's perception of utility of the tutorials 
+            -- however, if you have a good reason to override this rule you can do it by setting the override_cards_count to the number of cards you want to show
+            -- e.g.
+            -- override_cards_count = 5,
+
+            -- [OPTIONAL] Start Actions
+            -- start_actions and end_actions are the actions that will be executed when the set is shown or closed
+            -- you can use the custom actions defined above
+            -- an example of start actions is for instance giving the player some items to use after the tutorial
+            -- or adding a debuff to the player to explain the effect of a certain condition and then remove it at the end of the tutorial
+            -- another example of end actions is for instance creating a task for the player to find a certain item after the tutorial
+            -- you can add as many actions as you want
+            start_actions = {   -- these list of action play at the start of the tutorial, before the first card is shown
+                ACTION.NOOSPHERE_BUFF, -- we give a buff to the player
+                ACTION.ADD_BINO_TO_STASH -- we add the binoculars to the stash
+            },
+
+            -- [OPTIONAL] Set's start sounds
+            -- start_sounds are the sounds that will be played when the set is shown
+            start_sounds = { -- this plays thorough the entire set, bg music, narrations, etc
+                [1] = { 
+                    -- [MANDATORY] you must declare the sound file path
+                    sound = "npe\\mgs_codec\\voiceover\\snake\\what",
+                    -- [MANDATORY] you must declare the duration of the sound file in seconds
+                    duration = 1 
+                },
+            },
             cards = {
                 -- [MANDATORY] Define your set of cards
                 --      cards are defined with index starting from 1 and increasing by 1 for each card
@@ -93,39 +266,61 @@ local deck_npe_modulename = {
                 --              - second card should present the action to be taken
                 --              - third card should present the result of the action and conclusion   
                 [1] = {
-                    title = "ui_modulename_setname_card_01_title", -- it must reference a string in the localization file "npe_ui_st_npe_modulename.xml"
-                    description = "ui_modulename_setname_card_01_description", -- it must reference a string in the localization file "npe_ui_st_modulename.xml"
-                    image = "ui_modulename_setname_card_01", -- it must reference a texture id in the file "ui/texture_descr/modulename.xml"
+                    title = "ui_npe_modulename_setname_card_01_title", -- it must reference a string in the localization file "ui_st_npe_modulename.xml"
+                    description = "ui_npe_modulename_setname_card_01_description", -- it must reference a string in the localization file "ui_st_npe_modulename.xml"
+                    image = "ui_npe_modulename_setname_card_01", -- it must reference a texture id in the file "ui/texture_descr/modulename.xml"
+                    
+                    -- [OPTIONAL] Card's start sounds
+                    -- you can assign specific sounds to be played when the card is shown, such as chimes or voiceovers
+                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\listentome",
+                                    duration = 1 
+                    },                    
                 },
                 [2] = {
-                    title = "ui_modulename_setname_card_02_title",
-                    description = "ui_modulename_setname_card_02_description",
-                    image = "ui_modulename_setname_card_02",
+                    title = "ui_npe_modulename_setname_card_02_title",
+                    description = "ui_npe_modulename_setname_card_02_description",
+                    image = "ui_npe_modulename_setname_card_02",
                 },
                 [3] = {
-                    title = "ui_modulename_setname_card_03_title",
-                    description = "ui_modulename_setname_card_03_description",
-                    image = "ui_modulename_setname_card_03",
+                    title = "ui_npe_modulename_setname_card_03_title",
+                    description = "ui_npe_modulename_setname_card_03_description",
+                    image = "ui_npe_modulename_setname_card_03",
                 },                
             },
-            -- [MANDATORY] Define the context of when the set shall become active and shown
+            -- [MANDATORY] Context 
+            -- Defines the context of when the set shall become active and shown
             --      context represet the way this set is triggered and shown to the player
             --      context can have the following keys:
             --      event: [MANDATORY] the event that triggers this set
-            --      delay: [OPTIONAL] the delay in seconds after the event is triggered before the set is shown
+            --      delay: [OPTIONAL] the delay in seconds after the event is triggered before the set is shown. Bear in mind that this time can still vary depending on the number of playable sets in the queued_context at the moment of the activation
+            --      strict: [OPTIONAL] tries to enforce the delay as much as possible, moving the event to an higher priority in the activation queue
             --      pause_game: [OPTIONAL] if true the game is paused when the set is shown
             --      override: [OPTIONAL] rule to override another npe module set on similar context (e.g. if you want to override the encumbrance set of another npe module)
-
             context = {
                 -- [MANDATORY] Assign the event that triggers this set
                 --      event can be choosen from the predefined events included in the npe.script (NPE Main Module) or from your custom events you might have defined above
                 event = npe.EVENT.ACTOR_OVERWEIGHT,
             },
-        },
-        -- you can define more then one set        
+
+            -- [OPTIONAL] Define the actions that will be executed when the set is closed
+            end_actions = { -- this list of actions are executed upon closing the tutorial.
+                ACTION.CREATE_TASK_G0_TO_THE_CAR_PARK -- we create an in-game task for the player to go to a certain location
+            },
+            
+            -- [OPTIONAL] Set's end sounds
+            -- end_sounds are the sounds that will be played when the set is closed
+            end_sounds = { -- this list of sounds can plays upon closing the tutorial.
+                [1] = { sound = "npe\\mgs_codec\\voiceover\\snake\\whats_going_on",
+                        duration = 1 },
+            },
+
+            disabled = false, -- [OPTIONAL] if true the set is disabled and will not be added to the NPE Manager on registration
+        }, 
+        -- you can define more then one set
+
         {
             id = "setname1",
-            title = "ui_mcm_npe_module_modulename_setname1_set_title",
+            title = "ui_mcm_npe_modulename_setname1_set_title",
             cards = {
                 [1] = {
                     title = "ui_modulename_setname1_card_title",
@@ -140,10 +335,72 @@ local deck_npe_modulename = {
                 -- this time can vary depending on the number of playable sets in the queued_context at the moment of the activation
                 -- the number set it's the minimum not guaranteed
                 delay = 30,
+                strict = true, -- we can use strict to enforce the delay
                 -- pause_game is optional and if true the game is paused when the set is shown
                 pause_game = true,
             },
-        },  
+        },     
+        {
+            id = "setname2",
+            title = "ui_mcm_npe_modulename_setname2_set_title",
+            cards = {
+                [1] = {
+                    title = "ui_modulename_setname2_card1_title",
+                    description = "ui_modulename_setname2_card1_description",
+                    image = "ui_modulename_setname2_card1",
+                },
+                [2] = {
+                    title = "ui_modulename_setname2_card2_title",
+                    description = "ui_modulename_setname2_card2_description",
+                    image = "ui_modulename_setname2_card2",
+                },
+                [3] = {
+                    title = "ui_modulename_setname2_card3_title",
+                    description = "ui_modulename_setname2_card3_description",
+                    image = "ui_modulename_setname2_card3",
+                },
+                [4] = {
+                    title = "ui_modulename_setname2_card3_title",
+                    description = "ui_modulename_setname2_card3_description",
+                    image = "ui_modulename_setname2_card3",
+                },                                
+            },
+            context = {
+                event = npe.EVENT.GAME_START,
+                delay = 2,
+                strict = true,
+                pause_game = false,
+            },
+        },     
+        {
+            id = "setname2_override",
+            -- You can override the title, context and any of the cards content
+            -- IMPORTANT This set will not be played, but only used to override the target set which will be played instead with the altered content
+            title = "ui_mcm_npe_modulename_setname2_override_set_title",
+            cards = {
+                -- the overridden set is the base you will override, so you can just define the cards that you want to change
+                -- in this case we override the card two with new content (title, description and image)
+                -- the index of the card you want to override must match
+                [2] = {
+                    title = "ui_modulename_setname2_card2_title",
+                    description = "ui_modulename_setname2_card2_description",
+                    image = "ui_modulename_setname2_card2",
+                },             
+            },
+            context = {
+                -- you can change the context of the overridden set
+                event = npe.EVENT.GAME_START,
+                delay = 0,
+                override = { 
+                    -- [MANDATORY] The deckId and setId of the set you want to override
+                    -- you can override a set from this module, in that case you specify the deckId from this module
+                    -- or you can override a set from another npe module, in that case you specify the deckId from the other module
+                    deckId = "modulename", 
+                    setId = "setname2"},                
+            },
+        },
+
+
     -- and more...              
     }
 }
@@ -157,6 +414,7 @@ function on_mcm_load()
                 --      This allow the user to check sets that have been shown (selected) and evenually replay them (unselect in mcm) if needed
                 {id = "setname", type = "check", val = 1, def=false},
                 {id = "setname1", type = "check", val = 1, def=false},
+                {id = "setname2", type = "check", val = 1, def=false},
 			}
 		}
 

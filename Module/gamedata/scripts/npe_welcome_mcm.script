@@ -1,8 +1,4 @@
 
-npe_default_settings = {
-    ["introduction"]		= false	-- Enable/Disable New Player Experience
-}
-
 local deck_welcome = { 
     title = "New Player Experience Welcome Deck",
     module= "welcome",

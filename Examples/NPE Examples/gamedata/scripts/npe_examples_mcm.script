@@ -118,18 +118,14 @@ local deck_examples = {
             id = "drunken_introduction",
             title = "ui_mcm_npe_module_examples_drunken_introduction_set_title",
             cards = {
-                [1] = {
-                },
                 [2] = {
                     title = "ui_npe_examples_vodka_card_title",
                     description = "ui_npe_examples_vodka_card_description",
                     image = "ui_npe_examples_bino_card",
                 },
-                [3] = {
-                },
             },
             context = {
-                event = npe.EVENT.GAME_START,
+                event = npe.EVENT.ACTOR_IRRADIATED,
                 delay = 0,
                 override = { deckId = "welcome", setId = "introduction"},                
             },
