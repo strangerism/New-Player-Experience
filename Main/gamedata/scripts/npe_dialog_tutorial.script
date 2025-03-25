@@ -12,20 +12,34 @@ GAMETIME_STATE = npe_dialog.GAMETIME_STATE
 Sounds = npe_dialog.Sounds
 
 local SOUNDS_SET
+local DEFAULT_CARDS_COUNT = 3
+local set_cards_count
 
 function Play(set)
 	if set == nil then
-		printdebug(LOG.ERROR, LOG.UI," Play set is nil")
+		printlog(LOG.ERROR, LOG.UI," Play set is nil")
 		npe_director.Resume_execution_Deprecated()
 		return
 	end
 	npe_director.Register_dialog(set.dialog)
 
 	SOUNDS_SET = npe_director.Settings.sounds_set
+	if set.override_cards_count then
+		set_cards_count = set.override_cards_count
+	else
+		set_cards_count = DEFAULT_CARDS_COUNT
+	end
+
+	if set_cards_count ~= #set.cards then
+		printlog(LOG.ERROR, LOG.UI," Set cards count [%s] does not match with number of cards available [%s] ", set_cards_count, #set.cards)
+		npe_director.Resume_execution_Deprecated()
+		return
+	end
 
     printdebug(LOG.RUN, LOG.UI," Play set module: " .. set.module .. " set : " .. set.id)
 	printdebug(LOG.INFO, LOG.UI," Play set title: " .. set.title)
 	printdebug(LOG.INFO, LOG.UI," Sounds set: " .. SOUNDS_SET)
+	printdebug(LOG.INFO, LOG.UI," Max Cards set to: " .. set_cards_count)
 	if npe_director.Settings.pause_game or set.context.pause_game then
     	npe_dialog.Change_gametime_to(GAMETIME_STATE.STOPPED)
 	end
@@ -123,7 +137,7 @@ function UINewPlayerExperience:InitControls(set)
 
 ---@diagnostic disable-next-line: undefined-field
     self.card_index = xml:InitTextWnd(set.dialog .. ":card_index",self.dialog)
-	local max_card = #self.set.cards > 3 and 3 or #self.set.cards
+	local max_card = #self.set.cards > set_cards_count and set_cards_count or #self.set.cards
 	self.card_index:SetText(self.cardIndex .. "/" .. max_card)
 
 ---@diagnostic disable-next-line: undefined-field
@@ -219,7 +233,7 @@ function UINewPlayerExperience:UpdateButtons()
 		self.btn_prev:Show(true)
 	end
 
-	if self.cardIndex == 3 or self.cardIndex == #self.set.cards then
+	if self.cardIndex == set_cards_count or self.cardIndex == #self.set.cards then
 		self.btn_next:Show(false)
 	else
 		self.btn_next:Show(true)
@@ -235,7 +249,7 @@ end
 function UINewPlayerExperience:OnButtonNext()
     printdebug(LOG.RUN, LOG.UI," OnButtonNext")
 	self.cardIndex = self.cardIndex + 1
-	if self.cardIndex <= #self.set.cards and self.cardIndex <= 3 and self.set.cards[self.cardIndex] then
+	if self.cardIndex <= #self.set.cards and self.cardIndex <= set_cards_count and self.set.cards[self.cardIndex] then
 		local text
 		if self.set.cards[self.cardIndex].title then
 			text = game.translate_string(self.set.cards[self.cardIndex].title)
@@ -248,10 +262,10 @@ function UINewPlayerExperience:OnButtonNext()
 		self.card_description:SetText(text)
 
 		self.card_image:InitTexture(self.set.cards[self.cardIndex].image)
-		local max_card = #self.set.cards > 3 and 3 or #self.set.cards
+		local max_card = #self.set.cards > set_cards_count and set_cards_count or #self.set.cards
 		self.card_index:SetText(self.cardIndex .. "/" .. max_card)
 	else
-		self.cardIndex = 3
+		self.cardIndex = set_cards_count
 	end
 	npe_dialog.Play_sound(Sounds[SOUNDS_SET].next)
 	self:UpdateButtons()
@@ -274,7 +288,7 @@ function UINewPlayerExperience:OnButtonPrev()
 
 		self.card_image:InitTexture(self.set.cards[self.cardIndex].image)
 
-		local max_card = #self.set.cards > 3 and 3 or #self.set.cards
+		local max_card = #self.set.cards > set_cards_count and set_cards_count or #self.set.cards
 		self.card_index:SetText(self.cardIndex .. "/" .. max_card)
 	else
 		self.cardIndex = 1
