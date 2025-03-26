@@ -970,8 +970,6 @@ function UINewPlayerExperience:PlayCard()
 			starting_delay = starting_delay + tts_sounds[i].duration + 1
 		end
 	end
-	local start_sound_delay = 0
-	local tts_starting_delay = 0
 end
 
 ---@diagnostic disable-next-line: duplicate-set-field

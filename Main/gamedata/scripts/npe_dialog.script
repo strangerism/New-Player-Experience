@@ -161,6 +161,20 @@ function Purge_all_sounds_events()
 	end
 end
 
+function Play_sounds_sequence(sounds)
+	if sounds then
+		-- play set sounds
+		local sequence_delay = nil
+		for i = 1, #sounds do
+			if not sequence_delay then
+				sequence_delay = sounds[i].delay or 0
+			end
+			Play_sound_with_delay(sounds[i].sound, sequence_delay)
+			sequence_delay = sequence_delay + (sounds[i].duration or 0) + (sounds[i+1] and sounds[i+1].delay or 0)
+		end		
+	end
+end
+
 function Enable_dof(enable)
 	printtrace(LOG.RUN, LOG.UI," Enable DOF: " .. tostring(enable))
 	if ssfx_weapons_dof then

@@ -429,7 +429,7 @@ local function update_runners_configs()
             exclusive = true,
             execution = npe_execution.TYPE.QUEUE,
             queue = { "npe_director", "get_playableHighPrioQueue"},
-            start_timer = 1,
+            start_timer = 0.1,
             functor = { "npe_director", "play_now_set" }
         },                   
     }    

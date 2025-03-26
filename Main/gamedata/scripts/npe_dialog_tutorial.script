@@ -171,29 +171,24 @@ function UINewPlayerExperience:InitControls(set)
 	self:UpdateButtons()
 
 	self:PlayStartSounds()
+
+	-- play card sounds
+	if self.set.cards[self.cardIndex].sounds then
+		npe_dialog.Play_sounds_sequence(self.set.cards[self.cardIndex].sounds)
+	end	
 end
 
 function UINewPlayerExperience:PlayStartSounds()
 	if self.set.start_sounds then
 		-- play set sounds
-		local set_sounds = self.set.start_sounds
-		local starting_delay = 0
-		for i = 1, #set_sounds do
-			npe_dialog.Play_sound_with_delay(set_sounds[i].sound, starting_delay)
-			starting_delay = starting_delay + set_sounds[i].duration + 1
-		end		
+		npe_dialog.Play_sounds_sequence(self.set.start_sounds)
 	end
 end
 
 function UINewPlayerExperience:PlayEndSounds()
 	if self.set.end_sounds then
 		-- play set sounds
-		local set_sounds = self.set.end_sounds
-		local starting_delay = 0
-		for i = 1, #set_sounds do
-			npe_dialog.Play_sound_with_delay(set_sounds[i].sound, starting_delay)
-			starting_delay = starting_delay + set_sounds[i].duration + 1
-		end		
+		npe_dialog.Play_sounds_sequence(self.set.end_sounds)
 	end
 end
 
@@ -218,6 +213,32 @@ function UINewPlayerExperience:DoEndActions()
 			npe_director.Execute_npe_action(action, self.set.id)
 		end
 	
+	end
+end
+
+---@diagnostic disable-next-line: duplicate-set-field
+function UINewPlayerExperience:PlayCard()
+	printdebug(LOG.RUN, LOG.UI," PlayCard")
+	local text
+
+	-- update card context
+	if self.set.cards[self.cardIndex].title then
+		text = game.translate_string(self.set.cards[self.cardIndex].title)
+	else
+		text = game.translate_string(self.set.title)
+	end
+	self.card_title:SetText(text)
+
+	text = game.translate_string(self.set.cards[self.cardIndex].description)
+	self.card_description:SetText(text)
+
+	self.card_image:InitTexture(self.set.cards[self.cardIndex].image)
+	local max_card = #self.set.cards > set_cards_count and set_cards_count or #self.set.cards
+	self.card_index:SetText(self.cardIndex .. "/" .. max_card)
+
+	-- play card sounds
+	if self.set.cards[self.cardIndex].sounds then
+		npe_dialog.Play_sounds_sequence(self.set.cards[self.cardIndex].sounds)
 	end
 end
 
@@ -247,22 +268,10 @@ end
 
 function UINewPlayerExperience:OnButtonNext()
     printdebug(LOG.RUN, LOG.UI," OnButtonNext")
+	npe_dialog.Purge_all_sounds_events()
 	self.cardIndex = self.cardIndex + 1
 	if self.cardIndex <= #self.set.cards and self.cardIndex <= set_cards_count and self.set.cards[self.cardIndex] then
-		local text
-		if self.set.cards[self.cardIndex].title then
-			text = game.translate_string(self.set.cards[self.cardIndex].title)
-		else
-			text = game.translate_string(self.set.title)
-		end
-		self.card_title:SetText(text)
-	
-		text = game.translate_string(self.set.cards[self.cardIndex].description)
-		self.card_description:SetText(text)
-
-		self.card_image:InitTexture(self.set.cards[self.cardIndex].image)
-		local max_card = #self.set.cards > set_cards_count and set_cards_count or #self.set.cards
-		self.card_index:SetText(self.cardIndex .. "/" .. max_card)
+		self:PlayCard()
 	else
 		self.cardIndex = set_cards_count
 	end
@@ -272,23 +281,10 @@ end
 
 function UINewPlayerExperience:OnButtonPrev()
     printdebug(LOG.RUN, LOG.UI," OnButtonPrev")
+	npe_dialog.Purge_all_sounds_events()
 	self.cardIndex = self.cardIndex - 1
 	if self.cardIndex > 0 and self.set.cards[self.cardIndex] then
-		local text
-		if self.set.cards[self.cardIndex].title then
-			text = game.translate_string(self.set.cards[self.cardIndex].title)
-		else
-			text = game.translate_string(self.set.title)
-		end
-		self.card_title:SetText(text)
-	
-		text = game.translate_string(self.set.cards[self.cardIndex].description)
-		self.card_description:SetText(text)
-
-		self.card_image:InitTexture(self.set.cards[self.cardIndex].image)
-
-		local max_card = #self.set.cards > set_cards_count and set_cards_count or #self.set.cards
-		self.card_index:SetText(self.cardIndex .. "/" .. max_card)
+		self:PlayCard()
 	else
 		self.cardIndex = 1
 	end
