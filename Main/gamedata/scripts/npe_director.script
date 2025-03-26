@@ -77,6 +77,23 @@ Dialog_name = nil
 
 -------------------------------------------------- NPE Utils --------------------------------------------------
 
+-------------------------------------------------- Tables --------------------------------------------------
+
+function clone (t) -- deep-copy a table
+    if type(t) ~= "table" then return t end
+    local meta = getmetatable(t)
+    local target = {}
+    for k, v in pairs(t) do
+        if type(v) == "table" then
+            target[k] = clone(v)
+        else
+            target[k] = v
+        end
+    end
+    setmetatable(target, meta)
+    return target
+end
+
 -------------------------------------------------- NPE hashing functions --------------------------------------------------
 
 local function map_to_set_key(deckId, setId)
@@ -165,6 +182,7 @@ local function override_cards(set, overrideTargetSet)
 end
 
 local function override_contexts(context, overrideTargetSet)
+    overrideTargetSet.context = {}
     for contextKey, contextValue in pairs(context) do
         if contextKey ~= "override" and contextValue ~= nil then
             printdebug(LOG.INFO, LOG.OVERR," Override context [%s] with value [%s]", contextKey, contextValue)
@@ -179,40 +197,33 @@ local function apply_overrides_to_decks()
     for deckId, deck in pairs(npeConfig.decks) do
         printdebug(LOG.RUN, LOG.OVERR," Searching into Deck [%s]:", deckId)
         for setId, set in pairs(deck.sets) do
-            printdebug(LOG.RUN, LOG.OVERR," Searching into Set [%s]:", setId)
-            if set.context and set.context.override and not set.played then
+            printdebug(LOG.RUN, LOG.OVERR," Searching into Set [%s] played [%s]:", setId, set.played)
+            if set.context and set.context.override then
 
                 printdebug(LOG.RUN, LOG.OVERR," Set [%s] has override rules:", setId)
                 debug_table(set.context.event.override)
-                local overrideTargetDeckId = set.context.override.deckId
-                local overrideTargetSetId = set.context.override.setId
 
-                if npeConfig.decks[overrideTargetDeckId] and npeConfig.decks[overrideTargetDeckId].sets[overrideTargetSetId] then
+                local override = set.context.override
+
+                if npeConfig.decks[override.deckId] and npeConfig.decks[override.deckId].sets[override.setId] then
                     
-                    local overrideTargetSet = npeConfig.decks[overrideTargetDeckId].sets[overrideTargetSetId]
-                    printdebug(LOG.RUN, LOG.OVERR," Override set [%s] data with content from set [%s]", overrideTargetSet.id, set.id)
-                    overrideTargetSet = override_cards(set, overrideTargetSet)
+                    local overrideTemplateSet = clone(npeConfig.decks[override.deckId].sets[override.setId])
+                    printdebug(LOG.RUN, LOG.OVERR," Override set [%s] data with content from set [%s]", override.setId, set.id)
 
+                    overrideTemplateSet = override_cards(set, overrideTemplateSet)
                     if set.title then
-                        overrideTargetSet.title = set.title
-                        printdebug(LOG.INFO, LOG.OVERR," Override set [%s] title with [%s]", overrideTargetSet.id, set.title)
+                        overrideTemplateSet.title = set.title
+                        printdebug(LOG.INFO, LOG.OVERR," Override set [%s] title with [%s]", override.setId, set.title)
                     end
                     
-                    overrideTargetSet = override_contexts(set.context, overrideTargetSet)
-
-                    -- update the overrideTargetSet state for re-play with the new content
-                    overrideTargetSet.played = false
-
-                    -- turn off the overrider set
-                    set.module = npeConfig.decks[deckId].module
-                    update_set_played_state(set, true)
-                    printdebug(LOG.INFO, LOG.OVERR," Override set [%s] played with [false]", overrideTargetSet.id)
+                    overrideTemplateSet = override_contexts(set.context, overrideTemplateSet)
 
                     -- update the npeConfig.decks table with the new changes
-                    npeConfig.decks[deckId].sets[setId] = set
-                    npeConfig.decks[overrideTargetDeckId].sets[overrideTargetSetId] = overrideTargetSet
+                    npeConfig.decks[deckId].sets[setId] = overrideTemplateSet
+                    npeConfig.decks[deckId].sets[setId].id = setId
+                    npeConfig.decks[override.deckId].sets[override.setId].overridden = true
                 else
-                    printlog("![NPE][OVERR] Deck with id [%s] or Set with id [%s] to for overriding, does not exist.", overrideTargetDeckId, overrideTargetSetId)
+                    printlog("![NPE][OVERR] Deck with id [%s] or Set with id [%s] to for overriding, does not exist.", override.deckId, override.setId)
                 end
             end
         end
@@ -232,7 +243,7 @@ local function compare_events(event1, event2)
 end
 
 local function find_sets_on(event)
-    printdebug(LOG.RUN, LOG.ACTIV," Find sets activating on event [%s]", event.name)
+    printdebug(LOG.RUN, LOG.ACTIV," Find queued contexts activating on event [%s]", event.name)
     local setsKeys = {}
     for setKey, queued_context in pairs(npeSetsActivationQueue.contexts) do
         if compare_events(queued_context.event, event) then
@@ -292,7 +303,9 @@ local function add_to_playable_queue(setsKeys)
                 table.insert(playableQueue.setsKeys, setKey)
             end
             -- removes it from the npeSetsActivationQueue
-            npeSetsActivationQueue.contexts[setKey] = nil            
+            npeSetsActivationQueue.contexts[setKey] = nil
+        else
+            printlog(LOG.ERROR, LOG.QUEUE," Set with key [%s] does not exist", setKey)
         end
     end
 end
@@ -320,8 +333,8 @@ local function update_activation_queue()
     }
     for deckId, deck in pairs(npeConfig.decks) do
         for setId, set in pairs(deck.sets) do
-            -- Only call add_to_sets_queue if set.played is false
-            if set.played == false then
+            -- Only call add_to_sets_queue if set is not overridden and has not played
+            if not set.overridden and not set.played then
                 add_to_sets_queue(set, deck.id, deck.module)
             end
         end
@@ -621,7 +634,7 @@ function Activate_contexts_on(event)
     local setsKeys = find_sets_on(event)
     if setsKeys then
         printdebug(LOG.INFO, LOG.ACTIV," Found sets on [%s]", event.name)
-        print_table(setsKeys)
+        debug_table(setsKeys)
         add_to_playable_queue(setsKeys)
         -- resume_play_queues_manager_loop()
     end
@@ -688,13 +701,13 @@ function Register_npe_callbacks()
                 if AddScriptCallback then
                     local callback_name = context.event.handler.module .. "_" .. context.event.handler.name
                     context.event.handler.callback_name = callback_name
-                    add_to_execution_queue(context.event.handler)
                     if not RegisteredCustomCallbacks[callback_name] then
                         RegisteredCustomCallbacks[callback_name] = true
+                        add_to_execution_queue(context.event.handler)
                         AddScriptCallback(callback_name)
+                        printdebug(LOG.ADD, LOG.RGSTR," Registering CUSTOM callback [" .. callback_name .. "] for [".. context.event.name .. "]")
+                        RegisterScriptCallback(callback_name,activate_oneshot_event(context.event, callback_name))                        
                     end
-                    printdebug(LOG.ADD, LOG.RGSTR," Registering CUSTOM callback [" .. callback_name .. "] for [".. context.event.name .. "]")
-                    RegisterScriptCallback(callback_name,activate_oneshot_event(context.event, callback_name))
                 end
             end
         end
@@ -795,7 +808,6 @@ local function mcm_on_option_change()
 
     update_decks_from_mcm()
     
-    apply_overrides_to_decks()
 
     -- Use the function to print the npeConfig.decks table
     printdebug(LOG.RUN, LOG.CONF," Listing Decks:")
