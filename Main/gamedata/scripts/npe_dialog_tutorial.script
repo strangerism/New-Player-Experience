@@ -25,15 +25,14 @@ function Play(set)
 
 	SOUNDS_SET = npe_director.Settings.sounds_set
 	if set.override_cards_count then
+		if set.override_cards_count ~= #set.cards then
+			printlog(LOG.ERROR, LOG.UI," Set cards count [%s] does not match with number of cards available [%s] ", set_cards_count, #set.cards)
+			npe_director.Resume_execution_Deprecated()
+			return
+		end
 		set_cards_count = set.override_cards_count
 	else
 		set_cards_count = DEFAULT_CARDS_COUNT
-	end
-
-	if set_cards_count ~= #set.cards then
-		printlog(LOG.ERROR, LOG.UI," Set cards count [%s] does not match with number of cards available [%s] ", set_cards_count, #set.cards)
-		npe_director.Resume_execution_Deprecated()
-		return
 	end
 
     printdebug(LOG.RUN, LOG.UI," Play set module: " .. set.module .. " set : " .. set.id)
