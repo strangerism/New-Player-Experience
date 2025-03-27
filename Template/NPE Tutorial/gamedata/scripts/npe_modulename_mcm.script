@@ -248,12 +248,16 @@ local deck_npe_modulename = {
 
             -- [OPTIONAL] Set's start sounds
             -- start_sounds are the sounds that will be played when the set is shown
-            start_sounds = { -- this plays thorough the entire set, bg music, narrations, etc
-                [1] = { 
-                    -- [MANDATORY] you must declare the sound file path
-                    sound = "npe\\mgs_codec\\voiceover\\snake\\what",
-                    -- [MANDATORY] you must declare the duration of the sound file in seconds
-                    duration = 1 
+            -- this plays thorough the entire set, bg music, narrations, etc
+            -- Beware, these can be muted if sounds are defined in cards too
+            start_sounds = { 
+                [1] = {
+                    -- [MANDATORY] you must declare the sound file path, which is in ogg format
+                    -- custom sounds must be stored relative total the "gamedata\sounds\" folder
+                    -- and so is the path e.g. "gamedata\sounds\music\guitar_28.ogg"
+                    sound = "music\\guitar_28",
+                    delay = 1, -- [OPTIONAL] the delay in seconds before the sound is played
+                    duration = 33, -- [MANDATORY] you must declare the duration of the sound file in seconds
                 },
             },
             cards = {
@@ -270,11 +274,22 @@ local deck_npe_modulename = {
                     description = "ui_npe_modulename_setname_card_01_description", -- it must reference a string in the localization file "ui_st_npe_modulename.xml"
                     image = "ui_npe_modulename_setname_card_01", -- it must reference a texture id in the file "ui/texture_descr/modulename.xml"
                     
-                    -- [OPTIONAL] Card's start sounds
-                    -- you can assign specific sounds to be played when the card is shown, such as chimes or voiceovers
-                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\listentome",
-                                    duration = 1 
-                    },                    
+                    -- [OPTIONAL] Card's sounds
+                    -- you can assign specific sounds to be played when the card is shown, such as chimes, music or voiceovers
+                    -- this list of sounds can play upon showing the card. all sounds are played in sequence with delays between them where declared
+                    sounds = {
+                        [1] = {
+                                -- [MANDATORY] you must declare the sound file path, which is in ogg format
+                                -- custom sounds must be stored relative total the "gamedata\sounds\" folder
+                                -- and so is the path e.g. "gamedata\sounds\ambient\siren2.ogg"
+                                sound = "ambient\\siren2",
+                                delay = 1, -- [OPTIONAL] the delay in seconds before the sound is played
+                                duration = 1, -- [MANDATORY] you must declare the duration of the sound file in seconds
+                            },
+                        [2] = { sound = "ambient\\crickets_1",
+                                delay = 3,
+                                duration = 6 },
+                    },
                 },
                 [2] = {
                     title = "ui_npe_modulename_setname_card_02_title",
@@ -309,12 +324,20 @@ local deck_npe_modulename = {
             
             -- [OPTIONAL] Set's end sounds
             -- end_sounds are the sounds that will be played when the set is closed
-            end_sounds = { -- this list of sounds can plays upon closing the tutorial.
-                [1] = { sound = "npe\\mgs_codec\\voiceover\\snake\\whats_going_on",
-                        duration = 1 },
+            end_sounds = { 
+                [1] = {
+                    -- [MANDATORY] you must declare the sound file path, which is in ogg format
+                    -- custom sounds must be stored relative total the "gamedata\sounds\" folder
+                    -- and so is the path e.g. "gamedata\sounds\music\guitar_27.ogg"
+                    sound = "music\\guitar_27",
+                    delay = 1, -- [OPTIONAL] the delay in seconds before the sound is played
+                    duration = 33, -- [MANDATORY] you must declare the duration of the sound file in seconds
+                },
             },
 
-            disabled = false, -- [OPTIONAL] if true the set is disabled and will not be added to the NPE Manager on registration
+            -- [OPTIONAL] if true the set is disabled and will not be added to the NPE Manager on registration
+            -- use it at your discretion, e.g. for development, testing or if you want to prevent a set to be used at release
+            disabled = true,
         }, 
         -- you can define more then one set
 
