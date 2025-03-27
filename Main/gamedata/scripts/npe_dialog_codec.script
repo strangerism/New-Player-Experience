@@ -744,7 +744,7 @@ local codec_ring_count_answer = 2
 local function codec_call_loop(set)
 	printtrace(LOG.RUN, LOG.UI_EXEC," run codec call loop")
     if not run_codec_call_loop then return true end
-	npe_dialog.Play_sound(Sounds[SOUNDS_SET].call)
+	npe_dialog.Play_sound(Sounds[SOUNDS_SET].call, true)
 	codec_ring_count = codec_ring_count + 1
 	printtrace(LOG.INFO, LOG.UI_EXEC," codec_ring_count: " .. codec_ring_count)
 	if codec_ring_count < codec_ring_count_answer then
@@ -1102,7 +1102,7 @@ function UINewPlayerExperience:Close()
 		end
 		if self.set.completion_sound then 
 			-- we have the set's completion sound to play, un-equip radio with a delay equal to its duration
-			npe_dialog.Play_sound(self.set.completion_sound.sound)
+			npe_dialog.Play_sound(self.set.completion_sound.sound, false)
 			CreateTimeEvent("npe_dialog_codec", "unequip_radio", self.set.completion_sound.duration, unequip_radio, self.set.dialog)
 		else
 			-- delay is 0

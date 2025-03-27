@@ -129,8 +129,10 @@ function Stop_sound()
 		snd = nil
 	end
 end
-function Play_sound(sound)
-	Stop_sound()
+function Play_sound(sound, mute_current_play)
+	if mute_current_play then
+		Stop_sound()
+	end
     if sound == nil then
        printtrace(LOG.ERROR, LOG.UI," Play sound: sound is nil")
     end
@@ -156,13 +158,17 @@ function Play_sound_with_delay(sound, delay)
 end
 
 function Purge_all_sounds_events()
+	Stop_sound()
 	for k,v in pairs(Delayed_sounds_events) do
+		printtrace(LOG.RUN, LOG.UI," Purge sound event: " .. k)
 		RemoveTimeEvent("play_sound_with_delay",v)
 	end
 end
 
 function Play_sounds_sequence(sounds)
 	if sounds then
+		Purge_all_sounds_events()
+	
 		-- play set sounds
 		local sequence_delay = nil
 		for i = 1, #sounds do

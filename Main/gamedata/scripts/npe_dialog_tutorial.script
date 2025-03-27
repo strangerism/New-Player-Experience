@@ -43,7 +43,7 @@ function Play(set)
     	npe_dialog.Change_gametime_to(GAMETIME_STATE.STOPPED)
 	end
 
-	npe_dialog.Play_sound(Sounds[SOUNDS_SET].open)
+	npe_dialog.Play_sound(Sounds[SOUNDS_SET].open, true)
     
 	printtrace(LOG.INFO, LOG.UI," Creating GUI")
     GUI = UINewPlayerExperience(set)
@@ -268,27 +268,27 @@ end
 
 function UINewPlayerExperience:OnButtonNext()
     printdebug(LOG.RUN, LOG.UI," OnButtonNext")
-	npe_dialog.Purge_all_sounds_events()
+
 	self.cardIndex = self.cardIndex + 1
 	if self.cardIndex <= #self.set.cards and self.cardIndex <= set_cards_count and self.set.cards[self.cardIndex] then
 		self:PlayCard()
 	else
 		self.cardIndex = set_cards_count
 	end
-	npe_dialog.Play_sound(Sounds[SOUNDS_SET].next)
+	npe_dialog.Play_sound(Sounds[SOUNDS_SET].next, false)
 	self:UpdateButtons()
 end
 
 function UINewPlayerExperience:OnButtonPrev()
     printdebug(LOG.RUN, LOG.UI," OnButtonPrev")
-	npe_dialog.Purge_all_sounds_events()
+
 	self.cardIndex = self.cardIndex - 1
 	if self.cardIndex > 0 and self.set.cards[self.cardIndex] then
 		self:PlayCard()
 	else
 		self.cardIndex = 1
 	end
-	npe_dialog.Play_sound(Sounds[SOUNDS_SET].prev)
+	npe_dialog.Play_sound(Sounds[SOUNDS_SET].prev, false)
 	self:UpdateButtons()
 end
 
@@ -333,7 +333,7 @@ function UINewPlayerExperience:Close()
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
 	npe_dialog.Disable_dof()
-	npe_dialog.Play_sound(Sounds[SOUNDS_SET].close)
+	npe_dialog.Play_sound(Sounds[SOUNDS_SET].close, false)
 	npe_dialog.Change_gametime_to(GAMETIME_STATE.INMOTION)
 	npe_director.Unregister_dialog(self.set.dialog)
 	npe_director.Resume_execution_Deprecated()
