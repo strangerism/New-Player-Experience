@@ -208,6 +208,10 @@ local function apply_overrides_to_decks()
                 if npeConfig.decks[override.deckId] and npeConfig.decks[override.deckId].sets[override.setId] then
                     
                     local overrideTemplateSet = clone(npeConfig.decks[override.deckId].sets[override.setId])
+
+                    -- inheriting the played state from the overrider set
+                    overrideTemplateSet.played = set.played
+
                     printdebug(LOG.RUN, LOG.OVERR," Override set [%s] data with content from set [%s]", override.setId, set.id)
 
                     overrideTemplateSet = override_cards(set, overrideTemplateSet)
@@ -683,7 +687,7 @@ local function activate_oneshot_event(event, callback)
 
     printdebug(LOG.REMOVE, LOG.RGSTR," Unregistering callback [" ..callback .. "]")
     UnregisterScriptCallback(callback, f)
-
+    RegisteredCustomCallbacks[callback] = false
     Activate_contexts_on(event)
     end
     return f
