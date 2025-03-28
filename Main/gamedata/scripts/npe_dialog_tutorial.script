@@ -333,6 +333,9 @@ function UINewPlayerExperience:Close()
 	Unregister_UI("UINewPlayerExperience")
 	GUI = nil    
 	npe_dialog.Disable_dof()
+	if not self.set.end_sounds then
+		npe_dialog.Purge_all_sounds_events()
+	end
 	npe_dialog.Play_sound(Sounds[SOUNDS_SET].close, false)
 	npe_dialog.Change_gametime_to(GAMETIME_STATE.INMOTION)
 	npe_director.Unregister_dialog(self.set.dialog)

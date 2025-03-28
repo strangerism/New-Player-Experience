@@ -119,12 +119,12 @@ Sounds = {
 	},    			
 }
 
-local Delayed_sounds_events = {}
+local delayed_sounds_events = {}
+local played_sounds = {}
 
-local snd
 function Stop_sound()
 	printtrace(LOG.RUN, LOG.UI," Stop sound")
-	if snd then
+	for k, snd in pairs(played_sounds) do
 		snd:stop()
 		snd = nil
 	end
@@ -137,7 +137,8 @@ function Play_sound(sound, mute_current_play)
        printtrace(LOG.ERROR, LOG.UI," Play sound: sound is nil")
     end
 	printtrace(LOG.RUN, LOG.UI," Play sound: %s", sound)
-	snd = sound_object(sound)
+	local snd = sound_object(sound)
+	table.insert(played_sounds, snd)
 	snd:play(db.actor,0,sound_object.s2d)
 	return true
 end
@@ -145,21 +146,19 @@ end
 function Play_delayed_sound(sound)
 	Stop_sound()
 	printtrace(LOG.RUN, LOG.UI," Play delayed sound: %s", sound)
-	snd = sound_object(sound)
-	snd:play(db.actor,0,sound_object.s2d)
-	return true
+	return Play_sound(sound)
 end
 
 function Play_sound_with_delay(sound, delay)
 	printtrace(LOG.RUN, LOG.UI," Play sound with delay: " .. sound .. " delay: " .. delay)
 	local sound_name = GetFilename(sound .. ".ogg")
-	Delayed_sounds_events[sound_name] = "play_sound_with_delay" .. sound_name
+	delayed_sounds_events[sound_name] = "play_sound_with_delay" .. sound_name
 	CreateTimeEvent("play_sound_with_delay", "play_sound_with_delay" .. sound_name, delay, Play_delayed_sound, sound)
 end
 
 function Purge_all_sounds_events()
 	Stop_sound()
-	for k,v in pairs(Delayed_sounds_events) do
+	for k,v in pairs(delayed_sounds_events) do
 		printtrace(LOG.RUN, LOG.UI," Purge sound event: " .. k)
 		RemoveTimeEvent("play_sound_with_delay",v)
 	end
