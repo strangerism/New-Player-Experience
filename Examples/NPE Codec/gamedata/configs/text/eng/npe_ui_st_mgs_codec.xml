@@ -53,7 +53,7 @@
 		<text>You wake up
 		\n
 		\n
-		The last thing you remember was that %c[d_red]explosion%c[d_white] or something that look like one.
+		The last thing you remember was that %c[d_red]explosion%c[d_white] or something that looked like one.
 		\n
 		\n
 		You were suppoded to be out of %c[d_blue]this%c[d_white]
@@ -66,7 +66,7 @@
 		<text>%c[d_blue]Once a rokie...</text>
 	</string>
 	<string id="ui_mgs_codec_nanomachines_card2_message">
-		<text>You ended to the Rokie Village. Again.
+		<text>You ended up to the Rokie Village. Again.
 		\n
 		\n
 		You need to contact your %c[d_blue]old friend%c[d_white], as soon as possible.

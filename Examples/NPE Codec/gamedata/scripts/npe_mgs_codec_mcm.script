@@ -140,28 +140,28 @@ local deck_npe_mgs_codec = {
     title = "MGS Codec", 
     module= "mgs_codec", 
     id="mgs_codec", 
-    dialog= npe.DIALOG.UI_CODEC, -- default dialog used by sets if not specified
+    dialog= npe.DIALOG.UI_CODEC,
     sets = {
-        {
-            dialog= npe.DIALOG.UI_QUEST, -- override default dialog
+        {   -- the introcutory set (it's where the quest starts)
+            dialog= npe.DIALOG.UI_QUEST, -- we will use the quest dialog to show the introduction
             id = "nanomachines",
             title = "ui_mcm_npe_module_mgs_codec_nanomachines_set_title",
-            start_actions = {   -- these list of action play at the start of the quest dialog, before the first card is shown
+            start_actions = {
                 ACTION.NOOSPHERE_BUFF, -- we give a buff to the player
                 ACTION.ADD_CODEC_TO_STASH,  -- we add the codec (quest item) to the stash
-                ACTION.ADD_BINO_TO_STASH
+                ACTION.ADD_BINO_TO_STASH -- we add the binoculats as a nod to Metal Gear Solid Snake (PS1)
             },
-            start_sounds = { -- this plays thorough the entire set, bg music, narrations, etc
-                [1] = { sound = "npe\\mgs_codec\\voiceover\\snake\\what",
-                        duration = 1 },
+            start_sounds = { 
+                [1] = { 
+                    sound = "npe\\mgs_codec\\voiceover\\snake\\what",
+                    delay = 2
+                },
             },
             cards = {
                 [1] = {
                     title = "ui_mgs_codec_nanomachines_card1_title",
                     description = "ui_mgs_codec_nanomachines_card1_message",
                     image = "ui_mgs_codec_nanomachines_card1_wish_granter",
-                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\listentome", -- do we need this ??????
-                        duration = 1 },
                 },
                 [2] = {
                     title = "ui_mgs_codec_nanomachines_card2_title",
@@ -169,7 +169,7 @@ local deck_npe_mgs_codec = {
                     image = "ui_mgs_codec_nanomachines_card2_sidorovich",
                 },                          
             },
-            context = { -- the context under which the set is shown
+            context = { --- The context is the dlc start event which is always triggered at game start
                 event = npe.EVENT.DLC_START,
                 delay = 0,
                 strict = true,
@@ -193,9 +193,7 @@ local deck_npe_mgs_codec = {
                     message = "ui_mgs_codec_old_friend_card1_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
-                    -- start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\listentome",
-                    --                 duration = 1 },
-                    tts_sounds = {
+                    sounds = {
                         [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon_mgs1\\snake_is_it_really_you",
                                 duration = 5 },
                     },                                      
@@ -205,9 +203,7 @@ local deck_npe_mgs_codec = {
                     message = "ui_mgs_codec_old_friend_card2_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
-                    -- start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\becareful",
-                    --                 duration = 2 },
-                    tts_sounds = {
+                    sounds = {
                         [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon_mgs1\\this_cannot_be",
                                 duration = 20 },
                     },              
@@ -217,9 +213,7 @@ local deck_npe_mgs_codec = {
                     message = "ui_mgs_codec_old_friend_card3_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
-                    -- start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\becareful",
-                    --                 duration = 2 },
-                    tts_sounds = {
+                    sounds = {
                         [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon_mgs1\\too_late",
                                 duration = 21 },
                     },              
@@ -233,7 +227,6 @@ local deck_npe_mgs_codec = {
             },
             save_context = {
             },
-            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
         }, 
         {
             id = "we_need_a_plan",
@@ -245,9 +238,7 @@ local deck_npe_mgs_codec = {
                     message = "ui_mgs_codec_we_need_a_plan_card1_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
-                    -- start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\where-are-you-now",
-                    --                 duration = 1 },
-                    tts_sounds = {
+                    sounds = {
                         [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon_mgs1\\somehow",
                                 duration = 17 },
                     },                                      
@@ -257,9 +248,7 @@ local deck_npe_mgs_codec = {
                     message = "ui_mgs_codec_we_need_a_plan_card2_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
-                    -- start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\listentome",
-                    --                 duration = 2 },
-                    tts_sounds = {
+                    sounds = {
                         [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon_mgs1\\the_only_way",
                                 duration = 26 },
                     },              
@@ -269,9 +258,7 @@ local deck_npe_mgs_codec = {
                     message = "ui_mgs_codec_we_need_a_plan_card3_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
-                    -- start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\becareful",
-                    --                 duration = 2 },
-                    tts_sounds = {
+                    sounds = {
                         [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon_mgs1\\go_to_their_hideout",
                                 duration = 14 },
                     },              
@@ -287,7 +274,6 @@ local deck_npe_mgs_codec = {
             end_actions = {
                 ACTION.CREATE_TASK_G0_TO_THE_CAR_PARK
             },
-            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\call-me-if-you-need-to", duration = 2 },
         },          
         {
             id = "look_for_help",
@@ -299,9 +285,7 @@ local deck_npe_mgs_codec = {
                     message = "ui_mgs_codec_look_for_help_card1_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
-                    -- start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\listentome",
-                    --                 duration = 1 },
-                    tts_sounds = {
+                    sounds = {
                         [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon_mgs1\\since_you_are_loners_base",
                                 duration = 20 },
                     },                                      
@@ -313,7 +297,6 @@ local deck_npe_mgs_codec = {
                 strict = true,
                 pause_game = false,
             },
-            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
         },
         {
             id = "fanatic_boars",
@@ -325,9 +308,7 @@ local deck_npe_mgs_codec = {
                     message = "ui_mgs_codec_fanatic_boars_card1_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
-                    -- start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\listentome",
-                    --                 duration = 1 },
-                    tts_sounds = {
+                    sounds = {
                         [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon_mgs1\\really_killing_boars",
                                 duration = 12 },
                     },                                      
@@ -338,7 +319,6 @@ local deck_npe_mgs_codec = {
                 delay = 2,
                 pause_game = false,
             },
-            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
         },          
         {
             id = "save_the_curier",
@@ -350,21 +330,18 @@ local deck_npe_mgs_codec = {
                     message = "ui_mgs_codec_save_the_curier_card1_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
-                    -- start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\listentome",
-                    --                 duration = 1 },
-                    tts_sounds = {
+                    sounds = {
                         [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon_mgs1\\a_courier",
                                 duration = 17 },
-                    },                                      
-                },              
+                    },
+                },
             },
             context = {
                 event = EVENT.SAVE_THE_CURIER,
                 delay = 2,
                 pause_game = false,
             },
-            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
-        },                 
+        },
         {
             id = "warn_military_base",
             title = "ui_mcm_npe_module_mgs_codec_warn_military_base_set_title",
@@ -375,9 +352,7 @@ local deck_npe_mgs_codec = {
                     message = "ui_mgs_codec_warn_military_base_card1_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
-                    -- start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\listentome",
-                    --                 duration = 1 },
-                    tts_sounds = {
+                    sounds = {
                         [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon_mgs1\\warn_mil_base",
                                 duration = 11 },
                     },                                      
@@ -389,7 +364,6 @@ local deck_npe_mgs_codec = {
                 strict = true,
                 pause_game = true,
             },
-            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
         }, 
         {
             id = "danger_military_base",
@@ -401,9 +375,7 @@ local deck_npe_mgs_codec = {
                     message = "ui_mgs_codec_danger_military_base_card1_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
-                    -- start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\listentome",
-                    --                 duration = 1 },
-                    tts_sounds = {
+                    sounds = {
                         [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon_mgs1\\danger_mil_base",
                                 duration = 5 },
                     },                                      
@@ -415,7 +387,6 @@ local deck_npe_mgs_codec = {
                 strict = true,
                 pause_game = true,
             },
-            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
         },
         {
             id = "approach_carpark",
@@ -427,9 +398,7 @@ local deck_npe_mgs_codec = {
                     message = "ui_mgs_codec_approach_carpark_card1_message",
                     portrait_caller = "ui_npe_mgs_codec_otacon",
                     portrait_actor = "ui_npe_mgs_codec_snake",
-                    start_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\listentome",
-                                    duration = 1 },
-                    -- tts_sounds = {
+                    -- sounds = {
                     --     [1] = { sound = "npe\\mgs_codec\\voiceover\\otacon_mgs1\\danger_mil_base",
                     --             duration = 5 },
                     -- },                                      
@@ -441,7 +410,6 @@ local deck_npe_mgs_codec = {
                 strict = true,
                 pause_game = true,
             },
-            -- completion_sound = { sound = "npe\\mgs_codec\\voiceover\\otacon\\defaults\\just-hold-on-ok", duration = 2 },
         },                          
     },
 }
