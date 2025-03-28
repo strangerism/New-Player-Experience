@@ -245,6 +245,7 @@ function start_codec_convo()
 	npe_execution.Resume(Runner.portrait_scanlines.name)
 	npe_execution.Resume(Runner.portrait_wide_scanlines.name)
 	if not GUI then return end
+	GUI:PlayStartSounds()
 	GUI:PlayCard()
 	-- signal successful execution of stop functor
 	return true
@@ -931,6 +932,15 @@ function UINewPlayerExperience:DoEndActions()
 	end
 end
 
+---@diagnostic disable-next-line: duplicate-set-field
+function UINewPlayerExperience:PlayStartSounds()
+	if self.set.start_sounds then
+		-- play set sounds
+		npe_dialog.Play_sounds_sequence(self.set.start_sounds)
+	end
+end
+
+---@diagnostic disable-next-line: duplicate-set-field
 function UINewPlayerExperience:PlayCard()
 	printdebug(LOG.RUN, LOG.UI," PlayCard")
 	local text
@@ -951,24 +961,10 @@ function UINewPlayerExperience:PlayCard()
 	-- update card message
 	text = game.translate_string(self.set.cards[self.cardIndex].message)
 	self.message:SetText(text)
-
-	-- play start sound
-	local start_sound_delay = 0
-	local tts_starting_delay = 0
-	if self.set.cards[self.cardIndex].start_sound then 
-		start_sound_delay = 0.5
-		tts_starting_delay = self.set.cards[self.cardIndex].start_sound.duration
-		npe_dialog.Play_sound_with_delay(self.set.cards[self.cardIndex].start_sound.sound, start_sound_delay)
-	end
 	
-	-- play text to speech sounds
-	local tts_sounds = self.set.cards[self.cardIndex].tts_sounds
-	if tts_sounds then
-		local starting_delay = start_sound_delay + tts_starting_delay
-		for i = 1, #tts_sounds do
-			npe_dialog.Play_sound_with_delay(tts_sounds[i].sound, starting_delay)
-			starting_delay = starting_delay + tts_sounds[i].duration + 1
-		end
+	-- play card sounds
+	if self.set.cards[self.cardIndex].sounds then
+		npe_dialog.Play_sounds_sequence(self.set.cards[self.cardIndex].sounds)
 	end
 end
 
@@ -1021,7 +1017,6 @@ local function close_dialog(dialog)
 	npe_director.Unregister_dialog(dialog)
 	npe_director.Resume_execution_Deprecated()
 	closing_dialog = false
-	npe_dialog.Purge_all_sounds_events()
 	return true
 end
 
@@ -1031,6 +1026,7 @@ local function unequip_nerfs_radio(radio_type, dialog)
 	if radio_type == npe_utils.RADIO_TYPE.NERFS then
 		local close_time = 0
 		local unmute_time = 2
+		printtrace(LOG.INFO, LOG.UI," Play close sound after delay %s", close_time)	
 		CreateTimeEvent("npe_dialog_codec", "play_close_sound", close_time, npe_dialog.Play_sound, Sounds[SOUNDS_SET].close)
 		CreateTimeEvent("npe_dialog_codec", "unmute_anomaly_radio", unmute_time, npe_utils.Mute_radio, false)
 		CreateTimeEvent("npe_dialog_codec", "close_dialog", close_time, close_dialog, dialog)
@@ -1069,9 +1065,10 @@ end
 
 local function unequip_radio(dialog)
 	close_codec_portraits()
+	npe_dialog.Purge_all_sounds_events()
 	-- handle radio type
 	local radio_type = npe_utils.Get_radio_type()
-	printtrace(LOG.INFO, LOG.UI," Play open sound for radio_type: " .. radio_type)
+	printtrace(LOG.INFO, LOG.UI," Play close sound for radio_type: " .. radio_type)
 	if radio_type == npe_utils.RADIO_TYPE.VANILLA then
 		unequip_anomaly_radio(dialog)
 	else
@@ -1100,10 +1097,11 @@ function UINewPlayerExperience:Close()
 		if self.set.save_context then
 			self:Save()
 		end
-		if self.set.completion_sound then 
-			-- we have the set's completion sound to play, un-equip radio with a delay equal to its duration
-			npe_dialog.Play_sound(self.set.completion_sound.sound, false)
-			CreateTimeEvent("npe_dialog_codec", "unequip_radio", self.set.completion_sound.duration, unequip_radio, self.set.dialog)
+		if self.set.end_sounds then 
+			printdebug(LOG.INFO, LOG.UI," Play end sounds")
+			-- we have the set's end_sounds to play, un-equip radio with a delay equal to its duration
+			local duration = npe_dialog.Play_sounds_sequence(self.set.end_sounds)
+			CreateTimeEvent("npe_dialog_codec", "unequip_radio", duration, unequip_radio, self.set.dialog)
 		else
 			-- delay is 0
 			unequip_radio(self.set.dialog)
