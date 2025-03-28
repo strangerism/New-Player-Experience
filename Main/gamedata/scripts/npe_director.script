@@ -172,7 +172,12 @@ local function override_cards(set, overrideTargetSet)
         if overrideTargetSet.cards[cardKey] ~= nil then
             for fieldKey, fieldValue in pairs(card) do
                 if fieldValue ~= nil then
-                    printlog(LOG.INFO, LOG.OVERR," Override card [%s] field [%s] with value [%s]", cardKey, fieldKey, fieldValue)
+                    if type(fieldValue) ~= "table" then
+                        printlog(LOG.INFO, LOG.OVERR," Override card [%s] field [%s] with value [%s]", cardKey, fieldKey, fieldValue)
+                    else
+                        printlog(LOG.INFO, LOG.OVERR," Override card [%s] field [%s] with table", cardKey, fieldKey)
+                        print_table(fieldValue)
+                    end
                     overrideTargetSet.cards[cardKey][fieldKey] = fieldValue
                 end
             end
@@ -214,13 +219,42 @@ local function apply_overrides_to_decks()
 
                     printdebug(LOG.RUN, LOG.OVERR," Override set [%s] data with content from set [%s]", override.setId, set.id)
 
-                    overrideTemplateSet = override_cards(set, overrideTemplateSet)
+                    -- override title
                     if set.title then
                         overrideTemplateSet.title = set.title
                         printdebug(LOG.INFO, LOG.OVERR," Override set [%s] title with [%s]", override.setId, set.title)
                     end
+
+                    -- override start_action
+                    if set.start_action then
+                        overrideTemplateSet.start_action = set.start_action
+                        printdebug(LOG.INFO, LOG.OVERR," Override set [%s] start_action ", override.setId, set.start_action)
+                    end
                     
+                    -- override start_sounds
+                    if set.start_sounds then
+                        overrideTemplateSet.start_sounds = set.start_sounds
+                        printdebug(LOG.INFO, LOG.OVERR," Override set [%s] start_sounds ", override.setId, set.start_sounds)
+                    end
+
+                    -- override cards
+                    overrideTemplateSet = override_cards(set, overrideTemplateSet)
+
+                    -- override context
                     overrideTemplateSet = override_contexts(set.context, overrideTemplateSet)
+
+                    -- end_action
+                    if set.end_action then
+                        overrideTemplateSet.end_action = set.end_action
+                        printdebug(LOG.INFO, LOG.OVERR," Override set [%s] end_action ", override.setId, set.end_action)
+                    end
+
+                    -- override end_sounds
+                    if set.end_sounds then
+                        overrideTemplateSet.end_sounds = set.end_sounds
+                        printdebug(LOG.INFO, LOG.OVERR," Override set [%s] end_sounds ", override.setId, set.end_sounds)
+                    end
+
 
                     -- update the npeConfig.decks table with the new changes
                     npeConfig.decks[deckId].sets[setId] = overrideTemplateSet
