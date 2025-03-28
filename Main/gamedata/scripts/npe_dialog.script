@@ -165,11 +165,11 @@ function Purge_all_sounds_events()
 end
 
 function Play_sounds_sequence(sounds)
+	-- play set sounds
+	local sequence_delay = nil
 	if sounds then
 		Purge_all_sounds_events()
 	
-		-- play set sounds
-		local sequence_delay = nil
 		for i = 1, #sounds do
 			if not sequence_delay then
 				sequence_delay = sounds[i].delay or 0
@@ -178,6 +178,7 @@ function Play_sounds_sequence(sounds)
 			sequence_delay = sequence_delay + (sounds[i].duration or 0) + (sounds[i+1] and sounds[i+1].delay or 0)
 		end		
 	end
+	return sequence_delay or 0
 end
 
 function Enable_dof(enable)

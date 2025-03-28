@@ -17,8 +17,8 @@ RADIO_TYPE = {
     DAR = "DAR"
 }
 
-local NERFS_RADIO = "<NERFS> "
-local NERFS_VANILLA = "1.6-b2"
+local NERFS_RADIO = "[NERFS] "
+local NERFS_VANILLA = "1.7.0"
 local NERFS_DAR = "1.5-DAR"
 
 -- saving radio sounds for restoration
