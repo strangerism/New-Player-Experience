@@ -35,7 +35,7 @@ local deck_examples = {
     title = "New Player Experience Examples Deck",
     module= "examples",
     id="examples",
-    dialog= npe.DIALOG.UI_TUTORIAL,
+    dialog= npe.DIALOG.UI_QUEST,
     sets = {
         {
             id = "binoculars",

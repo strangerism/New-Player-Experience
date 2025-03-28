@@ -167,7 +167,7 @@ function UINewPlayerExperience:InitControls(set)
 
 	self.credits = xml:InitTextWnd(set.dialog .. ":credits",self.dialog)
 	self.credits:SetText("%c[d_cyan]NPE by Strangerism")
-
+	self.credits:Show(not (self.show_credits or false))
 	self:UpdateButtons()
 
 	self:PlayStartSounds()

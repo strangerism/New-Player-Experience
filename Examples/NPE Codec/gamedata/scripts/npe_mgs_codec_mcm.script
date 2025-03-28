@@ -143,10 +143,10 @@ local deck_npe_mgs_codec = {
     dialog= npe.DIALOG.UI_CODEC, -- default dialog used by sets if not specified
     sets = {
         {
-            dialog= npe.DIALOG.UI_TUTORIAL, -- override default dialog
+            dialog= npe.DIALOG.UI_QUEST, -- override default dialog
             id = "nanomachines",
             title = "ui_mcm_npe_module_mgs_codec_nanomachines_set_title",
-            start_actions = {   -- these list of action play at the start of the tutorial, before the first card is shown
+            start_actions = {   -- these list of action play at the start of the quest dialog, before the first card is shown
                 ACTION.NOOSPHERE_BUFF, -- we give a buff to the player
                 ACTION.ADD_CODEC_TO_STASH,  -- we add the codec (quest item) to the stash
                 ACTION.ADD_BINO_TO_STASH
@@ -175,10 +175,10 @@ local deck_npe_mgs_codec = {
                 strict = true,
                 pause_game = false,
             },
-            end_actions = { -- this list of actions are executed upon closing the tutorial.
+            end_actions = { -- this list of actions are executed upon closing the quest dialog.
                 ACTION.CREATE_TASK_FIND_CODEC
             },
-            end_sounds = { -- this list of sounds can plays upon closing the tutorial.
+            end_sounds = { -- this list of sounds can plays upon closing the quest dialog.
                 [1] = { sound = "npe\\mgs_codec\\voiceover\\snake\\whats_going_on",
                         duration = 1 },
             },

@@ -26,7 +26,7 @@
 		<text>You have installed the New Player Experience mod, NPE in brief. 
 		\n
 		\n
-		NPE framework is a tutorial system that aims to help new players to get started in the game.
+		NPE framework is a tutorial system that aims to help new players to get started in the game. A Tutorial is the basic form of quest design for which this framework was created.
 		\n
 		\n
 		Mods makers that add tutorials using the NPE framework will be able to use this system to guide new players through their content. 
@@ -43,6 +43,8 @@
 		The firt card usually presents the topic at hand, the second the explanation or action needed to be taken and the last card the conclusion or the results of the action.
 		\n
 		\n
+        Beyond tutorials, modders can create quests that are driven by the same system and rich features that NPE provides, like adding sounds, voice overs, music, and perform actions
+		\\
 		You can find more information about NPE on the mod page on the ModDb website.
 		</text>
 	</string>	

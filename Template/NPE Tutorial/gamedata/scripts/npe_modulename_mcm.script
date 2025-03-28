@@ -16,7 +16,11 @@
 --      replace in this script all the instances of modulename and setname as required
 
 
-
+-- !!!! DISCLAIMER !!!!
+--
+-- In this documentation, the tutorial is used the example of the type of quest is being created using the NPE framework. Therefore it will be referenced several times in the following sections
+-- However the same rules applies if you ever whish to develop a game quest, or any type of content and form, using the NPE framework 
+--
 
 -- 2. DEVELOPMENT OF THE NEW NPE MODULE
 
@@ -211,7 +215,7 @@ local deck_npe_modulename = {
     --      dialog type is used to define the type of dialog that will be shown to the player
     --      it can be a tutorial dialog or a codec dialog
     --      the dialog type is defined in the npe.script file
-    dialog= npe.DIALOG.UI_TUTORIAL,
+    dialog= npe.DIALOG.UI_QUEST,
 
     ------------------------------------ [MANDATORY] Define the sets ---------------------------------------------------------------------------------------
     --
