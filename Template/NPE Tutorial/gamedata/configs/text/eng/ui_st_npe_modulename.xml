@@ -17,6 +17,9 @@
 	<string id="ui_mcm_npe_module_modulename_title">
 		<text>The title of the npe module MCM menu</text>
 	</string>
+	<string id="ui_mcm_npe_module_modulename_desc">
+		<text>The description of the npe module MCM menu</text>
+	</string>	
 
 	<!-- every set defined in npe_modulename_mcm.script must have a string definition as below -->
 	<string id="ui_mcm_npe_module_modulename_setname">

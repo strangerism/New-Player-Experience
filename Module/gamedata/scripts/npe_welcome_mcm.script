@@ -1,8 +1,11 @@
 
-local deck_welcome = { 
+local deck = { 
     title = "New Player Experience Welcome Deck",
     module= "welcome",
     id="welcome",
+    mcm_menu_name = "ui_mcm_npe_module_welcome",
+    mcm_menu_title = "ui_mcm_npe_module_welcome_title",
+    mcm_menu_desc = "ui_mcm_npe_module_welcome_desc",        
     dialog= nil, -- using the default dialog
     sets = {
         {
@@ -33,19 +36,12 @@ local deck_welcome = {
 }
 
 function on_mcm_load()
-
-	op =  { id= "welcome", sh=true, text="ui_mcm_npe_module_welcome", gr ={
-				{id = "title",type= "slide",link= "ui_options_slider_player",text="ui_mcm_npe_module_welcome_title",size= {512,50},spacing= 20 },
-				{id = "introduction", type = "check", val = 1, def=false},
-			}
-		}
-
-	return op, "npe_module"
+    op = { id = deck.id, sh = true, text = deck.mcm_menu_name, gr = npe_mcm.get_module_menu(deck) }
+    return op, "npe_module"
 end
-
 
 function on_game_start()
     if npe then
-        npe_director.Register_npe_module(deck_welcome)
+        npe_director.Register_npe_module(deck)
     end
 end

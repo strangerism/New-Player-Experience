@@ -10,6 +10,9 @@
 	<string id="ui_mcm_npe_module_welcome_title">
 		<text>New Player Experience</text>
 	</string>
+	<string id="ui_mcm_npe_module_welcome_desc">
+		<text>A tutorial to introduce the player with NPE</text>
+	</string>	
 	<string id="ui_mcm_npe_module_welcome_introduction">
 		<text>Introduction</text>
 	</string>

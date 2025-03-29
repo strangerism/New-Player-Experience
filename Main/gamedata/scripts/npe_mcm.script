@@ -80,6 +80,17 @@ function npe_module_installed(script)
 	end
 end
 
+function get_module_menu(module_deck)
+    local gr = {
+        { id = "title", type = "slide", link = "ui_options_slider_player", text = module_deck.mcm_menu_title, size = {512,50}, spacing = 20 },
+        { id = "desc", type = "desc", clr = {200, 200, 255, 200}, text = module_deck.mcm_menu_desc }
+    }
+    for k,v in pairs(module_deck.sets) do
+        table.insert(gr, { id = v.id, type = "check", val = 1, def = false } )
+    end
+    return gr
+end
+
 function on_game_start()
 	-- RegisterScriptCallback("on_option_change", on_option_change)
 	-- on_option_change()

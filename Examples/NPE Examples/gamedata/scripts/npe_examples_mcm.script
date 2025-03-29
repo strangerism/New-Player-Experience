@@ -39,10 +39,13 @@ local ACTION = {
         delay = 10, -- not used
     },
 }
-local deck_examples = { 
+local deck = { 
     title = "New Player Experience Examples Deck",
     module= "examples",
     id="examples",
+    mcm_menu_name = "ui_mcm_npe_module_examples",
+    mcm_menu_title = "ui_mcm_npe_module_examples_title",
+    mcm_menu_desc = "ui_mcm_npe_module_examples_desc",
     dialog= npe.DIALOG.UI_QUEST,
     sets = {
         {
@@ -247,26 +250,12 @@ local deck_examples = {
 
 
 function on_mcm_load()
-
-	op =  { id= "examples", sh=true, text="ui_mcm_npe_module_examples", gr ={
-				{id = "title",type= "slide",link= "ui_options_slider_player",text="ui_mcm_npe_module_examples_title",size= {512,50},spacing= 20 },
-                {id = "help", type = "desc", clr = {200, 200, 255, 200}, text="ui_mcm_npe_module_examples_help"},
-                {id = "setup_binoculars", type = "check", val = 1, def=false},
-                {id = "binoculars", type = "check", val = 1, def=false},
-                {id = "vodka", type = "check", val = 1, def=false},
-                {id = "encumbrance", type = "check", val = 1, def=false},
-                {id = "anomalous_field", type = "check", val = 1, def=false},
-                {id = "irradiated", type = "check", val = 1, def=false},
-                {id = "actor_hit", type = "check", val = 1, def=false},
-                {id = "drunken_introduction", type = "check", val = 1, def=false},
-			}
-		}
-        -- op =  { id= "examples", sh=true, text="ui_mcm_npe_module_examples", gr=paw_mcm_ext.populate_set_menus(deck_examples)}
-	return op, "npe_module"
+    op = { id = deck.id, sh = true, text = deck.mcm_menu_name, gr = npe_mcm.get_module_menu(deck) }
+    return op, "npe_module"
 end
 
 function on_game_start()
     if npe then
-        npe_director.Register_npe_module(deck_examples)
+        npe_director.Register_npe_module(deck)
     end
 end

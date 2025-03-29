@@ -196,6 +196,24 @@ local ACTION = {
 --     },
 -- }
 
+------------------------------------------------------------------------------------ LOGGERS  ---------------------------------------------------------------------------------------
+
+local printlog = npe_director.Printlog_npe
+local printdebug = npe_director.Printdebug_npe
+
+-- you can use the loggers above in any of the custom functors that you create in this script 
+-- for example 
+-- to log an event
+
+-- function a_custom_handler_functor(obj)
+--     printlog(LOG.RUN, LOG.EVENT, "Custom handler functor called with parameter: %s", obj)
+-- end
+
+-- or to log an action
+-- function a_custom_action_functor(obj)
+--     printdebug(LOG.RUN, LOG.ACTION, "Custom action functor called with parameter: %s", obj)
+-- end
+
 
 ----------------------------------------------------------------------------------------- [MANDATORY] Define your deck ---------------------------------------------------------------------------------------
 
@@ -206,10 +224,16 @@ local ACTION = {
 --      A card is a single tutorial step that will be shown to the player
 --      A card can have an image, a title and a description
 
-local deck_npe_modulename = { 
+local deck = { 
     title = "Your module title", -- e.g. "My Mod Introduction" -- only used internally by the NPE Manager
     module= "modulename", -- must be unique thus the use of modulename whatever you have choosen above
     id="modulename", -- must be unique thus the use of modulename whatever you have choosen above
+    mcm_menu_name = "ui_mcm_npe_module_modulename", -- must match the string in the localization file "ui_st_npe_modulename.xml"
+    -- [MANDATORY] The mcm_menu_name is used to define the name of the module in the MCM menu (left sidebar)
+    mcm_menu_title = "ui_mcm_npe_module_modulename_title", -- must match the string in the localization file "ui_st_npe_modulename.xml"
+    -- [MANDATORY] The mcm_menu_title is used to define the title of the module in the MCM menu page
+    mcm_menu_desc = "ui_mcm_npe_module_modulename_desc", -- must match the string in the localization file "ui_st_npe_modulename.xml"
+    -- [MANDATORY] The mcm_menu_desc is used to define the description of the module in the MCM menu
 
     ------------------------------------ [MANDATORY] Define the dialog type of the deck ---------------------------------------------------------------------------------------
     --      dialog type is used to define the type of dialog that will be shown to the player
@@ -433,26 +457,21 @@ local deck_npe_modulename = {
 }
 
 
+
+-- [MANDATORY]
+--     DO NOT REMOVE/ALTER THESE FUNCTIONS
+--     these functions are used to register the module with the NPE Manager and to load the MCM menu
+
+-- The NPE module menu is loaded in the MCM
+-- The menu will contain all sets defined in the deck as settings with check boxes to enable/disable them
+-- When one of the tutorial is played in game the corresponding setting is set to true in the MCM menu
 function on_mcm_load()
-    -- [MANDATORY] The NPE module MCM menu meeds to be populated with the sets' ids defined above
-	op =  { id= "modulename", sh=true, text="ui_mcm_npe_module_modulename", gr ={
-				{id = "title",type= "slide",link= "ui_options_slider_player",text="ui_mcm_npe_module_modulename_title",size= {512,50},spacing= 20 },
-                -- [MANDATORY] The sets' ids defined above need to be added here. 
-                --      This allow the user to check sets that have been shown (selected) and evenually replay them (unselect in mcm) if needed
-                {id = "setname", type = "check", val = 1, def=false},
-                {id = "setname1", type = "check", val = 1, def=false},
-                {id = "setname2", type = "check", val = 1, def=false},
-			}
-		}
-
-	return op, "npe_module"  -- [IMPORTANT] do not change this line
+    op = { id = deck.id, sh = true, text = deck.mcm_menu_name, gr = npe_mcm.get_module_menu(deck) }
+    return op, "npe_module"
 end
-
--- [MANDATORY] At game start add your deck with the NPE Manager
---      you need to replace "deck_npe_modulename" with the name of your deck
-
+-- At game start the deck is registered with the NPE Manager
 function on_game_start()
     if npe then
-        npe_director.Register_npe_module(deck_npe_modulename)
+        npe_director.Register_npe_module(deck)
     end
 end
