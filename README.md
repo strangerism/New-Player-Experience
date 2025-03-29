@@ -55,6 +55,8 @@ Install (see below) the template module to access inline documentation directly 
 
 - **MCM menu**
 
+    https://www.moddb.com/mods/stalker-anomaly/addons/anomaly-mod-configuration-menu
+
 ## Download the addon
 
 https://drive.google.com/file/d/1U4OYp3D7nPsruJnOd8RfWPKQ1nQVK9rU/view?usp=drive_link
