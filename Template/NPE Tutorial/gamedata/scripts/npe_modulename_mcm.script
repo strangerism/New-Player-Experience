@@ -69,15 +69,14 @@ end
 --         name = "Binoculars Owned", 
 --         handler = { 
 --             name = "on_actor_owning_binoculars",
---             functor = {"npe_modulename_mcm", "owns_item", "wpn_binoc_inv" }
+--             functors = {{"npe_modulename_mcm", "owns_item", "wpn_binoc_inv" }}
 --         } 
 --     },
-
 --     VODKA_OWNED = { 
 --         name = "Vodka Owned", 
 --         handler = { 
 --             name = "on_actor_owning_vodka",
---             functor = {"npe_modulename_mcm", "owns_item", "vodka" }
+--             functors = {{"npe_modulename_mcm", "owns_item", "vodka" }}
 --         } 
 --     },
 
@@ -86,7 +85,7 @@ end
 --         name = "Vodka Owned", 
 --         handler = { 
 --             name = "on_actor_owning_vodka",
---             functor = {"npe_events", "owns_item", "vodka" }
+--             functors = {{"npe_events", "owns_item", "vodka" }}
 --         } 
 --     },
 
@@ -99,7 +98,7 @@ local EVENT = {
         name = "My Custom Event", -- this will be presented in the tutorial window as breadcrumb in the top left. It represent the context of the event  and it's not localized (use english preferably)
         handler = { 
             name = "a_custom_event_name",
-            functor = {"npe_modulename_mcm", "a_custom_handler_functor", "my_custom_parameter_obj"}
+            functors = {{"npe_modulename_mcm", "a_custom_handler_functor", "my_custom_parameter_obj" }}
         } 
     },
 }
