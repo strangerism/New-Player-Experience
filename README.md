@@ -71,13 +71,6 @@ https://drive.google.com/file/d/1U4OYp3D7nPsruJnOd8RfWPKQ1nQVK9rU/view?usp=drive
 
 - You can also install a template module which can be used as reference documentation and starting project to create your own NPE Module
 
-# Credits
-This mod was made thanks to the contribution of 
-
-**MrDemonized**
-**Catspaw**
-**RavenAscendant**
-
 # License
 
 Everything contained in this addon is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0). https://creativecommons.org/licenses/by-nc-sa/4.0/
