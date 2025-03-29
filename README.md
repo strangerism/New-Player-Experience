@@ -10,7 +10,7 @@ The obvious content for which this mod was made is in the form of tutorial cards
 
 It can be used in generic fashion as well, let's say create event based messages that are displayed with full UI dialog (as opposite to pda news notifications). 
 
-For example, books/messages to read related to quests that can be presented with a simple UI where each page is right side text / left side image
+For example, books/notes to read related to quests that can be presented with a simple UI where each page is right side text / left side image
 
 # How it works?
 

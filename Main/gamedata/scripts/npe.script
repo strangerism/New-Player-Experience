@@ -12,7 +12,7 @@ MODULE_TYPE = {
 }
 -- Dialog type is referenced in the npe_module's deck definitions
 DIALOG = {
-    UI_QUEST = "npe_dialog_quest",
+    UI_TUTORIAL = "npe_dialog_tutorial",
     UI_CODEC = "npe_dialog_codec"
 }
 -- Tasks can be referenced in the npe_modules custom events  

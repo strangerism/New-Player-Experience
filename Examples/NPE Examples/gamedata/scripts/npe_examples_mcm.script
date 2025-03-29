@@ -194,7 +194,7 @@ local deck = {
                 delay = 0,
                 override = { deckId = "welcome", setId = "introduction"},                
             },
-            disabled = false,
+            disabled = true,
         },                              
         {
             id = "encumbrance",

@@ -239,7 +239,7 @@ local deck = {
     --      dialog type is used to define the type of dialog that will be shown to the player
     --      it can be a tutorial dialog or a codec dialog
     --      the dialog type is defined in the npe.script file
-    dialog= npe.DIALOG.UI_QUEST,
+    dialog= npe.DIALOG.UI_TUTORIAL,
 
     ------------------------------------ [MANDATORY] Define the sets ---------------------------------------------------------------------------------------
     --

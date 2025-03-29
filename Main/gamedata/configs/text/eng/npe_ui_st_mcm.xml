@@ -15,13 +15,13 @@
 		<text>Enable</text>
 	</string>
 	<string id="ui_mcm_npe_general_enable_desc">
-		<text>Enable/Disable all installed NPE modules (quests, tutorials etc..)</text>
+		<text>Enable/Disable all installed NPE modules and their content</text>
 	</string>										
 	<string id="ui_mcm_npe_general_play_loop">
-		<text>Interval between the playing of quest or tutorial dialogs</text>
+		<text>Interval between the playing of sets (e.g. tutorials)</text>
 	</string>
 	<string id="ui_mcm_npe_general_play_loop_desc">
-		<text>Determine the minimum delay (in seconds) between a quest/tutorial context becoming active and the visualization of the associated dialog. Also the same delay is considered if more than one is queued</text>
+		<text>Determine the minimum delay (in seconds) between a set's context becoming active and the visualization of the associated dialog. Also the same delay is considered if more than one is queued</text>
 	</string>	
 	<string id="ui_mcm_npe_general_execution_loop">
 		<text>Interval between each NPE execution loops</text>
@@ -39,13 +39,13 @@
 		<text>Sounds</text>
 	</string>
 	<string id="ui_mcm_npe_general_sounds_set_desc">
-		<text>Select the sounds set used by the quest or tutorial dialog window</text>
+		<text>Select the sounds set used by the set's dialog window</text>
 	</string>	
 	<string id="ui_mcm_npe_general_pause_game">
 		<text>Pause game</text>
 	</string>
 	<string id="ui_mcm_npe_general_pause_game_desc">
-		<text>Pauses the game when a tutorial or quest is played. Some can force to pause the game regardless of this setting</text>
+		<text>Pauses the game when a set (e.g. tutorial) is played. This is a global setting. Some NPE modules have the option to pause the game as well. All dialog windows have a button to resume/pause the game</text>
 	</string>
 <!-- logs menu	 -->
 	<string id="ui_mcm_npe_logs">

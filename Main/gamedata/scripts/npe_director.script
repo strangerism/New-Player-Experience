@@ -7,7 +7,7 @@ local print_functor = npe_logging.Print_functor_npe
 local LOG = npe_logging
 -------------------------------------------------- NPE Data Structures --------------------------------------------------
 
--- this queue is populated at startup from other npe modules when available otherwise it will only have the npe quest module
+-- this queue is populated at startup from other npe modules when available otherwise it will only have the npe tutorial module
 local npeConfig = {
     decks = {},
 }
@@ -384,7 +384,7 @@ end
 local function start_dialog(set)
     -- if dialog is null, use the default dialog
     if not set.dialog then
-        set.dialog = npe.DIALOG.UI_QUEST
+        set.dialog = npe.DIALOG.UI_TUTORIAL
     end
     printdebug(LOG.RUN, LOG.PLAY," Starting dialog [%s]",set.dialog )
     local dialog_functor = {set.dialog, "Play", set}
