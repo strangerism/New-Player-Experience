@@ -418,6 +418,30 @@ local function play_set_dialog(set)
     start_dialog(set)
 end
 
+function mcm_play_set_dialog(set)
+    printdebug(LOG.RUN, LOG.PLAY," Playing set [%s] from module [%s] from MCM", set.id, set.module)
+    printdebug(LOG.INFO, LOG.PLAY," Set Title: [%s]", set.title)
+
+    Pause_Execution_Deprecated()
+
+    start_dialog(set)
+end
+
+
+function MCM_play_set(set, module, deckId)
+    printdebug(LOG.RUN, LOG.PLAY," Plays set from MCM")
+
+    if set ~= nil then
+        set.deckId = deckId
+        set.module = module
+        if not Dialog_in_use and not actor_menu.inventory_opened() then
+            if not set.dialog then
+                set.dialog = npe.DIALOG.UI_TUTORIAL
+            end
+            mcm_play_set_dialog(set)
+        end
+    end
+end
 ------------------------------------------ NPE Execution ------------------------------------------
 
 -- npe runners configuration
