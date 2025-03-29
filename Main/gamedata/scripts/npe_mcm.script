@@ -85,6 +85,10 @@ function get_module_menu(module_deck)
         { id = "title", type = "slide", link = "ui_options_slider_player", text = module_deck.mcm_menu_title, size = {512,50}, spacing = 20 },
         { id = "desc", type = "desc", clr = {200, 200, 255, 200}, text = module_deck.mcm_menu_desc }
     }
+
+	-- for i = 1, #module_deck.sets do
+	-- 	table.insert(gr, { id = module_deck.sets[i].id, type = "check", val = 1, def = false } )
+	-- end
     for k,v in pairs(module_deck.sets) do
         table.insert(gr, { id = v.id, type = "check", val = 1, def = false } )
     end
