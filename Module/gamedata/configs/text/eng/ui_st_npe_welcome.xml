@@ -45,9 +45,6 @@
 		Each card or ui panel displays a title, text, and an image. A set normally consist of a max of three cards that are enough to explain something to you.
 		The firt card usually presents the topic at hand, the second the explanation or action needed to be taken and the last card the conclusion or the results of the action.
 		\n
-		\n
-        Beyond tutorials, modders can create quests that are driven by the same system and rich features that NPE provides, like adding sounds, voice overs, music, and perform actions
-		\\
 		You can find more information about NPE on the mod page on the ModDb website.
 		</text>
 	</string>	

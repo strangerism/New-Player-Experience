@@ -182,6 +182,9 @@ function Play_sounds_sequence(sounds)
 end
 
 function Enable_dof(enable)
+	if npe_director.Settings.disable_dof then
+		return
+	end
 	printtrace(LOG.RUN, LOG.UI," Enable DOF: " .. tostring(enable))
 	if ssfx_weapons_dof then
 		actor_menu.last_mode = 1
@@ -189,6 +192,9 @@ function Enable_dof(enable)
 end
 
 function Disable_dof()
+	if npe_director.Settings.disable_dof then
+		return
+	end	
 	printtrace(LOG.RUN, LOG.UI," Disable DOF")
 	if ssfx_weapons_dof then
 		actor_menu.last_mode = 0

@@ -19,12 +19,14 @@ function on_mcm_load()
 
 		op = { id= "general", sh=true, text="ui_mcm_npe_general", gr ={
 				{id = "title",type= "slide",link= "ui_options_slider_player",text="ui_mcm_npe_general_title",size= {512,50},spacing= 20 },
+				{ id = "desc", type = "desc", clr = {200, 200, 255, 200}, text = "ui_mcm_npe_general_desc" },
 				{id = "enable", type = "check", val = 1, def=true},
 				{id = "play_loop",  type = 'track', val = 2, min = 1, max = 10, step = 1, def = 10},
 				{id = "execution_loop",  type = 'track', val = 2, min = 1, max = 10, step = 1, def = 3},
 				-- {id = "actions_execution_loop",  type = 'track', val = 2, min = 1, max = 10, step = 1, def = 3},
 				{id = "pause_game", type = "check", val = 1, def=false},
 				{id= "sounds_set"	,type= "list", val = 0, def="NPE_LOW", content= SOUNDS_LIST, no_str = true, },
+				{id = "disable_dof", type = "check", val = 1, def=false},
 				},
 			}
 	return op, "npe"

@@ -67,6 +67,7 @@ Settings = {
     play_loop = 10,
     sounds_set = "NPE",
     pause_game = false,
+    disable_dof = false,
 }
 
 RegisteredCustomCallbacks = {}
@@ -786,6 +787,7 @@ local function update_settings()
     Settings.play_loop = npe_mcm.npe_get_setting("general", "play_loop")  
     Settings.sounds_set = npe_mcm.npe_get_setting("general", "sounds_set")  
     Settings.pause_game = npe_mcm.npe_get_setting("general", "pause_game")  
+    Settings.disable_dof = npe_mcm.npe_get_setting("general", "disable_dof")
     printf(" Settings:")
 
     local function m_print_table(t, indent)

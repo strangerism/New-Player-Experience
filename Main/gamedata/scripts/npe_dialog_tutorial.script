@@ -165,9 +165,10 @@ function UINewPlayerExperience:InitControls(set)
     self:Register(self.btn_prev, "btn_prev")	
 	self:AddCallback("btn_prev", ui_events.BUTTON_CLICKED, self.OnButtonPrev, self)
 
-	self.credits = xml:InitTextWnd(set.dialog .. ":credits",self.dialog)
-	self.credits:SetText("%c[d_cyan]NPE by Strangerism")
-	self.credits:Show(not (self.show_credits or false))
+	-- self.credits = xml:InitTextWnd(set.dialog .. ":credits",self.dialog)
+	-- self.credits:SetText("%c[d_cyan]NPE by Strangerism")
+	-- self.show_credits = false
+	-- self.credits:Show(not (self.show_credits or false))
 	self:UpdateButtons()
 
 	self:PlayStartSounds()
