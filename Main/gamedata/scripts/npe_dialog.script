@@ -19,8 +19,39 @@ function GetFilename(path)
     return path:sub(start,#path) 
 end
 
+-- ssfx motion blur stored params
+local mblur1, mblur2, mblur3, mblur4
+
+function read_ssfx_setting(command)
+
+    local lut = get_console_cmd(0,command)
+    lut = lut:gsub("%(", "")
+    lut = lut:gsub("%)", "")
+    return lut:match("([^,]+),([^,]+),([^,]+),([^,]+)")
+end
+
+function execute_ssfx_setting(cmd, p1,p2,p3,p4)
+		local cmd_exe = cmd .. " " .. p1 .. "," .. p2 .. "," .. p3 .. "," .. p4
+		printtrace(LOG.RUN, LOG.UI," Console Execute: %s", cmd_exe)
+		exec_console_cmd(cmd_exe)
+end
+
 function Change_gametime_to(state)
     printtrace(LOG.RUN, LOG.UI," Change game time to: " .. state)
+
+	-- controls mblur
+	if state == GAMETIME_STATE.STOPPED then
+		mblur1, mblur2, mblur3, mblur4 = read_ssfx_setting("ssfx_motionblur")
+		printtrace(LOG.RUN, LOG.UI," Storing ssfx_motionblur: %s, %s, %s, %s", mblur1, mblur2, mblur3, mblur4)
+		exec_console_cmd("ssfx_motionblur 1,0,0,0")		
+	else
+		if not mblur1 then
+			mblur1, mblur2, mblur3, mblur4 = read_ssfx_setting("ssfx_motionblur")
+		end
+		execute_ssfx_setting("ssfx_motionblur", mblur1, mblur2, mblur3, mblur4)
+	end
+
+	-- toggle
 	exec_console_cmd("freeze_time " .. state)
 end
 
@@ -35,9 +66,16 @@ end
 
 function Pause_game(pause)
 	if pause then
+		mblur1, mblur2, mblur3, mblur4 = read_ssfx_setting("ssfx_motionblur")
+		printtrace(LOG.RUN, LOG.UI," Storing ssfx_motionblur: %s, %s, %s, %s", mblur1, mblur2, mblur3, mblur4)
+		exec_console_cmd("ssfx_motionblur 1,0,0,0")
 		exec_console_cmd("freeze_time on")
 	else
+		if not mblur1 then
+			mblur1, mblur2, mblur3, mblur4 = read_ssfx_setting("ssfx_motionblur")
+		end
 		exec_console_cmd("freeze_time off")
+		
 	end
 	
 end
