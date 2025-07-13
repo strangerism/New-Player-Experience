@@ -35,6 +35,36 @@ function on_actor_bleeding()
     local bleeding = db.actor.bleeding > 0
     return bleeding
 end
+
+-- return true if any actor limbs are damaged
+function on_actor_injury()
+
+    if not zzz_player_injuries then return false end
+
+	local is_serious_injury = false
+	
+	if zzz_player_injuries.health.head < 18 or zzz_player_injuries.health.torso < 18 or zzz_player_injuries.health.rightarm < 7 or zzz_player_injuries.health.leftarm < 7 or zzz_player_injuries.health.rightleg < 7 or zzz_player_injuries.health.leftleg < 7 then
+		is_serious_injury = true
+	end
+
+	return is_serious_injury
+end
+
+-- return true if the actor limbs are damaged
+function on_actor_limb_broken()
+    if db.actor == nil then
+        return false
+    end
+    if not zzz_player_injuries then return false end
+
+    local is_limb_broken = false
+	if zzz_player_injuries.health.head == 0 or zzz_player_injuries.health.torso == 0 or zzz_player_injuries.health.rightarm == 0 or zzz_player_injuries.health.leftarm == 0 or zzz_player_injuries.health.rightleg == 0 or zzz_player_injuries.health.leftleg == 0 then
+		is_limb_broken = true
+	end    
+
+    return is_limb_broken
+end
+
 -- return true if the actor is irradiated
 function on_actor_irradiated()
     if db.actor == nil then
@@ -48,7 +78,7 @@ function on_actor_stressed()
     if db.actor == nil then
         return false
     end
-    local stressed = db.actor.psy_health < 1
+    local stressed = db.actor.psy_health < 0.9
     return stressed
 end
 -- return true if the actor is experiencing madness
@@ -153,6 +183,76 @@ function dialogs.who_is_npc(first_speaker, second_speaker)
     npe_events.Last_npc_talked = npc:character_name()
     printtrace(LOG.INFO, LOG.EVENT, "Last_npc_talked = " .. tostring(npe_events.Last_npc_talked))
 	return npc
+end
+
+function IsInvOwner(npc)
+-- We need this cause Sid and Forester are not NPCs
+	return IsStalker(npc)
+end
+
+function parse_blackmarket_inventory(npc, possible_kind)
+
+	local found = false
+	local sec, kind
+	local function iterate(owner,obj)
+		sec = obj:section()
+        -- printdebug(LOG.INFO, LOG.EVENT," - name %s sec %s",obj:name(), sec )
+        if possible_kind then
+            kind = SYS_GetParam(0,sec,"kind") or "na"
+            if ignore_kind or pkind["s_all"] or pkind[kind] then
+                found = true
+                return
+            end            
+        else
+            if IsWeapon(obj) then
+                printdebug(LOG.INFO, LOG.EVENT," name %s sec %s",obj:name(), sec )
+                found = true
+                return
+            end
+        end
+	end
+	if IsInvOwner(npc) then
+        printdebug(LOG.INFO, LOG.EVENT," npc IsInvOwner")
+        npc:iterate_inventory(iterate,nil)
+	end
+	
+	return found
+end
+
+function on_npc_mechanic()
+    -- trade_generic_mechanic
+end
+
+function on_npc_trader()
+    local npc = mob_trade.GetTalkingNpc()  -- db.actor:get_talking_npc()
+    local is_trader = npc and trade_manager.get_trade_profile(npc:id(), "cfg_ltx")
+    printdebug(LOG.INFO, LOG.EVENT," on_npc_trader %s", is_trader)
+    if not is_trader then return end        -- if not trader  
+    
+    if string.find(is_trader,"trade_generic.ltx") then 
+        return false
+    else return string.find(is_trader,"trade_%a+") end
+end
+
+function on_npc_blackmarket_trader()
+    local npc = mob_trade.GetTalkingNpc()  -- db.actor:get_talking_npc()
+    printdebug(LOG.INFO, LOG.EVENT," on_npc_blackmarket_trader")
+    local is_trader = on_npc_trader(npc)
+    if not is_trader then return end        -- if not trader  
+
+    return parse_blackmarket_inventory(npc)
+end
+
+function on_npc_barman()
+    -- trade_generic_barman
+end
+
+function on_npc_medic()
+    -- trade_generic_medic
+end
+
+function on_npc_stalker()
+    -- trade_generic.ltx
 end
 
 -- for debugging monkey patching

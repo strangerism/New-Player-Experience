@@ -78,6 +78,17 @@ Dialog_name = nil
 
 -------------------------------------------------- NPE Utils --------------------------------------------------
 
+function is_calm_state()
+    
+    local item_in_hands = db.actor:active_item()
+    if (item_in_hands == nil or not IsWeapon(item_in_hands) or game.actor_weapon_lowered()) and (is_empty(xr_combat_ignore.fighting_with_actor_npcs)) then
+        return true
+    else
+        return false
+    end
+    
+end
+
 -------------------------------------------------- Tables --------------------------------------------------
 
 function clone (t) -- deep-copy a table
@@ -633,7 +644,7 @@ function play_set()
         if set ~= nil then
             set.deckId = deckId
             set.module = module
-            if not Dialog_in_use and not actor_menu.inventory_opened() then
+            if not Dialog_in_use and not actor_menu.inventory_opened() and is_calm_state() then
                 if not set.dialog then
                     set.dialog = dialog
                 end
@@ -657,7 +668,7 @@ function play_now_set()
         if set ~= nil then
             set.deckId = deckId
             set.module = module
-            if not Dialog_in_use and not actor_menu.inventory_opened() then
+            if not Dialog_in_use and not actor_menu.inventory_opened() and is_calm_state() then
                 if not set.dialog then
                     set.dialog = dialog
                 end

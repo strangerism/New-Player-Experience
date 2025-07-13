@@ -37,6 +37,11 @@ EVENT = {
     -- NPCs
     NPC_LOOTED = { name = "NPC Looted", handler = nil, module = MODULE_TYPE.NPE },
     NPC_KILLED = { name = "NPC Killed", handler = { name ="npc_on_death_callback", module = MODULE_TYPE.ANOMALY } },
+    NPC_TRADER = { name = "Talked To Trader", handler = { name = "npe_on_npc_trader", functors = {{ "npe_events", "on_npc_trader" }}, module = MODULE_TYPE.NPE } },
+    NPC_MECHANIC = { name = "Talked To Mechanic", handler = { name = "npe_on_npc_mechanic", functors = {{ "npe_events", "on_npc_mechanic" }}, module = MODULE_TYPE.NPE } },
+    NPC_BARMAN = { name = "Talked To Barman", handler = { name = "npe_on_npc_barman", functors = {{ "npe_events", "on_npc_barman" }}, module = MODULE_TYPE.NPE } },
+    NPC_MEDIC = { name = "Talked To Medic", handler = { name = "npe_on_npc_medic", functors = {{ "npe_events", "on_npc_medic" }}, module = MODULE_TYPE.NPE } },
+    NPC_BLACKMARKET = { name = "Talked To Black Market trader", handler = { name = "npe_on_npc_blackmarket_trader", functors = {{ "npe_events", "on_npc_blackmarket_trader" }}, module = MODULE_TYPE.NPE } },
 
     -- Mutants
     MUTANT_LOOTED = { name = "Mutant Looted", handler = { name = "monster_on_actor_use_callback", module = MODULE_TYPE.ANOMALY } },
@@ -52,7 +57,9 @@ EVENT = {
     ACTOR_USE_NPC_CORPSE = { name = "Check NPC Corpse", handler = { name = "npc_on_use", module = MODULE_TYPE.ANOMALY } },
     ACTOR_DEATH = { name = "Actor Death", handler = nil, module = MODULE_TYPE.NPE },
     ACTOR_HIT = { name = "Actor Hit", handler = { name = "actor_on_hit_callback", module = MODULE_TYPE.ANOMALY } },
+    ACTOR_INJURED = { name = "Actor Injured", handler = { name = "on_actor_injury", functors = {{ "npe_events", "on_actor_injury" }}, module = MODULE_TYPE.NPE } },
     ACTOR_BLEEDING = { name = "Actor Bleeding", handler = { name = "npe_on_actor_bleeding", functors = {{ "npe_events", "on_actor_bleeding" }}, module = MODULE_TYPE.NPE } },
+    ACTOR_LIMB_BROKEN = { name = "Actor Limb Broken", handler = { name = "npe_on_actor_limb_broken", functors = {{ "npe_events", "on_actor_limb_broken" }}, module = MODULE_TYPE.NPE } },
     ACTOR_IRRADIATED = { name = "Actor Irradiated", handler = { name = "npe_on_actor_irradiated", functors = {{ "npe_events", "on_actor_irradiated" }}, module = MODULE_TYPE.NPE } },
     ACTOR_HUNGRY = { name = "Actor Hungry", handler = { name = "npe_on_actor_hungry", functors = {{ "npe_events", "on_actor_hungry" }}, module = MODULE_TYPE.NPE } },
     ACTOR_OVERWEIGHT = { name = "Actor Overweight", handler = { name = "npe_on_actor_overweight", functors = {{ "npe_events", "on_actor_overweight" }}, module = MODULE_TYPE.NPE } },

@@ -74,7 +74,7 @@ function add_to_actor(money, items)
         [1] = { reward_money = money, reward_item = items}
     }
     
-    xr_effects.give_reward(db.actor,nil,reward)
+    give_reward(db.actor,nil,reward)
     return true
 end
 
@@ -184,7 +184,31 @@ function actor_on_item_put_in_box(box, itm)
 	printdebug(LOG.RUN, LOG.ACTION," box_id = " .. box:id())
 end
 
--------------------------------------------------------------------------- GANE SYSTEM CALLBACKS --------------------------------------------------------------------------
+-------------------------------------------------------------------------- GAME SYSTEM CALLBACKS --------------------------------------------------------------------------
+
+function give_reward(actor,npc,p) -- Give stored rewards
+    printdebug(LOG.RUN, LOG.ACTION,"give_reward")
+	-- local var = load_var(db.actor, p[1])
+	-- if (not var) then return end
+	
+	-- money reward
+	local money = p[1].reward_money
+	if money then
+		dialogs.relocate_money(db.actor,money,"in")
+	end
+	
+	-- item reward
+	local items = p[1].reward_item
+	if items then
+		for k,v in pairs(items) do
+			for i=1,v do
+				printdebug(LOG.RUN, LOG.ACTION,"add_to_actor %s", k)
+				local se_itm = alife_create_item(k, db.actor)
+			end
+			news_manager.relocate_item(db.actor,"in",k,v)
+		end
+	end
+end
 
 
 function on_game_start()
