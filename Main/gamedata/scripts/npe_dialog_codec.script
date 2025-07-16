@@ -1097,6 +1097,7 @@ function UINewPlayerExperience:Close()
 		if self.set.save_context then
 			self:Save()
 		end
+		npe_director.Update_set_played_state(self.set, true)
 		if self.set.end_sounds then 
 			printdebug(LOG.INFO, LOG.UI," Play end sounds")
 			-- we have the set's end_sounds to play, un-equip radio with a delay equal to its duration

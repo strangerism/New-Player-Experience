@@ -155,7 +155,7 @@ end
 
 -------------------------------------------------- NPE MCM State Updates --------------------------------------------------
 
-local function update_set_played_state(set, played)
+function Update_set_played_state(set, played)
     set.played = played
     npe_mcm.npe_module_set_setting(set.module, set.id, true)
 end
@@ -422,8 +422,6 @@ end
 local function play_set_dialog(set)
     printdebug(LOG.RUN, LOG.PLAY," Playing set [%s] from module [%s]", set.id, set.module)
     printdebug(LOG.INFO, LOG.PLAY," Set Title: [%s]", set.title)
-
-    update_set_played_state(set, true)
 
     Pause_Execution_Deprecated()
 

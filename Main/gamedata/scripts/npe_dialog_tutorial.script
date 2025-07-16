@@ -376,6 +376,7 @@ function UINewPlayerExperience:Close()
 	end
 	npe_dialog.Play_sound(Sounds[SOUNDS_SET].close, false)
 	npe_dialog.Change_gametime_to(GAMETIME_STATE.INMOTION)
+	npe_director.Update_set_played_state(self.set, true)
 	npe_director.Unregister_dialog(self.set.dialog)
 	npe_director.Resume_execution_Deprecated()
 end
