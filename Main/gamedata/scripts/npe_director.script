@@ -901,12 +901,9 @@ function play_set()
         if set ~= nil then
             set.deckId = deckId
             set.module = module
-            printf("!! force_play_on_threatened %s", set.force_play_on_threatened)
             local threatened_state = is_in_combat() or actor_threatened
-            printf("!! threatened_state %s", threatened_state)
             if set.force_play_on_threatened then
                 threatened_state = false
-                printf("// forcing threatened_state to %s", threatened_state)
             end
             if not Dialog_in_use and not actor_menu.inventory_opened() and not item_device.is_pda_active() and not threatened_state and not animation_playing() and not actor_near_space_restrictor then
                 if not set.dialog then
@@ -933,12 +930,9 @@ function play_now_set()
         if set ~= nil then
             set.deckId = deckId
             set.module = module
-            printf("!! force_play_on_threatened %s", set.force_play_on_threatened)
             local threatened_state = is_in_combat() or actor_threatened
-            printf("!! threatened_state %s", threatened_state)
             if set.force_play_on_threatened then
                 threatened_state = false
-                printf("// forcing threatened_state to %s", threatened_state)
             end
             if not Dialog_in_use and not actor_menu.inventory_opened() and not item_device.is_pda_active() and not threatened_state and not animation_playing() and not actor_near_space_restrictor then
                 if not set.dialog then
