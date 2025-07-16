@@ -336,14 +336,12 @@ local deck = {
             --      event: [MANDATORY] the event that triggers this set
             --      delay: [OPTIONAL] the delay in seconds after the event is triggered before the set is shown. Bear in mind that this time can still vary depending on the number of playable sets in the queued_context at the moment of the activation
             --      strict: [OPTIONAL] tries to enforce the delay as much as possible, moving the event to an higher priority in the activation queue
-            --      pause_game: [OPTIONAL] if true the game is paused when the set is shown
             --      override: [OPTIONAL] rule to override another npe module set on similar context (e.g. if you want to override the encumbrance set of another npe module)
             context = {
                 -- [MANDATORY] Assign the event that triggers this set
                 --      event can be choosen from the predefined events included in the npe.script (NPE Main Module) or from your custom events you might have defined above
                 event = npe.EVENT.ACTOR_OVERWEIGHT,
             },
-
             -- [OPTIONAL] Define the actions that will be executed when the set is closed
             end_actions = { -- this list of actions are executed upon closing the tutorial.
                 ACTION.CREATE_TASK_G0_TO_THE_CAR_PARK -- we create an in-game task for the player to go to a certain location
@@ -361,7 +359,8 @@ local deck = {
                     duration = 33, -- [MANDATORY] you must declare the duration of the sound file in seconds
                 },
             },
-
+            -- [OPTIONAL] if true the game is paused when the set is shown
+            pause_game = true,
             -- [OPTIONAL] if true the set is disabled and will not be added to the NPE Manager on registration
             -- use it at your discretion, e.g. for development, testing or if you want to prevent a set to be used at release
             disabled = true,
@@ -388,9 +387,9 @@ local deck = {
                 -- the number set it's the minimum not guaranteed
                 delay = 30,
                 strict = true, -- we can use strict to enforce the delay
-                -- pause_game is optional and if true the game is paused when the set is shown
-                pause_game = true,
             },
+            -- pause_game is optional and if true the game is paused when the set is shown
+            pause_game = true,
         },     
         {
             id = "setname2",
@@ -420,9 +419,9 @@ local deck = {
             context = {
                 event = npe.EVENT.GAME_START,
                 delay = 2,
-                strict = true,
-                pause_game = false,
+                strict = true
             },
+            pause_game = false,
         },     
         {
             id = "setname2_override",

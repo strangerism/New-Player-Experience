@@ -71,7 +71,7 @@ function Play(set)
 	printdebug(LOG.INFO, LOG.UI," Sounds set: " .. SOUNDS_SET)
 	printdebug(LOG.INFO, LOG.UI," Max Cards set to: " .. set_cards_count)
 
-	local pause = npe_director.Settings.pause_game or set.context.pause_game
+	local pause = npe_director.Settings.pause_game or set.pause_game
 	if pause then
     	npe_dialog.Change_gametime_to(GAMETIME_STATE.STOPPED)
 	end

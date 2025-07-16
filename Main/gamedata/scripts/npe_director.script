@@ -264,9 +264,6 @@ function iterate_nearests(obj)
     if obj and IsStalker(obj) then
         local se_obj = alife_object(obj:id())
         local sec = obj:section()
-        faction = obj:character_community()
-        relation = relation_registry.community_relation(faction, home_faction)
-        goodwill = relation_registry.community_goodwill(faction, db.actor:id())
         if not obj:alive() then
             return
         end
@@ -283,6 +280,9 @@ function iterate_nearests(obj)
             return
         end
 
+        local faction = obj:character_community()
+        relation = relation_registry.community_relation(faction, home_faction)
+        goodwill = relation_registry.community_goodwill(faction, db.actor:id())
         if (relation + goodwill) < 0 then
             printtrace(LOG.WARN, LOG.PLAY,"Found dangerous stalker %s", sec)
             actor_threatened = true
@@ -565,7 +565,6 @@ local function add_to_sets_queue(set, deckId, module)
         local context = {
             event = set.context.event,
             delay = set.context.delay,
-            pause_game = set.context.pause_game,
         }
         if not context.event.handler.module then
             context.event.handler.module = module

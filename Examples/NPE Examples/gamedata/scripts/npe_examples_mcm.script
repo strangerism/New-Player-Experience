@@ -170,8 +170,8 @@ local deck = {
             },
             context = {
                 event = npe.EVENT.ACTOR_HIT,
-                pause_game = true,
             },
+            pause_game = true,
         },
         {
             id = "drunken_introduction",
