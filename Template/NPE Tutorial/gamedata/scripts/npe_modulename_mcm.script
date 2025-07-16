@@ -365,6 +365,8 @@ local deck = {
             -- [OPTIONAL] if true the set is disabled and will not be added to the NPE Manager on registration
             -- use it at your discretion, e.g. for development, testing or if you want to prevent a set to be used at release
             disabled = true,
+            -- [OPTIONAL] force set to be played even if actor is in threatened state 
+            force_play_on_threatened = true
         }, 
         -- you can define more then one set
 

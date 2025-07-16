@@ -83,6 +83,7 @@ local home_faction = nil
 local relation = nil
 local goodwill = nil
 local actor_threatened
+local actor_near_space_restrictor
 
 function Set(t)
     local s = {}
@@ -258,13 +259,18 @@ local important_npcs = Set {
 
 }
 
-function iterate_nearest(obj)
+function iterate_nearests(obj)
+    -- printtrace(LOG.INFO, LOG.PLAY,"iterate_nearests %s", obj and obj:section() or "N/A")
     if obj and IsStalker(obj) then
         local se_obj = alife_object(obj:id())
         local sec = obj:section()
         faction = obj:character_community()
         relation = relation_registry.community_relation(faction, home_faction)
         goodwill = relation_registry.community_goodwill(faction, db.actor:id())
+        if not obj:alive() then
+            return
+        end
+
         if important_npcs[sec] then
             return
         end
@@ -284,12 +290,18 @@ function iterate_nearest(obj)
     elseif obj and IsMonster(obj) then
         local se_obj = alife_object(obj:id())
         local sec = obj:section()
+        if not obj:alive() then
+            return
+        end        
         if string.find(sec, "zat_b18_dog_little") then
             return        
         else
             printtrace(LOG.WARN, LOG.PLAY,"Found dangerous mutant %s", sec)
             actor_threatened = true
         end
+    elseif obj and obj:section() == "level_changer" then
+        -- actor is near space restrictor
+        actor_near_space_restrictor = true
     end
 end
 
@@ -298,10 +310,10 @@ end
 function check_threats()
     printtrace(LOG.INFO, LOG.PLAY,"check_threats")
     actor_threatened = false
-
+    actor_near_space_restrictor = false
     home_faction = gameplay_disguise.get_default_comm()
 
-    level.iterate_nearest(db.actor:position(), Settings.safe_distance_threat, iterate_nearest)
+    level.iterate_nearest(db.actor:position(), Settings.safe_distance_threat, iterate_nearests)
 
 end
 
@@ -316,9 +328,9 @@ function is_calm_state()
     
 end
 
-function is_out_of_combat()
+function is_in_combat()
     
-    return is_empty(xr_combat_ignore.fighting_with_actor_npcs)
+    return not is_empty(xr_combat_ignore.fighting_with_actor_npcs)
     
 end
 
@@ -748,6 +760,7 @@ local function update_runners_configs()
             module = "npe_director",
             group_name = "default",
             execution = npe_execution.TYPE.INFINITE,
+            loop_timer = 2,
             functor = { "npe_director", "check_threats" },
         },
     }    
@@ -888,7 +901,14 @@ function play_set()
         if set ~= nil then
             set.deckId = deckId
             set.module = module
-            if not Dialog_in_use and not actor_menu.inventory_opened() and is_out_of_combat() and not actor_threatened and not animation_playing() then
+            printf("!! force_play_on_threatened %s", set.force_play_on_threatened)
+            local threatened_state = is_in_combat() or actor_threatened
+            printf("!! threatened_state %s", threatened_state)
+            if set.force_play_on_threatened then
+                threatened_state = false
+                printf("// forcing threatened_state to %s", threatened_state)
+            end
+            if not Dialog_in_use and not actor_menu.inventory_opened() and not item_device.is_pda_active() and not threatened_state and not animation_playing() and not actor_near_space_restrictor then
                 if not set.dialog then
                     set.dialog = dialog
                 end
@@ -913,7 +933,14 @@ function play_now_set()
         if set ~= nil then
             set.deckId = deckId
             set.module = module
-            if not Dialog_in_use and not actor_menu.inventory_opened() and is_out_of_combat() and not actor_threatened and not animation_playing() then
+            printf("!! force_play_on_threatened %s", set.force_play_on_threatened)
+            local threatened_state = is_in_combat() or actor_threatened
+            printf("!! threatened_state %s", threatened_state)
+            if set.force_play_on_threatened then
+                threatened_state = false
+                printf("// forcing threatened_state to %s", threatened_state)
+            end
+            if not Dialog_in_use and not actor_menu.inventory_opened() and not item_device.is_pda_active() and not threatened_state and not animation_playing() and not actor_near_space_restrictor then
                 if not set.dialog then
                     set.dialog = dialog
                 end
