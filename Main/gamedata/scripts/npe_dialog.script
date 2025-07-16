@@ -219,11 +219,11 @@ function Play_sounds_sequence(sounds)
 	return sequence_delay or 0
 end
 
-function Enable_dof(enable)
-	if npe_director.Settings.disable_dof then
+function Enable_dof(pause)
+	if npe_director.Settings.disable_dof or pause then
 		return
 	end
-	printtrace(LOG.RUN, LOG.UI," Enable DOF: " .. tostring(enable))
+	printtrace(LOG.RUN, LOG.UI," Enable DOF")
 	if ssfx_weapons_dof then
 		actor_menu.last_mode = 1
 	end	

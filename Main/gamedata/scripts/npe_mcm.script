@@ -27,6 +27,7 @@ function on_mcm_load()
 				{id = "pause_game", type = "check", val = 1, def=false},
 				{id= "sounds_set"	,type= "list", val = 0, def="NPE_LOW", content= SOUNDS_LIST, no_str = true, },
 				{id = "disable_dof", type = "check", val = 1, def=false},
+				{id = "safe_distance_threat",  type = 'track', val = 2, min = 50, max = 100, step = 1, def = 60},
 				},
 			}
 	return op, "npe"

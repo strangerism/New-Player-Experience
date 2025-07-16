@@ -70,7 +70,9 @@ function Play(set)
 	printdebug(LOG.INFO, LOG.UI," Play set title: " .. set.title)
 	printdebug(LOG.INFO, LOG.UI," Sounds set: " .. SOUNDS_SET)
 	printdebug(LOG.INFO, LOG.UI," Max Cards set to: " .. set_cards_count)
-	if npe_director.Settings.pause_game or set.context.pause_game then
+
+	local pause = npe_director.Settings.pause_game or set.context.pause_game
+	if pause then
     	npe_dialog.Change_gametime_to(GAMETIME_STATE.STOPPED)
 	end
 
@@ -82,7 +84,7 @@ function Play(set)
 	if (GUI) and (not GUI:IsShown()) then
         printtrace(LOG.INFO, LOG.UI," Showing GUI")
 		GUI:ShowDialog(true)
-		npe_dialog.Enable_dof()
+		npe_dialog.Enable_dof(pause)
 		Register_UI("UINewPlayerExperience","npe_dialog")
 		GUI:DoStartActions()
     else

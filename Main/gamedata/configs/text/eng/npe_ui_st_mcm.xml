@@ -55,7 +55,13 @@
 	</string>
 	<string id="ui_mcm_npe_general_disable_dof_desc">
 		<text>If SSS DoF is enabled in inventory, NPE dialog windows will use it as well. Here you can disable DoF in the NPE dialogs windows but keep it when opening inventory</text>
-	</string>		
+	</string>
+	<string id="ui_mcm_npe_general_safe_distance_threat">
+		<text>Max Distance Threat</text>
+	</string>
+	<string id="ui_mcm_npe_general_safe_distance_threat_desc">
+		<text>Set the minimum distance from surrounding threats (stalkers/mutants) for the tutorials to play</text>
+	</string>
 <!-- logs menu	 -->
 	<string id="ui_mcm_npe_logs">
 		<text>Logging</text>
