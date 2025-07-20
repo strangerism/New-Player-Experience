@@ -23,11 +23,14 @@ end
 local mblur1, mblur2, mblur3, mblur4
 
 function read_ssfx_setting(command)
-
-    local lut = get_console_cmd(0,command)
-    lut = lut:gsub("%(", "")
-    lut = lut:gsub("%)", "")
-    return lut:match("([^,]+),([^,]+),([^,]+),([^,]+)")
+    local output = get_console_cmd(0,command)
+	if output then 
+		output = output:gsub("%(", "")
+		output = output:gsub("%)", "")
+		return output:match("([^,]+),([^,]+),([^,]+),([^,]+)")
+	else
+		return 1,0,0,0
+	end
 end
 
 function execute_ssfx_setting(cmd, p1,p2,p3,p4)
