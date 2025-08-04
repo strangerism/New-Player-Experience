@@ -640,7 +640,8 @@ local function add_to_playable_queue(key, set, delay)
         end    
 end
 
-local function add_all_to_playable_queue(setsKeys)
+local function add_all_to_playable_queue(setsKeys, event_name)
+    printdebug(LOG.ADD, LOG.QUEUE," add_all_to_playable_queue on event [%s]", event_name)
     if setsKeys == nil then
         return
     end
@@ -1018,7 +1019,7 @@ function Activate_contexts_on(event)
     if setsKeys then
         printdebug(LOG.INFO, LOG.ACTIV," Found sets on [%s]", event.name)
         debug_table(setsKeys)
-        add_all_to_playable_queue(setsKeys)
+        add_all_to_playable_queue(setsKeys, event.name)
         -- resume_play_queues_manager_loop()
     end
 end
