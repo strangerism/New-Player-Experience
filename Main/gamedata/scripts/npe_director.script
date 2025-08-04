@@ -12,6 +12,40 @@ local npeConfig = {
     decks = {},
 }
 
+local npe_state = nil
+
+function get_state()
+    local npe_state = {}
+    for deckId, deck in pairs(npeConfig.decks) do
+        if not npe_state[deckId] then
+            npe_state[deckId] = {}
+        end
+        for setId, set in pairs(deck.sets) do
+            if not npe_state[deckId][setId] then
+                npe_state[deckId][setId] = {}
+            end
+            npe_state[deckId][setId]["played"] = set.played
+        end
+    end
+    return npe_state
+end
+
+function apply_state(npe_state)
+    if not npe_state then 
+        return
+    end
+    for deckId, deck in pairs(npeConfig.decks) do
+        if npe_state[deckId] then
+            for setId, set in pairs(deck.sets) do
+                if npe_state[deckId][setId] then
+                    Update_set_played_state(set, npe_state[deckId][setId].played)
+                end
+            end
+        end
+    end
+    npe_state = nil
+end
+
 -- this queue is populated at first actor update and when the MCM settings are changed
 -- this queue is populated according to the settings in the MCM
 local npeSetsActivationQueue = {
@@ -408,7 +442,7 @@ end
 
 function Update_set_played_state(set, played)
     set.played = played
-    npe_mcm.npe_module_set_setting(set.module, set.id, true)
+    npe_mcm.npe_module_set_setting(set.module, set.id, played)
 end
 
 -------------------------------------------------- NPE decks update from MCM --------------------------------------------------
@@ -417,6 +451,8 @@ local function update_decks_from_mcm()
     printlog(LOG.ADD, LOG.CONF," Update decks from MCM")
     for deckId, deck in pairs(npeConfig.decks) do
         for setId, set in pairs(deck.sets) do
+            set.deckId = deckId
+            set.module = deck.module
             set.played = npe_mcm.npe_module_get_setting(deck.module, set.id)
             if set.context.event.handler.executed then
                 set.context.event.handler.executed = false
@@ -1102,6 +1138,8 @@ local function first_time_initialization()
    -- update the npeConfig table with the Settings from the MCM
    update_decks_from_mcm()
    apply_overrides_to_decks()
+    -- apply_state from load_state callback 
+   apply_state(npe_state)
    -- Use the function to print the npeConfig.decks table
    printlog(LOG.RUN, LOG.CONF," Listing Decks")
    print_table(npeConfig.decks)
@@ -1201,6 +1239,30 @@ local function teardown_npe()
     remove_runners()
 end
 
+function save_state(m_data)
+	printf("$ NPE Save State")
+    if not m_data.npe then
+        m_data.npe = {}
+    end 
+    if not m_data.npe.npe_state then
+        m_data.npe.npe_state = {}
+    end
+    -- save the state
+    m_data.npe.npe_state = get_state()
+    printlog(LOG.INFO, LOG.CONF,"save_state")
+    print_table(m_data.npe.npe_state)
+end
+
+function load_state(m_data)
+	printf("$ NPE Load State")
+	if m_data.npe and m_data.npe.npe_state then
+        -- cache the state
+		npe_state = m_data.npe.npe_state
+		printlog(LOG.INFO, LOG.CONF,"load_state")
+		print_table(npe_state)
+	end
+end
+
 function on_game_start()
     -- the app will start after the logging system is initialized
     RegisterScriptCallback("npe_on_log_init", npe_on_log_init)
@@ -1209,4 +1271,6 @@ function on_game_start()
     RegisterScriptCallback("actor_on_net_destroy", teardown_npe)
     RegisterScriptCallback("actor_on_before_death",teardown_npe)
     RegisterScriptCallback("npe_execution_manager_started",init_npe_execution)
+    RegisterScriptCallback("load_state", load_state)
+    RegisterScriptCallback("save_state", save_state)
 end
