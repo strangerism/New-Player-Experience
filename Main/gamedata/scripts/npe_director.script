@@ -582,31 +582,36 @@ local function add_to_sets_queue(set, deckId, module)
     end
 end
 
-local function add_to_playable_queue(setsKeys)
+local function add_to_playable_queue(key, set, delay)
+        if set then
+            -- delay is a program override to set.context.delay 
+            if set.context.delay or delay then 
+                if set.context.delay == 0 then
+                    printdebug(LOG.ADD, LOG.QUEUE," Set [%s] plays instantly - Set added to the play_now queue", key)
+                    table.insert(playableHighPrioQueue.setsKeys, key)                
+                else 
+                    printdebug(LOG.ADD, LOG.QUEUE," Set [%s] has a delay of [%s] - Set added to the countdown queue", key, delay or set.context.delay)
+                    table.insert(playableOnCountdownQueue.setsKeys, key)
+                end
+            else
+                printdebug(LOG.ADD, LOG.QUEUE," Set [%s] plays with default play_loop - Set added to the play queue", key)
+                table.insert(playableQueue.setsKeys, key)
+            end
+            -- removes it from the npeSetsActivationQueue
+            npeSetsActivationQueue.contexts[key] = nil
+        else
+            printlog(LOG.ERROR, LOG.QUEUE," Set with key [%s] does not exist", key)
+        end    
+end
+
+local function add_all_to_playable_queue(setsKeys)
     if setsKeys == nil then
         return
     end
     for i, setKey in ipairs(setsKeys) do
         -- add set to the playable queue
         local set, deckId, module = get_set_from_key(setKey)
-        if set then
-            if set.context.delay then 
-                if set.context.delay == 0 then
-                    printdebug(LOG.ADD, LOG.QUEUE," Set [%s] plays instantly - Set added to the play_now queue", setKey)
-                    table.insert(playableHighPrioQueue.setsKeys, setKey)                
-                else 
-                    printdebug(LOG.ADD, LOG.QUEUE," Set [%s] has a delay of [%s] - Set added to the countdown queue", setKey, set.context.delay)
-                    table.insert(playableOnCountdownQueue.setsKeys, setKey)
-                end
-            else
-                printdebug(LOG.ADD, LOG.QUEUE," Set [%s] plays with default play_loop - Set added to the play queue", setKey)
-                table.insert(playableQueue.setsKeys, setKey)
-            end
-            -- removes it from the npeSetsActivationQueue
-            npeSetsActivationQueue.contexts[setKey] = nil
-        else
-            printlog(LOG.ERROR, LOG.QUEUE," Set with key [%s] does not exist", setKey)
-        end
+        add_to_playable_queue(setKey, set)
     end
 end
 
@@ -912,7 +917,8 @@ function play_set()
             else
                 -- cannot play set, UI is busy. Put it back in the queue
                 printdebug(LOG.WARN, LOG.PLAY,"Set %s cannot be played actor is threatened", set.module )
-                table.insert(playableQueue.setsKeys, setKey)
+                local delay = 10
+                add_to_playable_queue(setKey, set, delay)                
             end
         end
     end
@@ -941,7 +947,8 @@ function play_now_set()
             else
                 -- cannot play set, UI is busy. Put it back in the queue
                 printdebug(LOG.WARN, LOG.PLAY,"Set %s cannot be played actor is threatened", set.module )
-                table.insert(playableHighPrioQueue.setsKeys, setKey)
+                local delay = 10
+                add_to_playable_queue(setKey, set, delay)
             end
         end
     end
@@ -975,7 +982,7 @@ function Activate_contexts_on(event)
     if setsKeys then
         printdebug(LOG.INFO, LOG.ACTIV," Found sets on [%s]", event.name)
         debug_table(setsKeys)
-        add_to_playable_queue(setsKeys)
+        add_all_to_playable_queue(setsKeys)
         -- resume_play_queues_manager_loop()
     end
 end
