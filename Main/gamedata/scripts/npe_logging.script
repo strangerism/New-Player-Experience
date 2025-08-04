@@ -20,7 +20,7 @@ RUN = { tag = "//"}
 CONF = { tag = "[CONF]", enabled = false}
 OVERR = { tag = "[OVERR]", enabled = false}
 RGSTR = { tag = "[RGSTR]", enabled = false}
-TRACE = { tag = "[TRACE]", enabled = false}
+POOL = { tag = "[POOL]", enabled = false}
 EXEC = { tag = "[EXEC]", enabled = false}
 ACTIV = { tag = "[ACTIV]", enabled = false}
 QUEUE = { tag = "[QUEUE]", enabled = false}
@@ -109,7 +109,7 @@ local function update_logs()
     printf("CONF enabled: %s", tostring(CONF.enabled))
     OVERR.enabled = npe_mcm.npe_get_setting("logs", "overr_logs")
     RGSTR.enabled = npe_mcm.npe_get_setting("logs", "rgstr_logs")
-    TRACE.enabled = npe_mcm.npe_get_setting("logs", "trace_logs")
+    POOL.enabled = npe_mcm.npe_get_setting("logs", "pool_logs")
     EXEC.enabled = npe_mcm.npe_get_setting("logs", "exec_logs")
     ACTIV.enabled = npe_mcm.npe_get_setting("logs", "activ_logs")
     QUEUE.enabled = npe_mcm.npe_get_setting("logs", "queue_logs")

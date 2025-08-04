@@ -1062,6 +1062,7 @@ function Register_npe_callbacks()
 end
 
 local function update_settings()
+    printlog(LOG.RUN, LOG.CONF," Update NPE settings from MCM")
     -- NPE FLAGS
     Dialog_in_use = false
     Dialog_name = nil
@@ -1122,6 +1123,13 @@ end
 local function init_npe_execution()
     printlog(LOG.RUN, LOG.EXEC," Init NPE Execution")
     add_runners()
+
+    -- at init time, we read it straight from mcm
+    local enable = npe_mcm.npe_get_setting("general", "enable")
+    if not enable then
+        printlog(LOG.RUN, LOG.EXEC," NPE Execution Not Enabled")
+        return
+    end
     start_runners()
 end
 
@@ -1155,6 +1163,12 @@ local function mcm_on_option_change()
     -- update npe configuration
     update_settings()
 
+    if not Settings.enable then
+        printlog(LOG.RUN, LOG.EXEC," NPE Execution Not Enabled")
+        stop_runners()
+        return
+    end
+
     update_decks_from_mcm()
     
 
@@ -1172,9 +1186,6 @@ local function mcm_on_option_change()
     printdebug(LOG.RUN, LOG.CONF," Activation Queue list Ended")
     -- register the queued contexts with the npe_events
     Register_npe_callbacks()
-
-    -- resume all loops
-    Resume_execution_Deprecated()
 
     -- runners
     update_runners_configs()
