@@ -1,3 +1,7 @@
+-- checker for anim_playing
+
+-- with monkey patch for https://www.moddb.com/addons/fdda-redone-fixes
+
 anim_playing = false
 
 function anim_start_func() anim_playing = true end
@@ -5,7 +9,7 @@ function anim_start_func() anim_playing = true end
 function anim_stop_func() anim_playing = false end
 
 function on_game_start()
-    if lam2.Subscribe then
+    if lam2 and lam2.Subscribe then
         lam2.Subscribe("on_anim_queue_start", anim_start_func)
         lam2.Subscribe("on_anim_queue_stop", anim_stop_func)
     elseif ea_callbacks then

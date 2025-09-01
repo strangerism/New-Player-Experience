@@ -194,6 +194,12 @@ function UINewPlayerExperience:InitControls(set)
 	self:AddCallback("btn_next", ui_events.BUTTON_CLICKED, self.OnButtonNext, self)
 
 ---@diagnostic disable-next-line: undefined-field
+    self.btn_mcm = xml:Init3tButton(set.dialog .. ":btn_mcm", self.dialog)
+	-- self.btn_mcm:SetWndPos(vector2():set(self.dialog:GetWndPos().x + self.dialog:GetWidth()/2, self.btn_mcm:GetWndPos().y ))
+	self:Register(self.btn_mcm, "btn_mcm")
+	self:AddCallback("btn_mcm", ui_events.BUTTON_CLICKED, self.OnButtonMcM, self)
+
+---@diagnostic disable-next-line: undefined-field
     self.btn_prev = xml:Init3tButton(set.dialog .. ":btn_prev", self.dialog)
     self:Register(self.btn_prev, "btn_prev")	
 	self:AddCallback("btn_prev", ui_events.BUTTON_CLICKED, self.OnButtonPrev, self)
@@ -287,6 +293,8 @@ function UINewPlayerExperience:UpdateButtons()
 	printdebug(LOG.RUN, LOG.UI," UpdateButtons")
 	self.btn_prev:Show(true)
 	self.btn_next:Show(true)
+	self.btn_mcm:Show(false)
+	-- self.card_index:Show(true)
 	if self.cardIndex == 1 then
 		self.btn_prev:Show(false)
 	else
@@ -295,6 +303,10 @@ function UINewPlayerExperience:UpdateButtons()
 
 	if self.cardIndex == set_cards_count or self.cardIndex == #self.set.cards then
 		self.btn_next:Show(false)
+		if self.set.mcm_menu_path then
+			self.btn_mcm:Show(true)
+			-- self.card_index:Show(false)
+		end
 	else
 		self.btn_next:Show(true)
 	end
@@ -304,6 +316,14 @@ end
 ---@diagnostic disable-next-line: duplicate-set-field
 function UINewPlayerExperience:OnButtonClose()
     self:Close()
+end
+
+function UINewPlayerExperience:OnButtonMcM()
+    self:Close()
+	CreateTimeEvent("npe_tutorial", "mcm_path", 0, function (path)
+		ui_mcm.open_to(path)
+		return true
+	end, self.set.mcm_menu_path)
 end
 
 function UINewPlayerExperience:OnButtonNext()

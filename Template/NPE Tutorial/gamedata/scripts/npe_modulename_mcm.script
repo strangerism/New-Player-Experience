@@ -365,7 +365,10 @@ local deck = {
             -- use it at your discretion, e.g. for development, testing or if you want to prevent a set to be used at release
             disabled = true,
             -- [OPTIONAL] force set to be played even if actor is in threatened state 
-            force_play_on_threatened = true
+            force_play_on_threatened = true,
+            -- [OPTIONAL] show button for mcm menu navigation. this will close the tutorial dialog
+            mcm_menu_path = "npe/general"
+
         }, 
         -- you can define more then one set
 

@@ -13,6 +13,9 @@
 	<string id="npe_tutorial_btn_next">
 		<text>Next</text>
 	</string>	
+	<string id="npe_tutorial_btn_mcm">
+		<text>Open MCM</text>
+	</string>		
 	<string id="npe_tutorial_btn_prev">
 		<text>Prev</text>
 	</string>						

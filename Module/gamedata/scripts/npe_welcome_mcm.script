@@ -31,6 +31,7 @@ local deck = {
             context = {
                 event = npe.EVENT.GAME_START,
             },
+            mcm_menu_path = "npe/general"
         },
     },
 }

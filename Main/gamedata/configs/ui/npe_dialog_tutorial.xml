@@ -47,7 +47,13 @@
         <btn_resume x="195" y="600" width="60" height="30" stretch="1">
 			<text align="c" font="letterica16" complex_mode="1">npe_tutorial_btn_resume</text>
 			<texture>ui_button_ordinary</texture>
-        </btn_resume>        
+        </btn_resume>  
+
+        <btn_mcm x="265" y="600" width="60" height="30" stretch="1">
+			<text align="c" font="letterica16" complex_mode="1">npe_tutorial_btn_mcm</text>
+			<texture>ui_button_ordinary</texture>
+        </btn_mcm>
+
         <card_index x="112" y="600" width="800" height="30" stretch="1">
             <text r="250" g="250" b="250" font="letterica18" align="c" vert_align="c" complex_mode="1"></text>
         </card_index>    
