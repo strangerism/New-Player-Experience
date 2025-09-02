@@ -71,7 +71,7 @@ This setting instead ovverides that ensuring the action is paused the moment a t
 \n
 \nThe module page will show you the sets that are added by the module. Each set's setting shows if the set has been played or not, already. They all start disabled.
 \n
-\nAn NPE module contains a deck (a series of tutorials about game topics) normally included with a mod or a modpack
+\nA NPE module contains a deck (a series of tutorials about game topics) normally included with a mod or a modpack
 \nEach deck contains several sets or tutorials (a series of cards about a specific topic).	
 \n
 \nIf a set has been played to you, e.g. you have seen the tutorial, the setting will be enabled (checked)

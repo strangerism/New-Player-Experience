@@ -133,6 +133,9 @@ function UINewPlayerExperience:InitControls(set)
 	self.context = xml:InitTextWnd(set.dialog .. ":context",self.dialog)
 	self.context:SetText("%c[0,255,208,0]" .. "Context > " .. set.context.event.name)
 
+	-- true when all cards have been seen
+	self.unlocked = false
+
 	local text
 	text = game.translate_string(self.set.title)
 ---@diagnostic disable-next-line: undefined-field
@@ -293,6 +296,7 @@ function UINewPlayerExperience:UpdateButtons()
 	self.btn_prev:Show(true)
 	self.btn_next:Show(true)
 	self.btn_mcm:Show(false)
+	self.btn_close:Show(false)
 	if self.cardIndex == 1 then
 		self.btn_prev:Show(false)
 	else
@@ -301,11 +305,15 @@ function UINewPlayerExperience:UpdateButtons()
 
 	if self.cardIndex == set_cards_count or self.cardIndex == #self.set.cards then
 		self.btn_next:Show(false)
-		if self.set.mcm_menu_path then
-			self.btn_mcm:Show(true)
-		end
+		self.unlocked = true
 	else
 		self.btn_next:Show(true)
+	end
+	if self.unlocked then
+		if self.set.mcm_menu_path then
+			self.btn_mcm:Show(true)
+		end			
+		self.btn_close:Show(true)
 	end
 	self:UpdateGametimeButtons()
 end
