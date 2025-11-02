@@ -357,7 +357,9 @@ end
 local function execute_start_functor(runner_name)
     local runner = Runner[runner_name]
     if runner.config.start then
-        local success = execute_func(unpack(runner.config.start))
+        local ex_functor = copy(runner.config.start)
+        table.insert(ex_functor, runner_name)
+        local success = execute_func(unpack(ex_functor))
         printdebug(LOG.ERROR, LOG.EXEC," Runner: " .. runner.name .. " start functor executed: " .. tostring(success))
     end
 end
@@ -365,7 +367,9 @@ end
 local function execute_stop_functor(runner_name)
     local runner = Runner[runner_name]
     if runner.config.stop then
-        local success = execute_func(unpack(runner.config.stop))
+        local ex_functor = copy(runner.config.stop)
+        table.insert(ex_functor, runner_name)
+        local success = execute_func(unpack(ex_functor))
         printdebug(LOG.ERROR, LOG.EXEC," Runner: " .. runner.name .. " stop functor executed: " .. tostring(success))
     end
 end
@@ -425,8 +429,10 @@ local execute_functor = function(runner_name)
         -- check if a stop condition is found and if prevents the execution
         if runner.config.execution == TYPE.CONDITIONAL then
             if runner.config.stop_condition then 
+                local ex_functor = copy(runner.config.stop_condition)
+                table.insert(ex_functor, runner_name)
             -- check the stop condition
-                if execute_func(unpack(runner.config.stop_condition)) then
+                if execute_func(unpack(ex_functor)) then
                     printdebug(LOG.INFO, LOG.EXEC," Runner: " .. runner.name .. " stop condition met")
                     -- stop condition met, let signal it  to the run handler
                     set_runner_state(runner_name, RUNNER_STATE.stop_condition_met, true)
@@ -436,7 +442,9 @@ local execute_functor = function(runner_name)
             end-- stop condition not met
             if runner.config.pause_condition then
                 -- check the pause condition
-                if execute_func(unpack(runner.config.pause_condition)) then
+                local ex_functor = copy(runner.config.pause_condition)
+                table.insert(ex_functor, runner_name)
+                if execute_func(unpack(ex_functor)) then
                     printdebug(LOG.INFO, LOG.EXEC," Runner: " .. runner.name .. " pause condition met")
                     -- pause condition met, let signal it  to the run handler                    
                     set_runner_state(runner_name, RUNNER_STATE.pause_condition_met, true)
@@ -448,7 +456,9 @@ local execute_functor = function(runner_name)
         
         -- execute the functor
         -- trace_table(runner.config.functor)
-        execution_success = execute_func(unpack(runner.config.functor))
+        local ex_functor = copy(runner.config.functor)
+        table.insert(ex_functor, runner_name)
+        execution_success = execute_func(unpack(ex_functor))
     end
 
     -- update the loop count
